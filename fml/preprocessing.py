@@ -53,6 +53,7 @@ def detect_types_dataframe(X, verbose=0):
          'categorical': cat_integers | cat_string, 'date': dates,
          'dirty_float_string': dirty_float_string})
     res = res.fillna(False)
+    res['useless'] = res.sum(axis=1) == 0
 
     if verbose >= 1:
         print("Detected feature types:")
@@ -61,17 +62,20 @@ def detect_types_dataframe(X, verbose=0):
             other.sum())
         print(desc)
         print("Interpreted as:")
-        dropped = (res.sum(axis=1) == 0).sum()
         interp = ("{} continuous, {} categorical, {} date, "
                   "{} dirty float, {} dropped").format(
             res.continuous.sum(), res.categorical.sum(), res.date.sum(),
-            dirty_float_string.sum(), dropped
+            dirty_float_string.sum(), res.useless.sum()
         )
         print(interp)
     if verbose >= 2:
         if dirty_float_string.any():
             print("WARN Found dirty floats encoded as strings: {}".format(
                 dirty_float_string.index[dirty_float_string].tolist()
+            ))
+        if res.useless.sum() > 0:
+            print("WARN dropped columns (too many unique values): {}".format(
+                res.index[res.useless].tolist()
             ))
     return res
 

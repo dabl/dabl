@@ -15,4 +15,10 @@ def test_detect_types_dataframe():
 def test_simple_preprocessor():
     sp = SimplePreprocessor()
     sp.fit(X_cat)
-    trans = sp.transform(X_cat)
+    trans = sp.transform(X_cat) 
+    assert trans.shape == (3, 5)
+
+
+# TODO add tests that floats as strins are correctly interpreted
+# TODO add test that weird missing values in strings are correctly interpreted
+# TODO check that we detect ID columns 

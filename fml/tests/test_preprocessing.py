@@ -1,4 +1,5 @@
-from fml.preprocessing import detect_types_dataframe, SimplePreprocessor
+from fml.preprocessing import (detect_types_dataframe, SimplePreprocessor,
+                               DirtyFloatCleaner)
 import pandas as pd
 import numpy as np
 
@@ -20,6 +21,8 @@ def test_detect_string_floats():
     cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
     dirty = pd.Series(cont_clean)
     # FIXME hardcoded frequency of tolerated missing
+    # FIXME add test with integers
+    # FIXME whitespace?
     dirty[::12] = "missing"
     X = pd.DataFrame({'a': cont_clean, 'b': dirty})
     res = detect_types_dataframe(X)
@@ -28,6 +31,22 @@ def test_detect_string_floats():
     assert ~res.continuous['b']
     assert ~res.dirty_float_string['a']
     assert res.dirty_float_string['b']
+
+
+def test_transform_dirty_float():
+    rng = np.random.RandomState(0)
+    cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
+    dirty = pd.DataFrame(cont_clean)
+    dirty[::12] = "missing"
+    dirty.iloc[3, 0] = "garbage"
+    dfc = DirtyFloatCleaner()
+    dfc.fit(dirty)
+    res = dfc.transform(dirty)
+    # TODO test for new values in test etc
+    assert res.shape == (100, 3)
+    assert (res.dtypes == float).all()
+    assert res.x0_missing.sum() == 9
+    assert res.x0_garbage.sum() == 1
 
 
 def test_simple_preprocessor():

@@ -8,6 +8,38 @@ from sklearn.utils.validation import check_array, check_is_fitted
 import pandas as pd
 import numpy as np
 
+_FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
+
+
+class DirtyFloatCleaner(TransformerMixin):
+    def fit(self, X, y=None):
+        # FIXME ensure X is dataframe?
+        # FIXME clean float columns will make this fail
+        encoders = {}
+        for col in X.columns:
+            floats = X[col].str.match(_FLOAT_REGEX)
+            # FIXME sparse
+            encoders[col] = OneHotEncoder(sparse=False).fit(X.loc[~floats, [col]])
+        self.encoders_ = encoders
+        self.columns_ = X.columns
+        return self
+
+    def transform(self, X):
+        # FIXME check that columns are the same?
+        result = []
+        for col in self.columns_:
+            nofloats = ~X[col].str.match(_FLOAT_REGEX)
+            new_col = X[col].copy()
+            new_col[nofloats] = np.NaN
+            new_col = new_col.astype(np.float)
+            enc = self.encoders_[col]
+            cats = pd.DataFrame(0, index=np.arange(len(X)),
+                                columns=enc.get_feature_names())
+            cats[nofloats] = enc.transform(X.loc[nofloats, [col]])
+            cats["{}_continuous".format(col)] = new_col
+            result.append(cats)
+        return pd.concat(result, axis=1)
+
 
 def detect_types_dataframe(X, verbose=0):
     """
@@ -36,7 +68,7 @@ def detect_types_dataframe(X, verbose=0):
     # check if we can cast strings to float
     # we don't need to cast all, could
     float_frequencies = X.loc[:, objects].apply(
-        lambda x: x.str.match("^[+-]?[0-9]*\.?[0-9]*$").mean())
+        lambda x: x.str.match(_FLOAT_REGEX).mean())
     clean_float_string = float_frequencies == 1.0
     dirty_float_string = (float_frequencies > .9) & (~clean_float_string)
 

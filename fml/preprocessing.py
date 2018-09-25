@@ -36,7 +36,8 @@ class DirtyFloatCleaner(TransformerMixin):
             cats = pd.DataFrame(0, index=np.arange(len(X)),
                                 columns=enc.get_feature_names())
             cats[nofloats] = enc.transform(X.loc[nofloats, [col]])
-            cats["{}_continuous".format(col)] = new_col
+            # FIXME use types to distinguish outputs instead?
+            cats["{}_fml_continuous".format(col)] = new_col
             result.append(cats)
         return pd.concat(result, axis=1)
 
@@ -70,7 +71,7 @@ def detect_types_dataframe(X, verbose=0):
     float_frequencies = X.loc[:, objects].apply(
         lambda x: x.str.match(_FLOAT_REGEX).mean())
     clean_float_string = float_frequencies == 1.0
-    dirty_float_string = (float_frequencies > .9) & (~clean_float_string)
+    dirty_float = (float_frequencies > .9) & (~clean_float_string)
 
     # using categories as integers is not that bad usually
     cont_integers = integers.copy()
@@ -83,7 +84,7 @@ def detect_types_dataframe(X, verbose=0):
     res = pd.DataFrame(
         {'continuous': floats | cont_integers | clean_float_string,
          'categorical': cat_integers | cat_string, 'date': dates,
-         'dirty_float_string': dirty_float_string})
+         'dirty_float': dirty_float})
     res = res.fillna(False)
     res['useless'] = res.sum(axis=1) == 0
 
@@ -97,13 +98,13 @@ def detect_types_dataframe(X, verbose=0):
         interp = ("{} continuous, {} categorical, {} date, "
                   "{} dirty float, {} dropped").format(
             res.continuous.sum(), res.categorical.sum(), res.date.sum(),
-            dirty_float_string.sum(), res.useless.sum()
+            dirty_float.sum(), res.useless.sum()
         )
         print(interp)
     if verbose >= 2:
-        if dirty_float_string.any():
+        if dirty_float.any():
             print("WARN Found dirty floats encoded as strings: {}".format(
-                dirty_float_string.index[dirty_float_string].tolist()
+                dirty_float.index[dirty_float].tolist()
             ))
         if res.useless.sum() > 0:
             print("WARN dropped columns (too many unique values): {}".format(
@@ -114,6 +115,10 @@ def detect_types_dataframe(X, verbose=0):
 
 def detect_types_ndarray(X):
     raise NotImplementedError
+
+
+def select_cont(X):
+    X.columns.str.endswith("_fml_continuous")
 
 
 class SimplePreprocessor(BaseEstimator, TransformerMixin):
@@ -166,12 +171,20 @@ class SimplePreprocessor(BaseEstimator, TransformerMixin):
         if X.loc[:, types['continuous']].isnull().values.any():
             steps_continuous.insert(0, SimpleImputer(strategy='median'))
         pipe_continuous = make_pipeline(*steps_continuous)
+        # FIXME only have one imputer/standard scaler in all
+        pipe_dirty_float = make_pipeline(
+            DirtyFloatCleaner(),
+            make_column_transformer(
+                (select_cont, pipe_continuous), remainder="passthrough"))
         # construct column transformer
         column_types = []
         if types['continuous'].any():
             column_types.append((types['continuous'], pipe_continuous))
         if types['categorical'].any():
             column_types.append((types['categorical'], pipe_categorical))
+        if types['dirty_float'].any():
+            column_types.append((types['dirty_float'], pipe_dirty_float))
+
         if not len(column_types):
             raise ValueError("No feature columns found")
         self.ct_ = make_column_transformer(*column_types)

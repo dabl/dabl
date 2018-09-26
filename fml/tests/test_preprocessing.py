@@ -1,4 +1,4 @@
-from fml.preprocessing import (detect_types_dataframe, SimplePreprocessor,
+from fml.preprocessing import (detect_types_dataframe, FriendlyPreprocessor,
                                DirtyFloatCleaner)
 import pandas as pd
 import numpy as np
@@ -50,7 +50,7 @@ def test_transform_dirty_float():
 
 
 def test_simple_preprocessor():
-    sp = SimplePreprocessor()
+    sp = FriendlyPreprocessor()
     sp.fit(X_cat)
     trans = sp.transform(X_cat)
     assert trans.shape == (3, 5)

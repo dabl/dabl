@@ -1,6 +1,3 @@
-from .template import (TemplateEstimator, TemplateClassifier,
-                       TemplateTransformer)
-from . import template
+from .preprocessing import FriendlyPreprocessor
 
-__all__ = ['TemplateEstimator', 'TemplateClassifier',
-           'TemplateTransformer', 'template']
+__all__ = ['FriendlyPreprocessor']

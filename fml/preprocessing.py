@@ -121,7 +121,7 @@ def select_cont(X):
     X.columns.str.endswith("_fml_continuous")
 
 
-class SimplePreprocessor(BaseEstimator, TransformerMixin):
+class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
     """ An simple preprocessor
 
     Detects variable types, encodes everything as floats

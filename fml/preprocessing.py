@@ -131,10 +131,31 @@ class SimplePreprocessor(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    ct_ : ColumnTransformer
+        Main container for all transformations.
+
+    columns_ : pandas columns
+        Columns of training data
+
+    dtypes_ : Series of dtypes
+        Dtypes of training data columns.
+
+    types_ : something
+        Inferred input types.
+
+
+    Parameters
+    ----------
+    scale : boolean, default=True
+        Whether to scale continuous data.
+
+    verbose : int, default=0
+        Control output verbosity.
 
     """
-    def __init__(self, verbose=0):
+    def __init__(self, scale=True, verbose=0):
         self.verbose = verbose
+        self.scale = scale
 
     def fit(self, X, y=None):
         """A reference implementation of a fitting function for a transformer.
@@ -166,8 +187,9 @@ class SimplePreprocessor(BaseEstimator, TransformerMixin):
         pipe_categorical = OneHotEncoder()
 
         steps_continuous = [FunctionTransformer(lambda x: x.astype(np.float),
-                                                validate=False),
-                            StandardScaler()]
+                                                validate=False)]
+        if self.scale:
+            steps_continuous.append(StandardScaler())
         if X.loc[:, types['continuous']].isnull().values.any():
             steps_continuous.insert(0, SimpleImputer(strategy='median'))
         pipe_continuous = make_pipeline(*steps_continuous)

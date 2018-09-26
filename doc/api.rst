@@ -1,4 +1,9 @@
 API Documentation
 =================
 
-* :doc:`template`
+
+Preprocessing
+-------------
+
+.. automodule:: fml.preprocessing
+   :members:

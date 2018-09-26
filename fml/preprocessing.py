@@ -4,7 +4,7 @@ from sklearn.preprocessing import (OneHotEncoder, StandardScaler,
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.compose import make_column_transformer
-from sklearn.utils.validation import check_array, check_is_fitted
+from sklearn.utils.validation import check_is_fitted
 import pandas as pd
 import numpy as np
 
@@ -19,7 +19,8 @@ class DirtyFloatCleaner(TransformerMixin):
         for col in X.columns:
             floats = X[col].str.match(_FLOAT_REGEX)
             # FIXME sparse
-            encoders[col] = OneHotEncoder(sparse=False).fit(X.loc[~floats, [col]])
+            encoders[col] = OneHotEncoder(sparse=False).fit(
+                X.loc[~floats, [col]])
         self.encoders_ = encoders
         self.columns_ = X.columns
         return self
@@ -33,9 +34,9 @@ class DirtyFloatCleaner(TransformerMixin):
             new_col[nofloats] = np.NaN
             new_col = new_col.astype(np.float)
             enc = self.encoders_[col]
-            cats = pd.DataFrame(0, index=np.arange(len(X)),
+            cats = pd.DataFrame(0, index=X.index,
                                 columns=enc.get_feature_names())
-            cats[nofloats] = enc.transform(X.loc[nofloats, [col]])
+            cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
             # FIXME use types to distinguish outputs instead?
             cats["{}_fml_continuous".format(col)] = new_col
             result.append(cats)
@@ -68,8 +69,11 @@ def detect_types_dataframe(X, verbose=0):
     other = - (floats | integers | objects | dates)
     # check if we can cast strings to float
     # we don't need to cast all, could
-    float_frequencies = X.loc[:, objects].apply(
-        lambda x: x.str.match(_FLOAT_REGEX).mean())
+    if objects.any():
+        float_frequencies = X.loc[:, objects].apply(
+            lambda x: x.str.match(_FLOAT_REGEX).mean())
+    else:
+        float_frequencies = pd.Series(0, index=X.columns)
     clean_float_string = float_frequencies == 1.0
     dirty_float = (float_frequencies > .9) & (~clean_float_string)
 
@@ -113,12 +117,8 @@ def detect_types_dataframe(X, verbose=0):
     return res
 
 
-def detect_types_ndarray(X):
-    raise NotImplementedError
-
-
 def select_cont(X):
-    X.columns.str.endswith("_fml_continuous")
+    return X.columns.str.endswith("_fml_continuous")
 
 
 class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
@@ -173,14 +173,13 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        if isinstance(X, pd.DataFrame):
-            self.columns_ = X.columns
-            self.dtypes_ = X.dtypes
-            types = detect_types_dataframe(X, verbose=self.verbose)
-        else:
-            X = check_array(X)
-            types = detect_types_ndarray(X)
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
 
+        self.columns_ = X.columns
+        self.dtypes_ = X.dtypes
+        types = detect_types_dataframe(X, verbose=self.verbose)
+        
         # go over variable blocks
         # check for missing values
         # scale etc

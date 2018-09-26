@@ -2,6 +2,7 @@ from fml.preprocessing import (detect_types_dataframe, FriendlyPreprocessor,
                                DirtyFloatCleaner)
 import pandas as pd
 import numpy as np
+from sklearn.datasets import load_iris
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
                       'second': ['word', 'no', '']})
@@ -12,6 +13,11 @@ def test_detect_types_dataframe():
     assert len(res) == 2
     assert res.categorical.all()
     assert ~res.continuous.any()
+
+    iris = load_iris()
+    res_iris = detect_types_dataframe(pd.DataFrame(iris.data))
+    assert (res_iris.sum(axis=1) == 1).all()
+    assert res_iris.continuous.sum() == 4
 
 
 def test_detect_string_floats():
@@ -29,8 +35,8 @@ def test_detect_string_floats():
     assert len(res) == 2
     assert res.continuous['a']
     assert ~res.continuous['b']
-    assert ~res.dirty_float_string['a']
-    assert res.dirty_float_string['b']
+    assert ~res.dirty_float['a']
+    assert res.dirty_float['b']
 
 
 def test_transform_dirty_float():
@@ -55,7 +61,14 @@ def test_simple_preprocessor():
     trans = sp.transform(X_cat)
     assert trans.shape == (3, 5)
 
+    iris = load_iris()
+    sp = FriendlyPreprocessor()
+    sp.fit(iris.data)
+
 
 # TODO add tests that floats as strings are correctly interpreted
 # TODO add test that weird missing values in strings are correctly interpreted
 # TODO check that we detect ID columns
+# TODO test for weirdly indexed dataframes
+# TODO test select cont
+# TODO test non-trivial case of FriendlyPreprocessor?!"!"

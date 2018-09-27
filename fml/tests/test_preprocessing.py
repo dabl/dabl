@@ -8,6 +8,15 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
                       'second': ['word', 'no', '']})
 
 
+def make_dirty_float():
+    rng = np.random.RandomState(0)
+    cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
+    dirty = pd.DataFrame(cont_clean)
+    dirty[::12] = "missing"
+    dirty.iloc[3, 0] = "garbage"
+    return dirty
+
+
 def test_detect_types_dataframe():
     res = detect_types_dataframe(X_cat)
     assert len(res) == 2
@@ -30,6 +39,12 @@ def test_detect_string_floats():
     # FIXME add test with integers
     # FIXME whitespace?
     dirty[::12] = "missing"
+    # only dirty:
+    res = detect_types_dataframe(pd.DataFrame(dirty))
+    assert len(res) == 1
+    assert res.dirty_float[0]
+
+    # dirty and clean
     X = pd.DataFrame({'a': cont_clean, 'b': dirty})
     res = detect_types_dataframe(X)
     assert len(res) == 2
@@ -40,11 +55,7 @@ def test_detect_string_floats():
 
 
 def test_transform_dirty_float():
-    rng = np.random.RandomState(0)
-    cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
-    dirty = pd.DataFrame(cont_clean)
-    dirty[::12] = "missing"
-    dirty.iloc[3, 0] = "garbage"
+    dirty = make_dirty_float()
     dfc = DirtyFloatCleaner()
     dfc.fit(dirty)
     res = dfc.transform(dirty)
@@ -64,6 +75,19 @@ def test_simple_preprocessor():
     iris = load_iris()
     sp = FriendlyPreprocessor()
     sp.fit(iris.data)
+
+
+def test_simple_preprocessor_dirty_float():
+    dirty = pd.DataFrame(make_dirty_float())
+    fp = FriendlyPreprocessor()
+    fp.fit(dirty)
+    res = fp.transform(dirty)
+    assert res.shape == (100, 3)
+    rowsum = res.sum(axis=0)
+    # count of "garbage"
+    assert rowsum[1] == 1
+    # count of "missing"
+    assert rowsum[2] == 9
 
 
 # TODO add tests that floats as strings are correctly interpreted

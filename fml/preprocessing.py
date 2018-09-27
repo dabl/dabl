@@ -3,7 +3,7 @@ from sklearn.preprocessing import (OneHotEncoder, StandardScaler,
                                    FunctionTransformer)
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.compose import make_column_transformer
+from sklearn.compose import make_column_transformer, ColumnTransformer
 from sklearn.utils.validation import check_is_fitted
 import pandas as pd
 import numpy as np
@@ -43,8 +43,31 @@ class DirtyFloatCleaner(TransformerMixin):
         return pd.concat(result, axis=1)
 
 
-def detect_types_dataframe(X, verbose=0):
+def detect_types_dataframe(X, max_int_cardinality='auto',
+                           dirty_float_threshold=.5, verbose=0):
     """
+    Parameters
+    ----------
+    X : dataframe
+        input
+    
+    dirty_float_threshold : float, default=.5
+        The fraction of floats required in a dirty continuous
+        column before it's considered "useless".
+
+    max_int_cardinality: int or 'auto', default='auto'
+        Maximum number of distinct integers for an integer column
+        to be considered categorical. 'auto' is ``max(42, n_samples/10)``.
+        Integers are also always considered as continuous variables.
+
+    verbose : int
+        How verbose to be
+
+    Returns
+    -------
+    res : dataframe
+        boolean dataframe of detected types.
+
     recognized types:
     continuous
     categorical
@@ -52,12 +75,15 @@ def detect_types_dataframe(X, verbose=0):
     free string TODO
     dirty category string TODO
     date
+    useless
     """
     # Todo: detect index / unique integers
     # todo: detect near constant features
     # TODO subsample large datsets? one level up?
     # TODO detect encoding missing values as strings /weird values
     n_samples, n_features = X.shape
+    if max_int_cardinality == "auto":
+        max_int_cardinality = max(42, n_samples / 10)
     n_values = X.apply(lambda x: x.nunique())
     dtypes = X.dtypes
     kinds = dtypes.apply(lambda x: x.kind)
@@ -75,13 +101,13 @@ def detect_types_dataframe(X, verbose=0):
     else:
         float_frequencies = pd.Series(0, index=X.columns)
     clean_float_string = float_frequencies == 1.0
-    dirty_float = (float_frequencies > .9) & (~clean_float_string)
+    dirty_float = ((float_frequencies > dirty_float_threshold)
+                   & (~clean_float_string))
 
     # using categories as integers is not that bad usually
     cont_integers = integers.copy()
     # using integers as categories only if low cardinality
-    # FIXME hardcoded
-    few_entries = n_values < max(42, n_samples / 10)
+    few_entries = n_values < max_int_cardinality
     cat_integers = few_entries & integers
     cat_string = few_entries & objects
 
@@ -189,8 +215,9 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
                                                 validate=False)]
         if self.scale:
             steps_continuous.append(StandardScaler())
-        if X.loc[:, types['continuous']].isnull().values.any():
-            steps_continuous.insert(0, SimpleImputer(strategy='median'))
+        #if X.loc[:, types['continuous']].isnull().values.any():
+        # FIXME doesn't work if missing values only in dirty column
+        steps_continuous.insert(0, SimpleImputer(strategy='median'))
         pipe_continuous = make_pipeline(*steps_continuous)
         # FIXME only have one imputer/standard scaler in all
         pipe_dirty_float = make_pipeline(
@@ -198,18 +225,20 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
             make_column_transformer(
                 (select_cont, pipe_continuous), remainder="passthrough"))
         # construct column transformer
-        column_types = []
+        transformer_cols = []
         if types['continuous'].any():
-            column_types.append((types['continuous'], pipe_continuous))
+            transformer_cols.append(('continuous',
+                                     pipe_continuous, types['continuous']))
         if types['categorical'].any():
-            column_types.append((types['categorical'], pipe_categorical))
+            transformer_cols.append(('categorical',
+                                     pipe_categorical, types['categorical']))
         if types['dirty_float'].any():
-            column_types.append((types['dirty_float'], pipe_dirty_float))
+            transformer_cols.append(('dirty_float',
+                                     pipe_dirty_float, types['dirty_float']))
 
-        if not len(column_types):
+        if not len(transformer_cols):
             raise ValueError("No feature columns found")
-        self.ct_ = make_column_transformer(*column_types)
-        self.ct_.sparse_threshold = .1  # FIXME HACK
+        self.ct_ = ColumnTransformer(transformer_cols, sparse_threshold=.1)
 
         self.ct_.fit(X)
 
@@ -219,7 +248,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def get_feature_names(self):
-        return self.ct_.get_feature_names(self.columns_)
+        return self.ct_.get_feature_names()
 
     def transform(self, X):
         """ A reference implementation of a transform function.

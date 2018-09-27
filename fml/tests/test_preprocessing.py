@@ -89,6 +89,9 @@ def test_simple_preprocessor_dirty_float():
     # count of "missing"
     assert rowsum[2] == 9
 
+    # make sure we can transform a clean column
+    fp.transform(pd.DataFrame(['0', '1', '2']))
+
 
 # TODO add tests that floats as strings are correctly interpreted
 # TODO add test that weird missing values in strings are correctly interpreted

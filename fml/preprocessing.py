@@ -12,6 +12,7 @@ _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
 
 
 class DirtyFloatCleaner(TransformerMixin):
+    # should this error if the inputs are not string?
     def fit(self, X, y=None):
         # FIXME ensure X is dataframe?
         # FIXME clean float columns will make this fail
@@ -36,7 +37,8 @@ class DirtyFloatCleaner(TransformerMixin):
             enc = self.encoders_[col]
             cats = pd.DataFrame(0, index=X.index,
                                 columns=enc.get_feature_names())
-            cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
+            if nofloats.any():
+                cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
             # FIXME use types to distinguish outputs instead?
             cats["{}_fml_continuous".format(col)] = new_col
             result.append(cats)

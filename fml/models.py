@@ -4,6 +4,7 @@ import pandas as pd
 
 from sklearn.model_selection import cross_validate
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.dummy import DummyClassifier
 from sklearn.utils.multiclass import type_of_target
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
@@ -35,14 +36,15 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
         n_classes = len(np.unique(y))
 
         # Heuristic: start with fast / instantaneous models
-        fast_ests = [make_pipeline(FriendlyPreprocessor(), GaussianNB()),
+        fast_ests = [DummyClassifier(strategy="prior"),
+                     make_pipeline(FriendlyPreprocessor(), GaussianNB()),
                      make_pipeline(FriendlyPreprocessor(scale=False),
                                    MinMaxScaler(), MultinomialNB()),
                      make_pipeline(FriendlyPreprocessor(scale=False),
-                                   DecisionTreeClassifier(max_depth=1)),
+                                   DecisionTreeClassifier(max_depth=1, class_weight="balanced")),
                      make_pipeline(FriendlyPreprocessor(scale=False),
                                    DecisionTreeClassifier(
-                                       max_depth=max(5, n_classes)))
+                                       max_depth=max(5, n_classes), class_weight="balanced"))
                      ]
         self.current_best_ = -np.inf
         for ests in fast_ests:
@@ -58,7 +60,10 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
             res = cross_validate(estimator, X, y, cv=5, scoring=self.scoring_,
                                  return_train_score=True)
         res_mean = pd.DataFrame(res).mean(axis=0)
-        name = str(estimator.steps[-1][1])
+        try:
+            name = str(estimator.steps[-1][1])
+        except AttributeError:
+            name = str(estimator)
         # FIXME don't use accuracy for getting the best?
         print(name)
         print(res_mean)

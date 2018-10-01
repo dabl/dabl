@@ -52,7 +52,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     ----------
     X : dataframe
         input
-    
+
     dirty_float_threshold : float, default=.5
         The fraction of floats required in a dirty continuous
         column before it's considered "useless".
@@ -79,6 +79,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     date
     useless
     """
+    # TODO detect top coding
     # Todo: detect index / unique integers
     # todo: detect near constant features
     # TODO subsample large datsets? one level up?
@@ -217,7 +218,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
                                                 validate=False)]
         if self.scale:
             steps_continuous.append(StandardScaler())
-        #if X.loc[:, types['continuous']].isnull().values.any():
+        # if X.loc[:, types['continuous']].isnull().values.any():
         # FIXME doesn't work if missing values only in dirty column
         steps_continuous.insert(0, SimpleImputer(strategy='median'))
         pipe_continuous = make_pipeline(*steps_continuous)

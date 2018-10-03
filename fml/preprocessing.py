@@ -208,7 +208,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         self.columns_ = X.columns
         self.dtypes_ = X.dtypes
         types = detect_types_dataframe(X, verbose=self.verbose)
-        
+
         # go over variable blocks
         # check for missing values
         # scale etc

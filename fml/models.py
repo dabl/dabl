@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import cross_validate
+from sklearn.metrics import make_scorer, average_precision_score
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.utils.multiclass import type_of_target
@@ -24,9 +25,16 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
 
         target_type = type_of_target(y)
+
         if target_type == "binary":
-            self.scoring_ = ['accuracy', 'average_precision', 'roc_auc',
-                             'precision_macro']
+            minority_class = pd.Series(y).value_counts().index[1]
+            my_average_precision_scorer = make_scorer(
+                average_precision_score, pos_label=minority_class,
+                needs_threshold=True)
+            self.scoring_ = {'accuracy':'accuracy',
+                             'average_precision': my_average_precision_scorer,
+                             'roc_auc': 'roc_auc',
+                             'precision_macro': 'precision_macro'}
         elif target_type == "multiclass":
             self.scoring_ = ['accuracy', 'precision_macro',
                              'recall_macro']

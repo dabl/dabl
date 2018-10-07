@@ -2,6 +2,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import (OneHotEncoder, StandardScaler,
                                    FunctionTransformer)
 from sklearn.pipeline import make_pipeline
+from sklearn.externals.joblib import Memory
 from sklearn.impute import SimpleImputer
 from sklearn.compose import make_column_transformer, ColumnTransformer
 from sklearn.utils.validation import check_is_fitted
@@ -9,6 +10,8 @@ import pandas as pd
 import numpy as np
 
 _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
+
+memory = Memory(location="some_cache")
 
 
 class DirtyFloatCleaner(TransformerMixin):
@@ -45,6 +48,7 @@ class DirtyFloatCleaner(TransformerMixin):
         return pd.concat(result, axis=1)
 
 
+@memory.cache
 def detect_types_dataframe(X, max_int_cardinality='auto',
                            dirty_float_threshold=.5, verbose=0):
     """
@@ -150,6 +154,10 @@ def select_cont(X):
     return X.columns.str.endswith("_fml_continuous")
 
 
+def _make_float(X):
+    return X.astype(np.float, copy=False)
+
+
 class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
     """ An simple preprocessor
 
@@ -214,8 +222,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         # scale etc
         pipe_categorical = OneHotEncoder()
 
-        steps_continuous = [FunctionTransformer(lambda x: x.astype(np.float),
-                                                validate=False)]
+        steps_continuous = [FunctionTransformer(_make_float, validate=False)]
         if self.scale:
             steps_continuous.append(StandardScaler())
         # if X.loc[:, types['continuous']].isnull().values.any():

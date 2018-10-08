@@ -160,8 +160,10 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def safe_cleanup(X, onehot=False):
+def _safe_cleanup(X, onehot=False):
     """Cleaning / preprocessing outside of cross-validation
+
+    FIXME this leads to duplicating integer columns! no good!
 
     This function is "safe" to use outside of cross-validation in that
     it only does preprocessing that doesn't use statistics that could

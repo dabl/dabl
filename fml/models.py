@@ -14,15 +14,23 @@ from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _multimetric_score
+from sklearn.linear_model import LogisticRegression
 
 from .preprocessing import FriendlyPreprocessor
+from .utils import nice_repr
 
 
 class FriendlyClassifier(BaseEstimator, ClassifierMixin):
-    """Automagic anytime classifier
+    """Automagic anytime classifier.
+
+    Parameters
+    ----------
+    verbose : integer, default=1
+        Verbosity (higher is more output)
     """
-    def __init__(self, memory=None):
-        self.memory = memory
+    def __init__(self, refit=False, verbose=1):
+        self.verbose = verbose
+        self.refit = refit
 
     def fit(self, X, y):
 
@@ -37,25 +45,30 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
             self.scoring_ = {'accuracy': 'accuracy',
                              'average_precision': my_average_precision_scorer,
                              'roc_auc': 'roc_auc',
-                             'precision_macro': 'precision_macro'
+                             'recall_macro': 'recall_macro'
                              }
         elif target_type == "multiclass":
-            self.scoring_ = ['accuracy', 'precision_macro',
-                             'recall_macro']
+            self.scoring_ = ['accuracy', 'recall_macro', 'precision_macro']
         else:
             raise ValueError("Unknown target type: {}".format(target_type))
         # speed up label encoding by not redoing it
         self.log_ = []
         n_classes = len(np.unique(y))
-        # kwargs = {'memory': self.memory}
-        # Heuristic: start with fast / instantaneous models
+
+        # reimplement cross-validation so we only do preprocessing once
+        # This could/should be solved with dask?
         cv = StratifiedKFold(n_splits=5)
         data_preproc = []
-        for train, test in cv.split(X, y):
-            sp = FriendlyPreprocessor()
+        for i, (train, test) in enumerate(cv.split(X, y)):
+            # maybe do two levels of preprocessing
+            # to search over treatment of categorical variables etc
+            # Also filter?
+            verbose = self.verbose if i == 0 else 0
+            sp = FriendlyPreprocessor(verbose=verbose)
             X_train = sp.fit_transform(X.iloc[train], y.iloc[train])
             X_test = sp.transform(X.iloc[test])
             data_preproc.append((X_train, X_test, y.iloc[train], y.iloc[test]))
+        # Heuristic: start with fast / instantaneous models
 
         fast_ests = [DummyClassifier(strategy="prior"),
                      GaussianNB(),
@@ -64,16 +77,29 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
                                             class_weight="balanced"),
                      DecisionTreeClassifier(max_depth=max(5, n_classes),
                                             class_weight="balanced"),
+                     DecisionTreeClassifier(class_weight="balanced", min_impurity_decrease=.01),
+                     LogisticRegression(C=.1, solver='lbfgs', class_weight='balanced')
                      ]
 
         scorers, _ = _check_multimetric_scoring(fast_ests[1],
                                                 scoring=self.scoring_)
 
         self.current_best_ = -np.inf
-        for ests in fast_ests:
-            self._evaluate_one(ests, data_preproc, scorers)
+        for est in fast_ests:
+            scores = self._evaluate_one(est, data_preproc, scorers)
+            # make scoring configurable
+            this_score = scores['recall_macro']
+            if this_score > self.current_best_:
+                if self.verbose:
+                    print("new best: {:.4f}".format(this_score))
+                self.current_best_ = this_score
+                best_est = est
+        if self.refit:
+            self.est_ = make_pipeline(FriendlyPreprocessor(), best_est)
+            self.est_.fit(X, y)
 
     def predict(self, X):
+        # FIXME check self.refit
         self.est_.predict(X)
 
     def _evaluate_one(self, estimator, data_preproc, scorers):
@@ -94,11 +120,14 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
 
         res_mean = pd.DataFrame(res).mean(axis=0)
         try:
-            name = str(estimator.steps[-1][1])
+            # show only last step of pipeline for simplicity
+            name = nice_repr(estimator.steps[-1][1])
         except AttributeError:
-            name = str(estimator)
-        # FIXME don't use accuracy for getting the best?
-        print(name)
-        print(res_mean)
+            name = nice_repr(estimator)
+        if self.verbose:
+            print(name)
+            res_string = "".join("{}: {:.4f}    ".format(m, s) for m, s in res_mean.items())
+            print(res_string)
         res_mean.name = name
         self.log_.append(res_mean)
+        return res_mean

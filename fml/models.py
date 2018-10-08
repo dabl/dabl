@@ -13,7 +13,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import UndefinedMetricWarning
 
-from .preprocessing import FriendlyPreprocessor
+from .preprocessing import FriendlyPreprocessor, detect_types_dataframe
 
 
 class FriendlyClassifier(BaseEstimator, ClassifierMixin):
@@ -42,15 +42,16 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("Unknown target type: {}".format(target_type))
         self.log_ = []
         n_classes = len(np.unique(y))
+        types = detect_types_dataframe(X)
 
         # Heuristic: start with fast / instantaneous models
         fast_ests = [DummyClassifier(strategy="prior"),
-                     make_pipeline(FriendlyPreprocessor(), GaussianNB()),
-                     make_pipeline(FriendlyPreprocessor(scale=False),
+                     make_pipeline(FriendlyPreprocessor(types=types), GaussianNB()),
+                     make_pipeline(FriendlyPreprocessor(types=types, scale=False),
                                    MinMaxScaler(), MultinomialNB()),
-                     make_pipeline(FriendlyPreprocessor(scale=False),
+                     make_pipeline(FriendlyPreprocessor(types=types, scale=False),
                                    DecisionTreeClassifier(max_depth=1, class_weight="balanced")),
-                     make_pipeline(FriendlyPreprocessor(scale=False),
+                     make_pipeline(FriendlyPreprocessor(types=types, scale=False),
                                    DecisionTreeClassifier(
                                        max_depth=max(5, n_classes), class_weight="balanced"))
                      ]

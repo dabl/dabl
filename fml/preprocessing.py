@@ -2,7 +2,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import (OneHotEncoder, StandardScaler,
                                    FunctionTransformer)
 from sklearn.pipeline import make_pipeline
-from sklearn.externals.joblib import Memory
 from sklearn.impute import SimpleImputer
 from sklearn.compose import make_column_transformer, ColumnTransformer
 from sklearn.utils.validation import check_is_fitted
@@ -11,10 +10,8 @@ import numpy as np
 
 _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
 
-memory = Memory(location="some_cache")
 
-
-class DirtyFloatCleaner(TransformerMixin):
+class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
     # should this error if the inputs are not string?
     def fit(self, X, y=None):
         # FIXME ensure X is dataframe?
@@ -48,7 +45,6 @@ class DirtyFloatCleaner(TransformerMixin):
         return pd.concat(result, axis=1)
 
 
-@memory.cache
 def detect_types_dataframe(X, max_int_cardinality='auto',
                            dirty_float_threshold=.5, verbose=0):
     """
@@ -91,12 +87,15 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
         max_int_cardinality = max(42, n_samples / 10)
+    # FIXME only apply nunique to non-continuous?
     n_values = X.apply(lambda x: x.nunique())
+    if verbose > 3:
+        print(n_values)
     dtypes = X.dtypes
     kinds = dtypes.apply(lambda x: x.kind)
     # FIXME use pd.api.type.is_string_dtype etc maybe
     floats = kinds == "f"
-    integers = kinds == "i"
+    integers = (kinds == "i") | (kinds == "u")
     objects = kinds == "O"  # FIXME string?
     dates = kinds == "M"
     other = - (floats | integers | objects | dates)
@@ -115,7 +114,10 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     cont_integers = integers.copy()
     # using integers as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
-    cat_integers = few_entries & integers
+    # dirty, dirty hack.
+    # will still be "continuous"
+    binary = n_values == 2
+    cat_integers = few_entries & integers & ~binary
     cat_string = few_entries & objects
 
     res = pd.DataFrame(
@@ -158,8 +160,47 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
+def safe_cleanup(X, onehot=False):
+    """Cleaning / preprocessing outside of cross-validation
+
+    This function is "safe" to use outside of cross-validation in that
+    it only does preprocessing that doesn't use statistics that could
+    leak information from the test set (like scaling or imputation).
+
+    Using this method prior to analysis can speed up your pipelines.
+
+    The main operation is checking for string-encoded floats.
+
+    Parameters
+    ----------
+    X : dataframe
+        Dirty data
+    onehot : boolean, default=False
+        Whether to do one-hot encoding of categorical data.
+
+    Returns
+    -------
+    X_cleaner : dataframe
+        Slightly cleaner dataframe.
+    """
+    types = detect_types_dataframe(X)
+    res = []
+    if types['dirty_float'].any():
+        # don't use ColumnTransformer that can't return dataframe yet
+        res.append(DirtyFloatCleaner().fit_transform(X.loc[:, types['dirty_float']]))
+    if types['useless'].any() or types['dirty_float'].any():
+        if onehot:
+            res.append(X.loc[:, types['continuous']])
+            cat_indices = types.index[types['categorical']]
+            res.append(pd.get_dummies(X.loc[:, types['categorical']], columns=cat_indices))
+        else:
+            res.append(X.loc[:, types['continuous'] | types['categorical']])
+        return pd.concat(res, axis=1)
+    return X
+
+
 class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
-    """ An simple preprocessor
+    """A simple preprocessor
 
     Detects variable types, encodes everything as floats
     for use with sklearn.
@@ -190,9 +231,10 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         Control output verbosity.
 
     """
-    def __init__(self, scale=True, verbose=0):
+    def __init__(self, scale=True, verbose=0, types=None):
         self.verbose = verbose
         self.scale = scale
+        self.types = types
 
     def fit(self, X, y=None):
         """A reference implementation of a fitting function for a transformer.
@@ -215,12 +257,16 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
 
         self.columns_ = X.columns
         self.dtypes_ = X.dtypes
-        types = detect_types_dataframe(X, verbose=self.verbose)
+        if self.types is None:
+            # FIXME some sanity check?
+            types = detect_types_dataframe(X, verbose=self.verbose)
+        else:
+            types = self.types
 
         # go over variable blocks
         # check for missing values
         # scale etc
-        pipe_categorical = OneHotEncoder()
+        pipe_categorical = OneHotEncoder(categories='auto')
 
         steps_continuous = [FunctionTransformer(_make_float, validate=False)]
         if self.scale:

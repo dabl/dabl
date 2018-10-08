@@ -20,7 +20,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         for col in X.columns:
             floats = X[col].str.match(_FLOAT_REGEX)
             # FIXME sparse
-            encoders[col] = OneHotEncoder(sparse=False).fit(
+            encoders[col] = OneHotEncoder(sparse=False, handle_unknown='ignore').fit(
                 X.loc[~floats, [col]])
         self.encoders_ = encoders
         self.columns_ = X.columns
@@ -86,7 +86,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     # TODO detect encoding missing values as strings /weird values
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
-        max_int_cardinality = max(42, n_samples / 10)
+        max_int_cardinality = max(42, n_samples / 100)
     # FIXME only apply nunique to non-continuous?
     n_values = X.apply(lambda x: x.nunique())
     if verbose > 3:
@@ -268,7 +268,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         # go over variable blocks
         # check for missing values
         # scale etc
-        pipe_categorical = OneHotEncoder(categories='auto')
+        pipe_categorical = OneHotEncoder(categories='auto', handle_unknown='ignore')
 
         steps_continuous = [FunctionTransformer(_make_float, validate=False)]
         if self.scale:

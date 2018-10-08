@@ -6,7 +6,7 @@ from sklearn.metrics import make_scorer, average_precision_score
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyClassifier
 from sklearn.utils.multiclass import type_of_target
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import make_pipeline
@@ -27,9 +27,10 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
 
         target_type = type_of_target(y)
+        y = pd.Series(LabelEncoder().fit_transform(y))
 
         if target_type == "binary":
-            minority_class = pd.Series(y).value_counts().index[1]
+            minority_class = y.value_counts().index[1]
             my_average_precision_scorer = make_scorer(
                 average_precision_score, pos_label=minority_class,
                 needs_threshold=True)
@@ -43,6 +44,7 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
                              'recall_macro']
         else:
             raise ValueError("Unknown target type: {}".format(target_type))
+        # speed up label encoding by not redoing it
         self.log_ = []
         n_classes = len(np.unique(y))
         # kwargs = {'memory': self.memory}

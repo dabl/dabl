@@ -2,9 +2,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sklearn.model_selection import cross_validate
 from sklearn.metrics import make_scorer, average_precision_score
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyClassifier
 from sklearn.utils.multiclass import type_of_target
 from sklearn.preprocessing import MinMaxScaler
@@ -12,15 +11,18 @@ from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics.scorer import _check_multimetric_scoring
+from sklearn.model_selection._validation import _multimetric_score
 
-from .preprocessing import FriendlyPreprocessor, detect_types_dataframe
+from .preprocessing import FriendlyPreprocessor
 
 
 class FriendlyClassifier(BaseEstimator, ClassifierMixin):
     """Automagic anytime classifier
     """
-    def __init__(self):
-        pass
+    def __init__(self, memory=None):
+        self.memory = memory
 
     def fit(self, X, y):
 
@@ -31,10 +33,11 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
             my_average_precision_scorer = make_scorer(
                 average_precision_score, pos_label=minority_class,
                 needs_threshold=True)
-            self.scoring_ = {'accuracy':'accuracy',
+            self.scoring_ = {'accuracy': 'accuracy',
                              'average_precision': my_average_precision_scorer,
                              'roc_auc': 'roc_auc',
-                             'precision_macro': 'precision_macro'}
+                             'precision_macro': 'precision_macro'
+                             }
         elif target_type == "multiclass":
             self.scoring_ = ['accuracy', 'precision_macro',
                              'recall_macro']
@@ -42,32 +45,51 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("Unknown target type: {}".format(target_type))
         self.log_ = []
         n_classes = len(np.unique(y))
-        types = detect_types_dataframe(X)
-
+        # kwargs = {'memory': self.memory}
         # Heuristic: start with fast / instantaneous models
+        cv = StratifiedKFold(n_splits=5)
+        data_preproc = []
+        for train, test in cv.split(X, y):
+            sp = FriendlyPreprocessor()
+            X_train = sp.fit_transform(X.iloc[train], y.iloc[train])
+            X_test = sp.transform(X.iloc[test])
+            data_preproc.append((X_train, X_test, y.iloc[train], y.iloc[test]))
+
         fast_ests = [DummyClassifier(strategy="prior"),
-                     make_pipeline(FriendlyPreprocessor(types=types), GaussianNB()),
-                     make_pipeline(FriendlyPreprocessor(types=types, scale=False),
-                                   MinMaxScaler(), MultinomialNB()),
-                     make_pipeline(FriendlyPreprocessor(types=types, scale=False),
-                                   DecisionTreeClassifier(max_depth=1, class_weight="balanced")),
-                     make_pipeline(FriendlyPreprocessor(types=types, scale=False),
-                                   DecisionTreeClassifier(
-                                       max_depth=max(5, n_classes), class_weight="balanced"))
+                     GaussianNB(),
+                     make_pipeline(MinMaxScaler(), MultinomialNB()),
+                     DecisionTreeClassifier(max_depth=1,
+                                            class_weight="balanced"),
+                     DecisionTreeClassifier(max_depth=max(5, n_classes),
+                                            class_weight="balanced"),
                      ]
+
+        scorers, _ = _check_multimetric_scoring(fast_ests[1],
+                                                scoring=self.scoring_)
+
         self.current_best_ = -np.inf
         for ests in fast_ests:
-            self._evaluate_one(ests, X, y)
+            self._evaluate_one(ests, data_preproc, scorers)
 
     def predict(self, X):
         self.est_.predict(X)
 
-    def _evaluate_one(self, estimator, X, y):
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore',
-                                    category=UndefinedMetricWarning)       
-            res = cross_validate(estimator, X, y, cv=5, scoring=self.scoring_,
-                                 return_train_score=True)
+    def _evaluate_one(self, estimator, data_preproc, scorers):
+        res = []
+        for X_train, X_test, y_train, y_test in data_preproc:
+            est = clone(estimator)
+            est.fit(X_train, y_train)
+            # fit_time = time.time() - start_time
+            # _score will return dict if is_multimetric is True
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore',
+                                        category=UndefinedMetricWarning)
+                test_scores = _multimetric_score(est, X_test, y_test, scorers)
+            # score_time = time.time() - start_time - fit_time
+            # train_scores = _multimetric_score(estimator, X_train, y_train,
+            #                                   scorers)
+            res.append(test_scores)
+
         res_mean = pd.DataFrame(res).mean(axis=0)
         try:
             name = str(estimator.steps[-1][1])

@@ -4,9 +4,10 @@ from itertools import product
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.base import clone
+from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection._search import _fit_and_score
-from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.utils.validation import indexable
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.utils import shuffle
@@ -15,21 +16,21 @@ from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.base import is_classifier
 
 
-class SuccessiveHalving:
+__all__ = ['GridSuccessiveHalving', 'RandomSuccessiveHalving']
+
+
+class BaseSuccessiveHalving(BaseSearchCV):
     """Implements successive halving.
 
     Ref:
     Almost optimal exploration in multi-armed bandits, ICML 13
     Zohar Karnin, Tomer Koren, Oren Somekh
     """
-    # FIXME: Inherit from BaseSearchCV? Return something?
-
-    def __init__(self, estimator, param_grid, scoring=None,
+    def __init__(self, estimator, scoring=None,
                  n_jobs=None, refit=True, verbose=0, cv=None,
                  pre_dispatch='2*n_jobs'):
 
         self.estimator = estimator
-        self.param_grid = param_grid
         self.scoring = scoring  # FIXME: support this?
         if scoring is not None:
             raise NotImplementedError
@@ -40,7 +41,6 @@ class SuccessiveHalving:
         self.verbose = verbose
         self.cv = cv
         self.pre_dispatch = pre_dispatch
-        _check_param_grid(param_grid)
 
     def fit(self, X, y, groups=None, **fit_params):
 
@@ -63,12 +63,11 @@ class SuccessiveHalving:
                                     error_score=np.nan,
                                     verbose=self.verbose)
 
-        # TODO: support ParameterSampler?
-        candidate_params = list(ParameterGrid(self.param_grid))
+        candidate_params = list(self._generate_candidate_params())
         n_iterations = int(ceil(log2(len(candidate_params))))
         n_samples_total = X.shape[0]
 
-        for iter_ in range(n_iterations):
+        for _ in range(n_iterations):
             n_candidates = len(candidate_params)
             n_samples = floor(n_samples_total / (n_candidates * n_iterations))
             # FIXME: use shuffle split instead?
@@ -98,18 +97,42 @@ class SuccessiveHalving:
 
         # There's only one parameter combination left
         assert len(candidate_params) == 1
-        best_params = candidate_params[0]
+        self.best_params_ = candidate_params[0]
 
         if self.refit:
-            self.estimator.set_params(**best_params)
-            self.estimator.fit(X, y)
+            self.best_estimator_ = clone(base_estimator).set_params(
+                **self.best_params_)
+            self.best_estimator_.fit(X, y, **fit_params)
+        self.scorer_ = scorers['score']
 
-    # FIXME quick hack for tests
-    def predict(self, *args, **kwargs):
-        return self.estimator.predict(*args, **kwargs)
 
-    def predict_proba(self, *args, **kwargs):
-        return self.estimator.predict_proba(*args, **kwargs)
+class GridSuccessiveHalving(BaseSuccessiveHalving):
 
-    def score(self, *args, **kwargs):
-        return self.estimator.score(*args, **kwargs)
+    def __init__(self, estimator, param_grid, scoring=None,
+                 n_jobs=None, refit=True, verbose=0, cv=None,
+                 pre_dispatch='2*n_jobs'):
+        super().__init__(estimator, scoring=scoring,
+                         n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
+                         pre_dispatch=pre_dispatch)
+        self.param_grid = param_grid
+        _check_param_grid(self.param_grid)
+
+    def _generate_candidate_params(self):
+        return ParameterGrid(self.param_grid)
+
+
+class RandomSuccessiveHalving(BaseSuccessiveHalving):
+
+    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
+                 n_jobs=None, refit=True, verbose=0, cv=None,
+                 pre_dispatch='2*n_jobs', random_state=None):
+        super().__init__(estimator, scoring=scoring,
+                         n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
+                         pre_dispatch=pre_dispatch)
+        self.param_distributions = param_distributions
+        self.n_iter = n_iter
+        self.random_state = random_state
+
+    def _generate_candidate_params(self):
+        return ParameterSampler(self.param_distributions, self.n_iter,
+                                self.random_state)

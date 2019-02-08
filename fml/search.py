@@ -1,5 +1,6 @@
 from math import ceil, floor, log2
 from itertools import product
+from abc import abstractmethod
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -25,6 +26,15 @@ class BaseSuccessiveHalving(BaseSearchCV):
     Ref:
     Almost optimal exploration in multi-armed bandits, ICML 13
     Zohar Karnin, Tomer Koren, Oren Somekh
+
+
+    Attributes
+    ----------
+    best_estimator_ : estimator
+        The last estimator remaining after the halving procedure. Not
+        available if ``refit=False``.
+    best_params : dict
+        The parameters of the best estimator.
     """
     def __init__(self, estimator, scoring,
                  n_jobs=None, refit=True, cv=None, verbose=0,
@@ -37,10 +47,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         if scoring is not None:
             raise NotImplementedError
-        if refit is not True:
-            raise NotImplemented
 
         self.random_state = random_state
+
+    @abstractmethod
+    def _generate_candidate_params(self):
+        pass
 
     def fit(self, X, y, groups=None, **fit_params):
 

@@ -10,7 +10,7 @@ from sklearn.model_selection._search import _fit_and_score
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.utils.validation import indexable
 from sklearn.metrics.scorer import _check_multimetric_scoring
-from sklearn.utils import shuffle, check_random_state
+from sklearn.utils import check_random_state
 from sklearn.model_selection._split import check_cv
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.base import is_classifier
@@ -31,9 +31,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True):
         super().__init__(estimator, scoring=scoring,
-                 n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
-                 pre_dispatch=pre_dispatch, error_score=error_score,
-                 return_train_score=return_train_score)
+                         n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
+                         pre_dispatch=pre_dispatch, error_score=error_score,
+                         return_train_score=return_train_score)
 
         if scoring is not None:
             raise NotImplementedError
@@ -41,7 +41,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             raise NotImplemented
 
         self.random_state = random_state
-
 
     def fit(self, X, y, groups=None, **fit_params):
 

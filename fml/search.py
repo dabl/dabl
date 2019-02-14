@@ -12,16 +12,15 @@ __all__ = ['GridSuccessiveHalving', 'RandomSuccessiveHalving']
 
 
 def _refit_callable(results):
-    # Return the best index from the results dict (gs.cv_results_). We need a
-    # custom refit because by default best_index is computed accross all
-    # candidates but here we only want the best candidate from the last
-    # iteration.
-    # Note: we hardcode that the last iteration has only 2 candidates here.
-    # That might not be the case if we stop the search before the end.
+    # Custom refit callable to return the index of the best candidate. We want
+    # the best candidate out of the last iteration. By default BaseSearchCV
+    # would return the best candidate out of all iterations.
 
-    best_index_last_iteration = np.argmax(results['mean_test_score'][-2:])
-    out = len(results['mean_test_score']) - 2 + best_index_last_iteration
-    return out
+    last_iter = np.max(results['iter'])
+    sorted_indices = np.argsort(results['mean_test_score'])[::-1]
+    best_index = next(i for i in sorted_indices
+                      if results['iter'][i] == last_iter)
+    return best_index
 
 
 class BaseSuccessiveHalving(BaseSearchCV):
@@ -30,21 +29,15 @@ class BaseSuccessiveHalving(BaseSearchCV):
     Ref:
     Almost optimal exploration in multi-armed bandits, ICML 13
     Zohar Karnin, Tomer Koren, Oren Somekh
-
-
-    Attributes
-    ----------
-    best_estimator_ : estimator
-        The last estimator remaining after the halving procedure.
-    best_params : dict
-        The parameters of the best estimator.
     """
     def __init__(self, estimator, scoring,
-                 n_jobs=None, cv=None, verbose=0,
+                 n_jobs=None, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True):
+
+        refit = _refit_callable if refit else False
         super().__init__(estimator, scoring=scoring,
-                         n_jobs=n_jobs, refit=_refit_callable, cv=cv,
+                         n_jobs=n_jobs, refit=refit, cv=cv,
                          verbose=verbose, pre_dispatch=pre_dispatch,
                          error_score=error_score,
                          return_train_score=return_train_score, iid=False)
@@ -58,7 +51,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         n_iterations = int(ceil(log2(len(candidate_params))))
         n_samples_total = X.shape[0]
 
-        for _ in range(n_iterations):
+        for iter_i in range(n_iterations):
             # randomly sample training samples
             n_candidates = len(candidate_params)
             n_samples_iter = floor(n_samples_total /
@@ -67,14 +60,20 @@ class BaseSuccessiveHalving(BaseSearchCV):
                                  replace=False)
             X_iter, y_iter = X[indices], y[indices]
 
-            out = evaluate_candidates(candidate_params, X_iter, y_iter)
+            more_results= {'iter': [iter_i] * n_candidates,
+                           'n_samples': [n_samples_iter] * n_candidates}
+            out = evaluate_candidates(candidate_params, X_iter, y_iter,
+                                      more_results=more_results)
 
             # Select the best half of the candidates for the next iteration
+            # We need to filter out candidates from the previous iterations
             n_candidates_to_keep = ceil(n_candidates / 2)
-            best_candidates_indices = np.argsort(out['mean_test_score'])
+            best_candidates_indices = np.argsort(out['mean_test_score'])[::-1]
+            best_candidates_indices = [i for i in best_candidates_indices
+                                       if out['iter'][i] == iter_i]
             best_candidates_indices = \
-                best_candidates_indices[-n_candidates_to_keep:]
-            candidate_params = [candidate_params[i]
+                best_candidates_indices[:n_candidates_to_keep]
+            candidate_params = [out['params'][i]
                                 for i in best_candidates_indices]
 
         assert len(candidate_params) == n_candidates_to_keep == 1
@@ -87,7 +86,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
 class GridSuccessiveHalving(BaseSuccessiveHalving):
 
     def __init__(self, estimator, param_grid, scoring=None,
-                 n_jobs=None, verbose=0, cv=None,
+                 n_jobs=None, refit=True, verbose=0, cv=None,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True):
         super().__init__(estimator, scoring=scoring,
@@ -105,7 +104,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
 class RandomSuccessiveHalving(BaseSuccessiveHalving):
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 n_jobs=None, verbose=0, cv=None,
+                 n_jobs=None, refit=True, verbose=0, cv=None,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True):
         super().__init__(estimator, scoring=scoring,

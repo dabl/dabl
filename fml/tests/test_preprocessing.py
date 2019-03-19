@@ -1,3 +1,4 @@
+import os
 from fml.preprocessing import (detect_types_dataframe, FriendlyPreprocessor,
                                DirtyFloatCleaner)
 import pandas as pd
@@ -99,3 +100,24 @@ def test_simple_preprocessor_dirty_float():
 # TODO test for weirdly indexed dataframes
 # TODO test select cont
 # TODO test non-trivial case of FriendlyPreprocessor?!"!"
+
+
+def test_titanic_detection():
+    path = os.path.dirname(__file__)
+    titanic = pd.read_csv(os.path.join(path, 'titanic.csv'))
+    types_table = detect_types_dataframe(titanic)
+    types = types_table.T.idxmax()
+    assert (types == [
+        'dirty_float', 'categorical', 'free_string', 'free_string',
+        'categorical', 'dirty_float', 'free_string', 'free_string',
+        'low_card_int', 'low_card_int',                    
+        'categorical', 'low_card_int', 'low_card_int', 'dirty_float']).all()
+        
+    titanic_nan = pd.read_csv(os.path.join(path, 'titanic.csv'), na_values='?')
+    types_table = detect_types_dataframe(titanic_nan)
+    types = types_table.T.idxmax()
+    assert (types == [
+        'continuous', 'dirty_float', 'continuous', 'free_string',
+        'categorical', 'continuous', 'free_string', 'free_string',
+        'low_card_int', 'low_card_int',
+        'categorical', 'low_card_int', 'low_card_int', 'dirty_float']).all()

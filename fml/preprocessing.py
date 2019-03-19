@@ -111,21 +111,27 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
                    & (~clean_float_string))
 
     # using categories as integers is not that bad usually
-    cont_integers = integers.copy()
+    # cont_integers = integers.copy()
     # using integers as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
+    large_cardinality_int = integers & ~few_entries
     # dirty, dirty hack.
     # will still be "continuous"
+    # WTF is going on with binary FIXME
     binary = n_values == 2
-    cat_integers = few_entries & integers & ~binary
-    cat_string = few_entries & objects
+    cat_integers = few_entries & integers  # & ~binary
+    cat_string = few_entries & objects & ~dirty_float
+    free_strings = objects & ~few_entries & ~dirty_float & ~clean_float_string
 
     res = pd.DataFrame(
-        {'continuous': floats | cont_integers | clean_float_string,
-         'categorical': cat_integers | cat_string, 'date': dates,
-         'dirty_float': dirty_float})
+        {'continuous': floats | large_cardinality_int | clean_float_string,
+         'dirty_float': dirty_float, 'low_card_int': cat_integers,
+         'categorical': cat_string, 'date': dates, 'free_string': free_strings
+         })
     res = res.fillna(False)
     res['useless'] = res.sum(axis=1) == 0
+
+    assert np.all(res.sum(axis=1) == 1)
 
     if verbose >= 1:
         print("Detected feature types:")
@@ -278,6 +284,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         steps_continuous.insert(0, SimpleImputer(strategy='median'))
         pipe_continuous = make_pipeline(*steps_continuous)
         # FIXME only have one imputer/standard scaler in all
+        # (right now copied in dirty floats and floats)
         pipe_dirty_float = make_pipeline(
             DirtyFloatCleaner(),
             make_column_transformer(

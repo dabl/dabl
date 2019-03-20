@@ -1,7 +1,9 @@
 from .preprocessing import detect_types_dataframe
 
 from sklearn.feature_selection import (f_regression,
-                                       mutual_info_regression, f_classif)
+                                       mutual_info_regression,
+                                       mutual_info_classif,
+                                       f_classif)
 from sklearn.impute import SimpleImputer
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import recall_score
@@ -39,6 +41,18 @@ def _prune_categories(series, max_categories=10):
     res = series.cat.remove_categories(small_categories)
     res = res.cat.add_categories(['fml_other']).fillna("fml_other")
     return res
+
+
+def _prune_category_make_X(X, col, target_col):
+    col_values = X[col]
+    if col_values.nunique() > 20:
+        # keep only top 10 categories if there are more than 20
+        col_values = _prune_categories(col_values)
+        X_new = X[[target_col]].copy()
+        X_new[col] = col_values
+    else:
+        X_new = X
+    return X_new
 
 
 def _fill_missing_categorical(X):
@@ -129,27 +143,24 @@ def plot_regression_categorical(X, target_col):
 
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
-        col_values = X[col]
-        if col_values.nunique() > 20:
-            # keep only top 10 categories if there are more than 20
-            col_values = _prune_categories(col_values)
-            X_new = X[[target_col]].copy()
-            X_new[col] = col_values
-        else:
-            X_new = X
+        X_new = _prune_category_make_X(X, col, target_col)
         medians = X_new.groupby(col)[target_col].median()
         order = medians.sort_values().index
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
         ax.set_title("F={:.2E}".format(f[col_ind]))
         # shorten long ticks and labels
-        ax.set_yticklabels([_shortname(t.get_text(), maxlen=10)
-                            for t in ax.get_yticklabels()])
-        ax.set_xlabel(_shortname(ax.get_xlabel(), maxlen=20))
-        ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=20))
+        _short_tick_names(ax)
 
     for j in range(i + 1, n_rows * n_cols):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
+
+
+def _short_tick_names(ax):
+    ax.set_yticklabels([_shortname(t.get_text(), maxlen=10)
+                        for t in ax.get_yticklabels()])
+    ax.set_xlabel(_shortname(ax.get_xlabel(), maxlen=20))
+    ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=20))
 
 
 def _find_scatter_plots_classification(X, target):
@@ -176,7 +187,8 @@ def _find_scatter_plots_classification(X, target):
 def _discrete_scatter(x, y, c, ax):
     for i in np.unique(c):
         mask = c == i
-        ax.plot()
+        ax.plot(x[mask], y[mask], 'o', label=i)
+    ax.legend()
 
 
 def plot_classification_continuous(X, target_col):
@@ -206,6 +218,8 @@ def plot_classification_continuous(X, target_col):
             show_top = X.shape[1]
         f, p = f_classif(features_imp, target)
         top_k = np.argsort(f)[-show_top:][::-1]
+        # FIXME this will fail if a feature is always
+        # NaN for a particular class
         best_features = features.iloc[:, top_k].copy()
 
         best_features[target_col] = target
@@ -213,7 +227,7 @@ def plot_classification_continuous(X, target_col):
 
         g = sns.FacetGrid(df, col='variable', hue=target_col, col_wrap=5,
                           sharey=False, sharex=False)
-        g = (g.map(sns.kdeplot, "value", shade=True))
+        g = g.map(sns.kdeplot, "value", shade=True)
         # FIXME remove "variable = " from title, add f score
         plt.suptitle("Univariate Distributions", y=1.02)
 
@@ -227,7 +241,8 @@ def plot_classification_continuous(X, target_col):
                                    top_pairs.score, axes.ravel()):
             i = top_k[x]
             j = top_k[y]
-            ax.scatter(features_imp[:, i], features_imp[:, j], c=target)
+            _discrete_scatter(features_imp[:, i], features_imp[:, j],
+                              c=target, ax=ax)
             ax.set_xlabel(features.columns[i])
             ax.set_ylabel(features.columns[j])
             ax.set_title("{:.3f}".format(score))
@@ -247,7 +262,8 @@ def plot_classification_continuous(X, target_col):
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
 
-        ax.scatter(features_pca[:, x], features_pca[:, y], c=target)
+        _discrete_scatter(features_pca[:, x], features_pca[:, y],
+                          c=target, ax=ax)
         ax.set_xlabel("PCA {}".format(x))
         ax.set_ylabel("PCA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -266,7 +282,8 @@ def plot_classification_continuous(X, target_col):
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
 
-        ax.scatter(features_pca[:, x], features_pca[:, y], c=target)
+        _discrete_scatter(features_pca[:, x], features_pca[:, y],
+                          c=target, ax=ax)
         ax.set_xlabel("LDA {}".format(x))
         ax.set_ylabel("LDA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -275,18 +292,56 @@ def plot_classification_continuous(X, target_col):
 
 
 def plot_classification_categorical(X, target_col):
-    pass
+    X = X.copy()
+    if X.shape[1] > 20:
+        print("Showing only top 10 of {} categorical features".format(
+            X.shape[1]))
+        # too many features, show just top 10
+        show_top = 10
+    else:
+        show_top = X.shape[1]
+    X = X.astype('category')
+    # features = [c for c in X.columns if c != target_col]
+    features = X.drop(target_col, axis=1)
+    # can't use OrdinalEncoder because we might have mix of int and string
+    ordinal_encoded = features.apply(lambda x: x.cat.codes)
+    target = X[target_col]
+    f = mutual_info_classif(
+        ordinal_encoded, target,
+        discrete_features=np.ones(X.shape[1], dtype=bool))
+    # FIXME copy & paste from regression, refactor
+    top_k = np.argsort(f)[-show_top:][::-1]
+    n_cols = 5
+    n_rows = int(np.ceil(show_top / n_cols))
+    max_levels = X.nunique().max()
+    if max_levels <= 5:
+        height = 3
+    else:
+        height = 5
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
+                             constrained_layout=True)
+    plt.suptitle("Categorical Feature vs Target")
+    for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
+        col = features.columns[i]
+        X_new = _prune_category_make_X(X, col, target_col)
+        sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
+        _short_tick_names(ax)
+
+    for j in range(i + 1, n_rows * n_cols):
+        # turn off axis if we didn't fill last row
+        axes.ravel()[j].set_axis_off()
 
 
 def plot_supervised(X, target_col, verbose=10):
     types = detect_types_dataframe(X)
+    features = [c for c in X.columns if c != target_col]
     # if any dirty floats, tell user to clean them first
     if types.dirty_float.any():
         warn("Found some dirty floats! "
              "Clean em up first:\n{}".format(
                  types.index[types.dirty_float]),
              UserWarning)
-    if types.low_card_int.any():
+    if types.low_card_int[features].any():
         warn("Found some low cardinality ints. "
              "No idea what to do, ignoring for now:\n{}".format(
                  types.index[types.low_card_int]),

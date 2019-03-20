@@ -95,17 +95,20 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     categorical
     low cardinality int
     dirty float string
-    free string TODO
     dirty category string TODO
     date
     useless
     """
     # FIXME integer indices are not dropped!
+    # TODO: detect near constant features, nearly always missing (same?)
+    # TODO detect encoding missing values as strings /weird values
     # TODO detect top coding
     # FIXME dirty int is detected as dirty float right now
-    # TODO: detect near constant features, nearly always missing (same?)
+    # FIXME detect constant that are string-floats '0.0'
+    # TODO discard all constant and binary columns at the beginning?
+
+
     # TODO subsample large datsets? one level up?
-    # TODO detect encoding missing values as strings /weird values
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
         max_int_cardinality = max(42, n_samples / 100)
@@ -132,22 +135,25 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     # cont_integers = integers.copy()
     # using integers as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
+    constant = n_values == 1
     large_cardinality_int = integers & ~few_entries
     # dirty, dirty hack.
     # will still be "continuous"
     # WTF is going on with binary FIXME
     binary = n_values == 2
-    cat_integers = few_entries & integers & ~binary
-    cat_string = few_entries & objects & ~dirty_float & ~clean_float_string
-    free_strings = objects & ~few_entries & ~dirty_float & ~clean_float_string
-
+    cat_integers = few_entries & integers & ~binary & ~constant
+    non_float_objects = objects & ~dirty_float & ~clean_float_string
+    cat_string = few_entries & non_float_objects & ~constant
+    free_strings = ~few_entries & non_float_objects
+    continuous = floats | large_cardinality_int | clean_float_string
     res = pd.DataFrame(
-        {'continuous': floats | large_cardinality_int | clean_float_string,
+        {'continuous': continuous & ~binary & ~constant,
          'dirty_float': dirty_float, 'low_card_int': cat_integers,
-         'categorical': cat_string | binary, 'date': dates, 'free_string': free_strings
+         'categorical': cat_string | binary, 'date': dates,
+         'free_string': free_strings, 'useless': constant,
          })
     res = res.fillna(False)
-    res['useless'] = res.sum(axis=1) == 0
+    res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
 
     assert np.all(res.sum(axis=1) == 1)
 

@@ -85,15 +85,20 @@ def plot_regression_continuous(X, target_col):
 
 
 def plot_regression_categorical(X, target_col):
+    X = X.copy()
     if X.shape[1] > 20:
         print("Showing only top 10 of {} categorical features".format(X.shape[1]))
         # too many features, show just top 10
         show_top = 10
     else:
         show_top = X.shape[1]
+    for col in X.columns:
+        if col != target_col:
+            X[col] = X[col].astype("category")
+            # seaborn needs to know these are categories
     features = X.drop(target_col, axis=1)
     # can't use OrdinalEncoder because we might have mix of int and string
-    ordinal_encoded = features.astype('category').apply(lambda x: x.cat.codes)
+    ordinal_encoded = features.apply(lambda x: x.cat.codes)
     target = X[target_col]
     f = mutual_info_regression(ordinal_encoded, target,
                                discrete_features=np.ones(X.shape[1], dtype=bool))
@@ -108,6 +113,7 @@ def plot_regression_categorical(X, target_col):
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
                              constrained_layout=True)
     plt.suptitle("Categorical Feature vs Target")
+
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
         col_values = X[col]

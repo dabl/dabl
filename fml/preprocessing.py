@@ -45,17 +45,37 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return pd.concat(result, axis=1)
 
 
+def _find_string_floats(X, dirty_float_threshold):
+    is_float = X.apply(lambda x: x.str.match(_FLOAT_REGEX))
+    clean_float_string = is_float.all()
+    # remove 5 most common string values before checking if the rest is float
+    # FIXME 5 hardcoded!!
+    dirty_float = pd.Series(0, index=X.columns, dtype=bool)
+    for col in X.columns:
+        if clean_float_string[col]:
+            # already know it's clean
+            continue
+        column = X[col]
+        common_values = column.value_counts()[:5].index
+        is_common = column.isin(common_values)
+        if is_float[col][~is_common].mean() > dirty_float_threshold:
+            dirty_float[col] = 1
+
+    return clean_float_string, dirty_float
+
+
 def detect_types_dataframe(X, max_int_cardinality='auto',
-                           dirty_float_threshold=.5, verbose=0):
+                           dirty_float_threshold=.9, verbose=0):
     """
     Parameters
     ----------
     X : dataframe
         input
 
-    dirty_float_threshold : float, default=.5
+    dirty_float_threshold : float, default=.9
         The fraction of floats required in a dirty continuous
-        column before it's considered "useless".
+        column before it's considered "useless" or categorical
+        (after removing top 5 string values)
 
     max_int_cardinality: int or 'auto', default='auto'
         Maximum number of distinct integers for an integer column
@@ -73,15 +93,17 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     recognized types:
     continuous
     categorical
+    low cardinality int
     dirty float string
     free string TODO
     dirty category string TODO
     date
     useless
     """
+    # FIXME integer indices are not dropped!
     # TODO detect top coding
-    # Todo: detect index / unique integers
-    # todo: detect near constant features
+    # FIXME dirty int is detected as dirty float right now
+    # TODO: detect near constant features, nearly always missing (same?)
     # TODO subsample large datsets? one level up?
     # TODO detect encoding missing values as strings /weird values
     n_samples, n_features = X.shape
@@ -100,15 +122,11 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     dates = kinds == "M"
     other = - (floats | integers | objects | dates)
     # check if we can cast strings to float
-    # we don't need to cast all, could
+    # we don't need to cast all, could so something smarter?
     if objects.any():
-        float_frequencies = X.loc[:, objects].apply(
-            lambda x: x.str.match(_FLOAT_REGEX).mean())
+        clean_float_string, dirty_float = _find_string_floats(X.loc[:, objects], dirty_float_threshold)
     else:
-        float_frequencies = pd.Series(0, index=X.columns)
-    clean_float_string = float_frequencies == 1.0
-    dirty_float = ((float_frequencies > dirty_float_threshold)
-                   & (~clean_float_string))
+        dirty_float = clean_float_string = pd.Series(0, index=X.columns)
 
     # using categories as integers is not that bad usually
     # cont_integers = integers.copy()
@@ -120,7 +138,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     # WTF is going on with binary FIXME
     binary = n_values == 2
     cat_integers = few_entries & integers  # & ~binary
-    cat_string = few_entries & objects & ~dirty_float
+    cat_string = few_entries & objects & ~dirty_float & ~clean_float_string
     free_strings = objects & ~few_entries & ~dirty_float & ~clean_float_string
 
     res = pd.DataFrame(
@@ -288,7 +306,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         pipe_dirty_float = make_pipeline(
             DirtyFloatCleaner(),
             make_column_transformer(
-                (select_cont, pipe_continuous), remainder="passthrough"))
+                (pipe_continuous, select_cont), remainder="passthrough"))
         # construct column transformer
         transformer_cols = []
         if types['continuous'].any():

@@ -107,17 +107,15 @@ def test_titanic_detection():
     titanic = pd.read_csv(os.path.join(path, 'titanic.csv'))
     types_table = detect_types_dataframe(titanic)
     types = types_table.T.idxmax()
-    assert (types == [
-        'dirty_float', 'categorical', 'free_string', 'free_string',
+    true_types = [
+        'dirty_float', 'categorical', 'dirty_float', 'free_string',
         'categorical', 'dirty_float', 'free_string', 'free_string',
-        'low_card_int', 'low_card_int',                    
-        'categorical', 'low_card_int', 'low_card_int', 'dirty_float']).all()
-        
+        'low_card_int', 'low_card_int',
+        'categorical', 'low_card_int', 'low_card_int', 'free_string']
+    assert (types == true_types).all()
     titanic_nan = pd.read_csv(os.path.join(path, 'titanic.csv'), na_values='?')
     types_table = detect_types_dataframe(titanic_nan)
     types = types_table.T.idxmax()
-    assert (types == [
-        'continuous', 'dirty_float', 'continuous', 'free_string',
-        'categorical', 'continuous', 'free_string', 'free_string',
-        'low_card_int', 'low_card_int',
-        'categorical', 'low_card_int', 'low_card_int', 'dirty_float']).all()
+    true_types_clean = [t if t != 'dirty_float' else 'continuous'
+                        for t in true_types]
+    assert (types == true_types_clean).all()

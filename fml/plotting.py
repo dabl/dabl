@@ -15,6 +15,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import itertools
+from warnings import warn
 
 
 def plot_continuous_unsupervised(X):
@@ -183,19 +184,40 @@ def plot_classification_continuous(X, target_col):
     features = X.drop(target_col, axis=1)
     features_imp = SimpleImputer().fit_transform(features)
     target = X[target_col]
-
+    # FIXME if one class only has NaN for a value we crash! :-/
     # TODO univariate plot?
     # already on diagonal for pairplot but not for many features
     if X.shape[1] <= 5:
         # for n_dim <= 5 we do full pairplot plot
-
-        sns.pairplot(X, vars=[x for x in X.columns if x != target_col],
+        # FIXME filling in missing values here b/c of a bug in seaborn
+        # we really shouldn't be doing this
+        # https://github.com/mwaskom/seaborn/issues/1699
+        X_imp = X.fillna(X.median(axis=0))
+        sns.pairplot(X_imp, vars=[x for x in X.columns if x != target_col],
                      hue=target_col)
-        # todo: see if PCA looks really good? Or some manifold thing?
     else:
-
-        # FIXME
+        # univariate plots
+        if X.shape[1] > 20:
+            print("Showing only top 10 of {} continuous features".format(
+                X.shape[1]))
+            # too many features, show just top 10
+            show_top = 10
+        else:
+            show_top = X.shape[1]
         f, p = f_classif(features_imp, target)
+        top_k = np.argsort(f)[-show_top:][::-1]
+        best_features = features.iloc[:, top_k].copy()
+
+        best_features[target_col] = target
+        df = best_features.melt(target_col)
+
+        g = sns.FacetGrid(df, col='variable', hue=target_col, col_wrap=5,
+                          sharey=False, sharex=False)
+        g = (g.map(sns.kdeplot, "value", shade=True))
+        # FIXME remove "variable = " from title, add f score
+        plt.suptitle("Univariate Distributions", y=1.02)
+
+        # pairwise plots
         top_k = np.argsort(f)[-top_for_interactions:][::-1]
         top_pairs = _find_scatter_plots_classification(
             features_imp[:, top_k], target)
@@ -259,8 +281,18 @@ def plot_classification_categorical(X, target_col):
 def plot_supervised(X, target_col, verbose=10):
     types = detect_types_dataframe(X)
     # if any dirty floats, tell user to clean them first
+    if types.dirty_float.any():
+        warn("Found some dirty floats! "
+             "Clean em up first:\n{}".format(
+                 types.index[types.dirty_float]),
+             UserWarning)
+    if types.low_card_int.any():
+        warn("Found some low cardinality ints. "
+             "No idea what to do, ignoring for now:\n{}".format(
+                 types.index[types.low_card_int]),
+             UserWarning)
     if types.continuous[target_col]:
-        print("regression")
+        print("Target looks like regression")
         # regression
         # make sure we include the target column in X
         # even though it's not categorical
@@ -273,7 +305,7 @@ def plot_supervised(X, target_col, verbose=10):
         plot_regression_continuous(X.loc[:, types.continuous], target_col)
         plot_regression_categorical(X.loc[:, mask_for_categorical], target_col)
     else:
-        print("classification")
+        print("Target looks like classification")
         # regression
         # make sure we include the target column in X
         # even though it's not categorical
@@ -281,9 +313,10 @@ def plot_supervised(X, target_col, verbose=10):
         plt.title("Target distribution")
         plt.ylabel("Label")
         plt.xlabel("Count")
-        mask_for_continuous = types.continuous.copy()
-        mask_for_continuous[target_col] = True
-        plot_classification_continuous(X.loc[:, mask_for_continuous],
-                                       target_col)
+        if types.continuous.any():
+            mask_for_continuous = types.continuous.copy()
+            mask_for_continuous[target_col] = True
+            plot_classification_continuous(X.loc[:, mask_for_continuous],
+                                           target_col)
         plot_classification_categorical(X.loc[:, types.categorical],
                                         target_col)

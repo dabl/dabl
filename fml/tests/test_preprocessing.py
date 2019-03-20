@@ -10,6 +10,7 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
                       'binary': [0.0, 1, 0]})
 
 ## FIXME two float values is not a float but binary!
+# FIXME features that are always missing are constant!
 
 def make_dirty_float():
     rng = np.random.RandomState(0)

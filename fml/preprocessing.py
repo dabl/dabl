@@ -45,6 +45,10 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return pd.concat(result, axis=1)
 
 
+def guess_ordinal():
+    # compare against http://proceedings.mlr.press/v70/valera17a/valera17a.pdf
+    pass
+
 def _find_string_floats(X, dirty_float_threshold):
     is_float = X.apply(lambda x: x.str.match(_FLOAT_REGEX))
     clean_float_string = is_float.all()
@@ -135,7 +139,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     # cont_integers = integers.copy()
     # using integers as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
-    constant = n_values == 1
+    constant = n_values < 2
     large_cardinality_int = integers & ~few_entries
     # dirty, dirty hack.
     # will still be "continuous"

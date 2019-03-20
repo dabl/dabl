@@ -108,7 +108,6 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     # TODO detect encoding missing values as strings /weird values
     # TODO detect top coding
     # FIXME dirty int is detected as dirty float right now
-    # FIXME detect constant that are string-floats '0.0'
     # TODO discard all constant and binary columns at the beginning?
 
 

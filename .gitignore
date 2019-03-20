@@ -69,3 +69,4 @@ target/
 .pytest_cache
 pipe_cache
 some_cache
+.ipynb_checkpoints

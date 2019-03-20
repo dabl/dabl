@@ -137,14 +137,14 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     # will still be "continuous"
     # WTF is going on with binary FIXME
     binary = n_values == 2
-    cat_integers = few_entries & integers  # & ~binary
+    cat_integers = few_entries & integers & ~binary
     cat_string = few_entries & objects & ~dirty_float & ~clean_float_string
     free_strings = objects & ~few_entries & ~dirty_float & ~clean_float_string
 
     res = pd.DataFrame(
         {'continuous': floats | large_cardinality_int | clean_float_string,
          'dirty_float': dirty_float, 'low_card_int': cat_integers,
-         'categorical': cat_string, 'date': dates, 'free_string': free_strings
+         'categorical': cat_string | binary, 'date': dates, 'free_string': free_strings
          })
     res = res.fillna(False)
     res['useless'] = res.sum(axis=1) == 0
@@ -158,12 +158,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
             other.sum())
         print(desc)
         print("Interpreted as:")
-        interp = ("{} continuous, {} categorical, {} date, "
-                  "{} dirty float, {} dropped").format(
-            res.continuous.sum(), res.categorical.sum(), res.date.sum(),
-            dirty_float.sum(), res.useless.sum()
-        )
-        print(interp)
+        print(res.sum())
     if verbose >= 2:
         if dirty_float.any():
             print("WARN Found dirty floats encoded as strings: {}".format(

@@ -111,7 +111,7 @@ def test_titanic_detection():
         'dirty_float', 'categorical', 'dirty_float', 'free_string',
         'categorical', 'dirty_float', 'free_string', 'free_string',
         'low_card_int', 'low_card_int',
-        'categorical', 'low_card_int', 'low_card_int', 'free_string']
+        'categorical', 'low_card_int', 'categorical', 'free_string']
     assert (types == true_types).all()
     titanic_nan = pd.read_csv(os.path.join(path, 'titanic.csv'), na_values='?')
     types_table = detect_types_dataframe(titanic_nan)

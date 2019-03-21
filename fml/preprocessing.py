@@ -37,7 +37,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             new_col = new_col.astype(np.float)
             enc = self.encoders_[col]
             cats = pd.DataFrame(0, index=X.index,
-                                columns=enc.get_feature_names([col]))
+                                columns=enc.get_feature_names([str(col)]))
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
             # FIXME use types to distinguish outputs instead?

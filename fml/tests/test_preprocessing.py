@@ -12,10 +12,11 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 ## FIXME two float values is not a float but binary!
 # FIXME features that are always missing are constant!
 
+
 def make_dirty_float():
     rng = np.random.RandomState(0)
     cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
-    dirty = pd.DataFrame(cont_clean)
+    dirty = pd.DataFrame(cont_clean, columns=['a_column'])
     dirty[::12] = "missing"
     dirty.iloc[3, 0] = "garbage"
     return dirty
@@ -74,8 +75,8 @@ def test_transform_dirty_float():
     # TODO test for new values in test etc
     assert res.shape == (100, 3)
     assert (res.dtypes == float).all()
-    assert res.x0_missing.sum() == 9
-    assert res.x0_garbage.sum() == 1
+    assert res.a_column_missing.sum() == 9
+    assert res.a_column_garbage.sum() == 1
 
 
 def test_simple_preprocessor():

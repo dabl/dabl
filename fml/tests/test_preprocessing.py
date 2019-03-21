@@ -103,7 +103,7 @@ def test_simple_preprocessor_dirty_float():
     assert rowsum[2] == 9
 
     # make sure we can transform a clean column
-    fp.transform(pd.DataFrame(['0', '1', '2']))
+    fp.transform(pd.DataFrame(['0', '1', '2'], columns=['a_column']))
 
 
 # TODO add tests that floats as strings are correctly interpreted

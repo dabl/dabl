@@ -20,7 +20,8 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         for col in X.columns:
             floats = X[col].str.match(_FLOAT_REGEX)
             # FIXME sparse
-            encoders[col] = OneHotEncoder(sparse=False, handle_unknown='ignore').fit(
+            encoders[col] = OneHotEncoder(sparse=False,
+                                          handle_unknown='ignore').fit(
                 X.loc[~floats, [col]])
         self.encoders_ = encoders
         self.columns_ = X.columns
@@ -36,7 +37,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             new_col = new_col.astype(np.float)
             enc = self.encoders_[col]
             cats = pd.DataFrame(0, index=X.index,
-                                columns=enc.get_feature_names())
+                                columns=enc.get_feature_names([col]))
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
             # FIXME use types to distinguish outputs instead?
@@ -48,6 +49,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
 def guess_ordinal():
     # compare against http://proceedings.mlr.press/v70/valera17a/valera17a.pdf
     pass
+
 
 def _find_string_floats(X, dirty_float_threshold):
     is_float = X.apply(lambda x: x.str.match(_FLOAT_REGEX))
@@ -110,7 +112,6 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     # FIXME dirty int is detected as dirty float right now
     # TODO discard all constant and binary columns at the beginning?
 
-
     # TODO subsample large datsets? one level up?
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
@@ -130,7 +131,8 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     # check if we can cast strings to float
     # we don't need to cast all, could so something smarter?
     if objects.any():
-        clean_float_string, dirty_float = _find_string_floats(X.loc[:, objects], dirty_float_threshold)
+        clean_float_string, dirty_float = _find_string_floats(
+            X.loc[:, objects], dirty_float_threshold)
     else:
         dirty_float = clean_float_string = pd.Series(0, index=X.columns)
 
@@ -217,14 +219,20 @@ def _safe_cleanup(X, onehot=False):
     res = []
     if types['dirty_float'].any():
         # don't use ColumnTransformer that can't return dataframe yet
-        res.append(DirtyFloatCleaner().fit_transform(X.loc[:, types['dirty_float']]))
+        res.append(DirtyFloatCleaner().fit_transform(
+            X.loc[:, types['dirty_float']]))
     if types['useless'].any() or types['dirty_float'].any():
         if onehot:
+            # FIXME REMOVE THIS HERE
             res.append(X.loc[:, types['continuous']])
             cat_indices = types.index[types['categorical']]
-            res.append(pd.get_dummies(X.loc[:, types['categorical']], columns=cat_indices))
+            res.append(pd.get_dummies(X.loc[:, types['categorical']],
+                                      columns=cat_indices))
         else:
-            res.append(X.loc[:, types['continuous'] | types['categorical']])
+            good_types = (types.continuous | types.categorical
+                          | types.low_card_int | types.date
+                          | types.free_string)
+            res.append(X.loc[:, good_types])
         return pd.concat(res, axis=1)
     return X
 
@@ -296,7 +304,8 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         # go over variable blocks
         # check for missing values
         # scale etc
-        pipe_categorical = OneHotEncoder(categories='auto', handle_unknown='ignore')
+        pipe_categorical = OneHotEncoder(categories='auto',
+                                         handle_unknown='ignore')
 
         steps_continuous = [FunctionTransformer(_make_float, validate=False)]
         if self.scale:

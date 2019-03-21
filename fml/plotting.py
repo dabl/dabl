@@ -76,14 +76,9 @@ def plot_unsupervised(X, verbose=10):
 
 
 def plot_regression_continuous(X, target_col):
-    if X.shape[1] > 20:
-        print("Showing only top 10 of {} continuous features".format(
-            X.shape[1]))
-        # too many features, show just top 10
-        show_top = 10
-    else:
-        show_top = X.shape[1]
     features = X.drop(target_col, axis=1)
+    show_top = _get_n_top(features, "continuous")
+
     target = X[target_col]
     # HACK we should drop them per column before feeding them into f_regression
     # FIXME
@@ -91,7 +86,7 @@ def plot_regression_continuous(X, target_col):
     f, p = f_regression(features_imp, target)
     top_k = np.argsort(f)[-show_top:][::-1]
     # we could do better lol
-    n_cols = 5
+    n_cols = min(5, features.shape[1])
     n_rows = int(np.ceil(show_top / n_cols))
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 3 * n_rows),
                              constrained_layout=True)
@@ -111,18 +106,13 @@ def plot_regression_continuous(X, target_col):
 
 def plot_regression_categorical(X, target_col):
     X = X.copy()
-    if X.shape[1] > 20:
-        print("Showing only top 10 of {} categorical features".format(
-            X.shape[1]))
-        # too many features, show just top 10
-        show_top = 10
-    else:
-        show_top = X.shape[1]
+    features = X.drop(target_col, axis=1)
+
+    show_top = _get_n_top(features, "categorical")
     for col in X.columns:
         if col != target_col:
             X[col] = X[col].astype("category")
             # seaborn needs to know these are categories
-    features = X.drop(target_col, axis=1)
     # can't use OrdinalEncoder because we might have mix of int and string
     ordinal_encoded = features.apply(lambda x: x.cat.codes)
     target = X[target_col]
@@ -130,7 +120,7 @@ def plot_regression_categorical(X, target_col):
         ordinal_encoded, target,
         discrete_features=np.ones(X.shape[1], dtype=bool))
     top_k = np.argsort(f)[-show_top:][::-1]
-    n_cols = 5
+    n_cols = min(5, features.shape[1])
     n_rows = int(np.ceil(show_top / n_cols))
     max_levels = X.nunique().max()
     if max_levels <= 5:
@@ -209,13 +199,7 @@ def plot_classification_continuous(X, target_col):
                      hue=target_col)
     else:
         # univariate plots
-        if X.shape[1] > 20:
-            print("Showing only top 10 of {} continuous features".format(
-                X.shape[1]))
-            # too many features, show just top 10
-            show_top = 10
-        else:
-            show_top = X.shape[1]
+        show_top = _get_n_top(features, "continuous")
         f, p = f_classif(features_imp, target)
         top_k = np.argsort(f)[-show_top:][::-1]
         # FIXME this will fail if a feature is always
@@ -293,16 +277,10 @@ def plot_classification_continuous(X, target_col):
 
 def plot_classification_categorical(X, target_col):
     X = X.copy()
-    if X.shape[1] > 20:
-        print("Showing only top 10 of {} categorical features".format(
-            X.shape[1]))
-        # too many features, show just top 10
-        show_top = 10
-    else:
-        show_top = X.shape[1]
     X = X.astype('category')
-    # features = [c for c in X.columns if c != target_col]
     features = X.drop(target_col, axis=1)
+    show_top = _get_n_top(X, features)
+
     # can't use OrdinalEncoder because we might have mix of int and string
     ordinal_encoded = features.apply(lambda x: x.cat.codes)
     target = X[target_col]
@@ -311,7 +289,7 @@ def plot_classification_categorical(X, target_col):
         discrete_features=np.ones(X.shape[1], dtype=bool))
     # FIXME copy & paste from regression, refactor
     top_k = np.argsort(f)[-show_top:][::-1]
-    n_cols = 5
+    n_cols = min(5, features.shape[1])
     n_rows = int(np.ceil(show_top / n_cols))
     max_levels = X.nunique().max()
     if max_levels <= 5:
@@ -330,6 +308,17 @@ def plot_classification_categorical(X, target_col):
     for j in range(i + 1, n_rows * n_cols):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
+
+
+def _get_n_top(features, name):
+    if features.shape[1] > 20:
+        print("Showing only top 10 of {} {} features".format(
+            features.shape[1], name))
+        # too many features, show just top 10
+        show_top = 10
+    else:
+        show_top = features.shape[1]
+    return show_top
 
 
 def plot_supervised(X, target_col, verbose=10):

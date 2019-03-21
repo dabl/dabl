@@ -1,13 +1,25 @@
 import pytest
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import itertools
 
 from sklearn.datasets import make_regression
 from sklearn.preprocessing import KBinsDiscretizer
 from fml.preprocessing import cleanup, detect_types_dataframe
-from fml.plotting import plot_supervised
+from fml.plotting import plot_supervised, find_pretty_grid
+
+
+def test_find_pretty_grid():
+    # test that the grid is big enough:
+    rng = np.random.RandomState(0)
+    for i in range(100):
+        n_plots = rng.randint(1, 34)
+        max_cols = rng.randint(1, 12)
+        rows, cols = find_pretty_grid(n_plots=n_plots, max_cols=max_cols)
+        assert rows * cols >= n_plots
+        assert cols <= max_cols
 
 
 @pytest.mark.parametrize("continuous_features, categorical_features, task",
@@ -40,7 +52,7 @@ def test_plots_smoke(continuous_features, categorical_features, task):
     if X_df.shape[1] == 0:
         y = np.random.uniform(size=n_samples)
     if task == "classification":
-        y = np.digitize(y, np.percentile(y, [1, 10, 60, 85]))
+        y = np.digitize(y, np.percentile(y, [5, 10, 60, 85]))
     X_clean['target'] = y
     if task == "classification":
         X_clean['target'] = X_clean['target'].astype('category')
@@ -54,3 +66,4 @@ def test_plots_smoke(continuous_features, categorical_features, task):
         assert column_types[-1] == 'continuous'
 
     plot_supervised(X_clean, 'target')
+    plt.close("all")

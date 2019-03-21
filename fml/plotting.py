@@ -21,6 +21,29 @@ import itertools
 from warnings import warn
 
 
+def find_pretty_grid(n_plots, max_cols=5):
+    # we could probably do something with prime numbers here
+    # but looks like that becomes a combinatorial problem again?
+    if n_plots % max_cols == 0:
+        # perfect fit!
+        # if max_cols is 6 do we prefer 6x1 over 3x2?
+        return int(n_plots / max_cols), max_cols
+    # min number of rows needed
+    min_rows = int(np.ceil(n_plots / max_cols))
+    best_empty = max_cols
+    best_cols = max_cols
+    for cols in range(max_cols, min_rows - 1, -1):
+        # we only allow getting narrower if we have more cols than rows
+        remainder = (n_plots % cols)
+        empty = cols - remainder if remainder != 0 else 0
+        if empty == 0:
+            return int(n_plots / cols), cols
+        if empty < best_empty:
+            best_empty = empty
+            best_cols = cols
+    return int(np.ceil(n_plots / best_cols)), best_cols
+
+
 def plot_continuous_unsupervised(X):
     pass
 
@@ -105,25 +128,30 @@ def plot_regression_continuous(X, target_col, types=None):
     f, p = f_regression(features_imp, target)
     top_k = np.argsort(f)[-show_top:][::-1]
     # we could do better lol
-    n_cols = min(5, features.shape[1])
-    n_rows = int(np.ceil(show_top / n_cols))
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 3 * n_rows),
-                             constrained_layout=True)
-    if n_rows * n_cols <= 1:
-        # we don't want ravel to fail, this is awkward!
-        axes = np.array([axes])
+    fig, axes = _make_subplots(n_plots=show_top)
+
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
     for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
-        if i % n_cols == 0:
+        if i % axes.shape[1] == 0:
             ax.set_ylabel(target_col)
         ax.plot(features.iloc[:, col], target, 'o', alpha=.6)
         ax.set_xlabel(_shortname(features.columns[col]))
         ax.set_title("F={:.2E}".format(f[col]))
 
-    for j in range(i + 1, n_rows * n_cols):
+    for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
+
+
+def _make_subplots(n_plots):
+    n_rows, n_cols = find_pretty_grid(n_plots, max_cols=5)
+    fig, axes = plt.subplots(n_rows, n_cols,
+                             figsize=(4 * n_cols, 3 * n_rows),
+                             constrained_layout=True)
+    # we don't want ravel to fail, this is awkward!
+    axes = np.atleast_2d(axes)
+    return fig, axes
 
 
 def plot_regression_categorical(X, target_col, types=None):

@@ -131,7 +131,9 @@ def plot_regression_categorical(X, target_col):
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
                              constrained_layout=True)
     plt.suptitle("Categorical Feature vs Target")
-
+    if n_rows * n_cols == 1:
+        # we don't want ravel to fail, this is awkward!
+        axes = np.array([axes])
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
         X_new = _prune_category_make_X(X, col, target_col)
@@ -261,7 +263,7 @@ def plot_classification_continuous(X, target_col):
     # copy and paste from above. Refactor?
     fig, axes = plt.subplots(1, len(top_pairs),
                              figsize=(len(top_pairs) * 4, 4))
-    if type(axes).__name__ == "AxesSubplot":
+    if len(top_pairs) <= 1:
         # we don't want ravel to fail, this is awkward!
         axes = np.array([axes])
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
@@ -280,6 +282,8 @@ def plot_classification_categorical(X, target_col, kind='count'):
     X = X.copy()
     X = X.astype('category')
     features = X.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
     show_top = _get_n_top(features, "categorical")
 
     # can't use OrdinalEncoder because we might have mix of int and string
@@ -297,7 +301,8 @@ def plot_classification_categorical(X, target_col, kind='count'):
         height = 3
     else:
         height = 5
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
+                             constrained_layout=True)
     # FIXME mosaic doesn't like constraint layout?
     plt.suptitle("Categorical Feature Proportions vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):

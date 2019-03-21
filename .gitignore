@@ -69,4 +69,5 @@ target/
 .pytest_cache
 pipe_cache
 some_cache
-.ipynb_checkpoints
+.ipynb_checkpoints/
+.vscode/.ropeproject/objectdb

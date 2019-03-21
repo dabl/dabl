@@ -12,6 +12,7 @@ from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from statsmodels.graphics.mosaicplot import mosaic
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -130,7 +131,9 @@ def plot_regression_categorical(X, target_col):
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
                              constrained_layout=True)
     plt.suptitle("Categorical Feature vs Target")
-
+    if n_rows * n_cols == 1:
+        # we don't want ravel to fail, this is awkward!
+        axes = np.array([axes])
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
         X_new = _prune_category_make_X(X, col, target_col)
@@ -260,7 +263,7 @@ def plot_classification_continuous(X, target_col):
     # copy and paste from above. Refactor?
     fig, axes = plt.subplots(1, len(top_pairs),
                              figsize=(len(top_pairs) * 4, 4))
-    if type(axes).__name__ == "AxesSubplot":
+    if len(top_pairs) <= 1:
         # we don't want ravel to fail, this is awkward!
         axes = np.array([axes])
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
@@ -275,10 +278,12 @@ def plot_classification_continuous(X, target_col):
     # TODO fancy manifolds?
 
 
-def plot_classification_categorical(X, target_col):
+def plot_classification_categorical(X, target_col, kind='count'):
     X = X.copy()
     X = X.astype('category')
     features = X.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
     show_top = _get_n_top(features, "categorical")
 
     # can't use OrdinalEncoder because we might have mix of int and string
@@ -298,11 +303,34 @@ def plot_classification_categorical(X, target_col):
         height = 5
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
                              constrained_layout=True)
-    plt.suptitle("Categorical Feature vs Target")
+    # FIXME mosaic doesn't like constraint layout?
+    plt.suptitle("Categorical Feature Proportions vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
-        col = features.columns[i]
+        col = features.columns[col_ind]
         X_new = _prune_category_make_X(X, col, target_col)
-        sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
+        if kind == 'proportion':
+            df = (X_new.groupby(col)[target_col]
+                  .value_counts(normalize=True)
+                  .unstack()
+                  .sort_values(by=target[0]))  # hacky way to get a class name
+            df.plot(kind='barh', stacked='True', ax=ax, legend=i == 0)
+            ax.set_title(col)
+            ax.set_ylabel(None)
+        elif kind == 'mosaic':
+            warn("Mosaic plots are buggy right now, come back later.",
+                 UserWarning)
+            # This seems pretty broken, abandoning for now
+            # counts = pd.crosstab(X_new[col], X_new[target_col])
+
+            mosaic(X_new, [col, target_col],
+                   horizontal=False, ax=ax)
+            # ,
+            # labelizer=lambda k: counts.loc[k[0], k[1]])
+        elif kind == 'count':
+            # absolute counts
+            sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
+        else:
+            raise ValueError("Unknown plot kind {}".format(kind))
         _short_tick_names(ax)
 
     for j in range(i + 1, n_rows * n_cols):

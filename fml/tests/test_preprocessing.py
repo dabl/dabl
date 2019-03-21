@@ -9,8 +9,10 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
                       'second': ['word', 'no', ''],
                       'binary': [0.0, 1, 0]})
 
-## FIXME two float values is not a float but binary!
+# FIXME two float values is not a float but binary!
 # FIXME features that are always missing are constant!
+# FIXME need to test dealing with categorical dtype
+# FIXME make sure in plotting single axes objects work everywhere (ravel issue)
 
 
 def make_dirty_float():

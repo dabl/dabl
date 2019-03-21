@@ -7,6 +7,7 @@ from sklearn.compose import make_column_transformer, ColumnTransformer
 from sklearn.utils.validation import check_is_fitted
 import pandas as pd
 import numpy as np
+from warnings import warn
 
 _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
 
@@ -48,6 +49,8 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
 
 def guess_ordinal():
     # compare against http://proceedings.mlr.press/v70/valera17a/valera17a.pdf
+    # there's some ways to guess month, day, week, year
+    # but even if we have that, is that ordinal or categorical?
     pass
 
 
@@ -120,42 +123,67 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     n_values = X.apply(lambda x: x.nunique())
     if verbose > 3:
         print(n_values)
+
     dtypes = X.dtypes
     kinds = dtypes.apply(lambda x: x.kind)
     # FIXME use pd.api.type.is_string_dtype etc maybe
     floats = kinds == "f"
     integers = (kinds == "i") | (kinds == "u")
-    objects = kinds == "O"  # FIXME string?
+    useless = pd.Series(0, index=X.columns, dtype=bool)
+
+    suspicious_index = (n_values == X.shape[0]) & integers
+    if suspicious_index.any():
+        warn_for = []
+        for c in suspicious_index.index[suspicious_index]:
+            if X[c][0] == 0:
+                if (X[c] == np.arange(X.shape[0])).all():
+                    # definitely an index
+                    useless[c] = True
+                else:
+                    warn_for.append(c)
+            elif X[c][0] == 1:
+                if (X[c] == np.arange(1, X.shape[0] + 1)).all():
+                    # definitely an index
+                    useless[c] = True
+                else:
+                    warn_for.append(c)
+        if len(warn_for):
+            warn("Suspiciously looks like an index: {}".format(
+                warn_for), UserWarning)
+    categorical = dtypes == 'category'
+    objects = (kinds == "O") & ~categorical  # FIXME string?
     dates = kinds == "M"
-    other = - (floats | integers | objects | dates)
+    other = - (floats | integers | objects | dates | categorical)
     # check if we can cast strings to float
     # we don't need to cast all, could so something smarter?
     if objects.any():
         clean_float_string, dirty_float = _find_string_floats(
             X.loc[:, objects], dirty_float_threshold)
     else:
-        dirty_float = clean_float_string = pd.Series(0, index=X.columns)
+        dirty_float = clean_float_string = pd.Series(0, index=X.columns,
+                                                     dtype=bool)
 
     # using categories as integers is not that bad usually
     # cont_integers = integers.copy()
     # using integers as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
-    constant = n_values < 2
+    # constant features are useless
+    useless = (n_values < 2) | useless
     large_cardinality_int = integers & ~few_entries
     # dirty, dirty hack.
     # will still be "continuous"
     # WTF is going on with binary FIXME
     binary = n_values == 2
-    cat_integers = few_entries & integers & ~binary & ~constant
+    cat_integers = few_entries & integers & ~binary & ~useless
     non_float_objects = objects & ~dirty_float & ~clean_float_string
-    cat_string = few_entries & non_float_objects & ~constant
+    cat_string = few_entries & non_float_objects & ~useless
     free_strings = ~few_entries & non_float_objects
     continuous = floats | large_cardinality_int | clean_float_string
     res = pd.DataFrame(
-        {'continuous': continuous & ~binary & ~constant,
+        {'continuous': continuous & ~binary & ~useless,
          'dirty_float': dirty_float, 'low_card_int': cat_integers,
-         'categorical': cat_string | binary, 'date': dates,
-         'free_string': free_strings, 'useless': constant,
+         'categorical': cat_string | binary | categorical, 'date': dates,
+         'free_string': free_strings, 'useless': useless,
          })
     res = res.fillna(False)
     res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
@@ -190,7 +218,37 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def _safe_cleanup(X, onehot=False):
+def cleanup(X, type_hints=None, unsafe=False):
+    """Public cleanup interface
+
+    Parameters
+    ----------
+    type_hints : dict or None
+        If dict, provide type information for columns.
+        Keys are column names, values are types as provided by detect_types.
+    unsafe : bool, default=False
+        Whether to adhere to type_hints that seem inconsistent with the data.
+    """
+    types = detect_types_dataframe(X)
+    for col in types.index[types.categorical]:
+        X[col] = X[col].astype('category', copy=False)
+    # get rid of dirty floats, add indicators
+    X = _safe_cleanup(X, types=types)
+    # deal with low cardinality ints
+    for col in types.index[types.low_card_int]:
+        # for now let's just check for smooth distributions
+        pass
+    # ensure that the indicator variables are also marked as categorical
+    # we could certainly do this nicer, but at this point calling
+    # detect_types shouldn't be expensive any more
+    # though if we have actual string columns that are free strings... hum
+    types = detect_types_dataframe(X)
+    for col in types.index[types.categorical]:
+        X[col] = X[col].astype('category', copy=False)
+    return X
+
+
+def _safe_cleanup(X, onehot=False, types=None):
     """Cleaning / preprocessing outside of cross-validation
 
     FIXME this leads to duplicating integer columns! no good!
@@ -215,7 +273,8 @@ def _safe_cleanup(X, onehot=False):
     X_cleaner : dataframe
         Slightly cleaner dataframe.
     """
-    types = detect_types_dataframe(X)
+    if types is None:
+        types = detect_types_dataframe(X)
     res = []
     if types['dirty_float'].any():
         # don't use ColumnTransformer that can't return dataframe yet

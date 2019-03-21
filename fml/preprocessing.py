@@ -108,6 +108,10 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     date
     useless
     """
+    duplicated = X.columns.duplicated()
+    if duplicated.any():
+        raise ValueError("Duplicate Columns: {}".format(
+            X.columns[duplicated]))
     # FIXME integer indices are not dropped!
     # TODO: detect near constant features, nearly always missing (same?)
     # TODO detect encoding missing values as strings /weird values

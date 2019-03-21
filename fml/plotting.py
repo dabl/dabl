@@ -30,10 +30,22 @@ def plot_categorical_unsupervised(X):
 
 
 def _shortname(some_string, maxlen=20):
+    some_string = str(some_string)
     if len(some_string) > maxlen:
         return some_string[:maxlen - 3] + "..."
     else:
         return some_string
+
+
+def _get_n_top(features, name):
+    if features.shape[1] > 20:
+        print("Showing only top 10 of {} {} features".format(
+            features.shape[1], name))
+        # too many features, show just top 10
+        show_top = 10
+    else:
+        show_top = features.shape[1]
+    return show_top
 
 
 def _prune_categories(series, max_categories=10):
@@ -76,8 +88,14 @@ def plot_unsupervised(X, verbose=10):
     plot_categorical_unsupervised(X.loc[:, types.categorical])
 
 
-def plot_regression_continuous(X, target_col):
-    features = X.drop(target_col, axis=1)
+def plot_regression_continuous(X, target_col, types=None):
+    if types is None:
+        types = detect_types_dataframe(X)
+    features = X.loc[:, types.continuous]
+    if target_col in features.columns:
+        features = features.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
     show_top = _get_n_top(features, "continuous")
 
     target = X[target_col]
@@ -91,6 +109,9 @@ def plot_regression_continuous(X, target_col):
     n_rows = int(np.ceil(show_top / n_cols))
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 3 * n_rows),
                              constrained_layout=True)
+    if n_rows * n_cols <= 1:
+        # we don't want ravel to fail, this is awkward!
+        axes = np.array([axes])
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
     for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
@@ -105,15 +126,20 @@ def plot_regression_continuous(X, target_col):
         axes.ravel()[j].set_axis_off()
 
 
-def plot_regression_categorical(X, target_col):
-    X = X.copy()
-    features = X.drop(target_col, axis=1)
-
+def plot_regression_categorical(X, target_col, types=None):
+    if types is None:
+        types = detect_types_dataframe(X)
+    features = X.loc[:, types.categorical]
+    if target_col in features.columns:
+        features = features.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
+    features = features.astype('category')
     show_top = _get_n_top(features, "categorical")
-    for col in X.columns:
-        if col != target_col:
-            X[col] = X[col].astype("category")
-            # seaborn needs to know these are categories
+    # for col in X.columns:
+    #    if col != target_col:
+    #        X[col] = X[col].astype("category")
+    # seaborn needs to know these are categories
     # can't use OrdinalEncoder because we might have mix of int and string
     ordinal_encoded = features.apply(lambda x: x.cat.codes)
     target = X[target_col]
@@ -184,21 +210,27 @@ def _discrete_scatter(x, y, c, ax):
     ax.legend()
 
 
-def plot_classification_continuous(X, target_col):
+def plot_classification_continuous(X, target_col, types=None):
+    if types is None:
+        types = detect_types_dataframe(X)
+    features = X.loc[:, types.continuous]
+    if target_col in features.columns:
+        features = features.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
     top_for_interactions = 20
-    features = X.drop(target_col, axis=1)
     features_imp = SimpleImputer().fit_transform(features)
     target = X[target_col]
     # FIXME if one class only has NaN for a value we crash! :-/
     # TODO univariate plot?
     # already on diagonal for pairplot but not for many features
-    if X.shape[1] <= 5:
+    if features.shape[1] <= 5:
         # for n_dim <= 5 we do full pairplot plot
         # FIXME filling in missing values here b/c of a bug in seaborn
         # we really shouldn't be doing this
         # https://github.com/mwaskom/seaborn/issues/1699
-        X_imp = X.fillna(X.median(axis=0))
-        sns.pairplot(X_imp, vars=[x for x in X.columns if x != target_col],
+        X_imp = X.fillna(features.median(axis=0))
+        sns.pairplot(X_imp, vars=features.columns,
                      hue=target_col)
     else:
         # univariate plots
@@ -246,6 +278,9 @@ def plot_classification_continuous(X, target_col):
     # copy and paste from above. Refactor?
     fig, axes = plt.subplots(1, len(top_pairs),
                              figsize=(len(top_pairs) * 4, 4))
+    if len(top_pairs) <= 1:
+        # we don't want ravel to fail, this is awkward!
+        axes = np.array([axes])
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
 
@@ -278,12 +313,18 @@ def plot_classification_continuous(X, target_col):
     # TODO fancy manifolds?
 
 
-def plot_classification_categorical(X, target_col, kind='count'):
-    X = X.copy()
-    X = X.astype('category')
-    features = X.drop(target_col, axis=1)
+def plot_classification_categorical(X, target_col, types=None, kind='count'):
+    if types is None:
+        types = detect_types_dataframe(X)
+    features = X.loc[:, types.categorical]
+    if target_col in features.columns:
+        features = features.drop(target_col, axis=1)
+
     if features.shape[1] == 0:
         return
+
+    features = features.astype('category')
+
     show_top = _get_n_top(features, "categorical")
 
     # can't use OrdinalEncoder because we might have mix of int and string
@@ -304,7 +345,10 @@ def plot_classification_categorical(X, target_col, kind='count'):
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
                              constrained_layout=True)
     # FIXME mosaic doesn't like constraint layout?
-    plt.suptitle("Categorical Feature Proportions vs Target", y=1.02)
+    if n_rows * n_cols <= 1:
+        # we don't want ravel to fail, this is awkward!
+        axes = np.array([axes])
+    plt.suptitle("Categorical Features vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[col_ind]
         X_new = _prune_category_make_X(X, col, target_col)
@@ -338,19 +382,9 @@ def plot_classification_categorical(X, target_col, kind='count'):
         axes.ravel()[j].set_axis_off()
 
 
-def _get_n_top(features, name):
-    if features.shape[1] > 20:
-        print("Showing only top 10 of {} {} features".format(
-            features.shape[1], name))
-        # too many features, show just top 10
-        show_top = 10
-    else:
-        show_top = features.shape[1]
-    return show_top
-
-
-def plot_supervised(X, target_col, verbose=10):
-    types = detect_types_dataframe(X)
+def plot_supervised(X, target_col, types=None, verbose=10):
+    if types is None:
+        types = detect_types_dataframe(X)
     features = [c for c in X.columns if c != target_col]
     # if any dirty floats, tell user to clean them first
     if types.dirty_float.any():
@@ -368,27 +402,22 @@ def plot_supervised(X, target_col, verbose=10):
         # regression
         # make sure we include the target column in X
         # even though it's not categorical
+        plt.figure()
         plt.hist(X[target_col], bins='auto')
         plt.xlabel(target_col)
         plt.ylabel("frequency")
         plt.title("Target distribution")
-        mask_for_categorical = types.categorical.copy()
-        mask_for_categorical[target_col] = True
-        plot_regression_continuous(X.loc[:, types.continuous], target_col)
-        plot_regression_categorical(X.loc[:, mask_for_categorical], target_col)
+        plot_regression_continuous(X, target_col, types=types)
+        plot_regression_categorical(X, target_col, types=types)
     else:
         print("Target looks like classification")
         # regression
         # make sure we include the target column in X
         # even though it's not categorical
-        X[target_col].value_counts().plot(kind='barh')
+        plt.figure()
+        X[target_col].value_counts().plot(kind='barh', ax=plt.gca())
         plt.title("Target distribution")
         plt.ylabel("Label")
         plt.xlabel("Count")
-        if types.continuous.any():
-            mask_for_continuous = types.continuous.copy()
-            mask_for_continuous[target_col] = True
-            plot_classification_continuous(X.loc[:, mask_for_continuous],
-                                           target_col)
-        plot_classification_categorical(X.loc[:, types.categorical],
-                                        target_col)
+        plot_classification_continuous(X, target_col, types=types)
+        plot_classification_categorical(X, target_col, types=types)

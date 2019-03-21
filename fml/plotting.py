@@ -275,7 +275,7 @@ def plot_classification_continuous(X, target_col):
     # TODO fancy manifolds?
 
 
-def plot_classification_categorical(X, target_col):
+def plot_classification_categorical(X, target_col, proportions=True):
     X = X.copy()
     X = X.astype('category')
     features = X.drop(target_col, axis=1)
@@ -298,11 +298,22 @@ def plot_classification_categorical(X, target_col):
         height = 5
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
                              constrained_layout=True)
-    plt.suptitle("Categorical Feature vs Target")
+    plt.suptitle("Categorical Feature Proportions vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
         X_new = _prune_category_make_X(X, col, target_col)
-        sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
+        if proportions:
+            df = (X_new.groupby(col)[target_col]
+                  .value_counts(normalize=True)
+                  .unstack()
+                  .sort_values(by=target[0]))  # hacky way to get a class name
+            df.plot(kind='barh', stacked='True', ax=ax, legend=i == 0)
+            ax.set_title(col)
+            ax.set_ylabel(None)
+
+        else:
+            # absolute counts
+            sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
         _short_tick_names(ax)
 
     for j in range(i + 1, n_rows * n_cols):

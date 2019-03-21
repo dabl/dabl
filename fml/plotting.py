@@ -279,7 +279,7 @@ def plot_classification_categorical(X, target_col):
     X = X.copy()
     X = X.astype('category')
     features = X.drop(target_col, axis=1)
-    show_top = _get_n_top(X, features)
+    show_top = _get_n_top(features, "categorical")
 
     # can't use OrdinalEncoder because we might have mix of int and string
     ordinal_encoded = features.apply(lambda x: x.cat.codes)

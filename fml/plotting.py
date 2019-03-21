@@ -144,10 +144,10 @@ def plot_regression_continuous(X, target_col, types=None):
         axes.ravel()[j].set_axis_off()
 
 
-def _make_subplots(n_plots):
-    n_rows, n_cols = find_pretty_grid(n_plots, max_cols=5)
+def _make_subplots(n_plots, max_cols=5, row_height=3):
+    n_rows, n_cols = find_pretty_grid(n_plots, max_cols=max_cols)
     fig, axes = plt.subplots(n_rows, n_cols,
-                             figsize=(4 * n_cols, 3 * n_rows),
+                             figsize=(4 * n_cols, row_height * n_rows),
                              constrained_layout=True)
     # we don't want ravel to fail, this is awkward!
     axes = np.atleast_2d(axes)
@@ -175,19 +175,11 @@ def plot_regression_categorical(X, target_col, types=None):
         ordinal_encoded, target,
         discrete_features=np.ones(X.shape[1], dtype=bool))
     top_k = np.argsort(f)[-show_top:][::-1]
-    n_cols = min(5, features.shape[1])
-    n_rows = int(np.ceil(show_top / n_cols))
-    max_levels = X.nunique().max()
-    if max_levels <= 5:
-        height = 3
-    else:
-        height = 5
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
-                             constrained_layout=True)
+
+    # large number of categories -> taller plot
+    row_height = 3 if X.nunique().max() <= 5 else 5
+    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
     plt.suptitle("Categorical Feature vs Target")
-    if n_rows * n_cols == 1:
-        # we don't want ravel to fail, this is awkward!
-        axes = np.array([axes])
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
         X_new = _prune_category_make_X(X, col, target_col)
@@ -198,7 +190,7 @@ def plot_regression_categorical(X, target_col, types=None):
         # shorten long ticks and labels
         _short_tick_names(ax)
 
-    for j in range(i + 1, n_rows * n_cols):
+    for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
 
@@ -361,21 +353,11 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
     f = mutual_info_classif(
         ordinal_encoded, target,
         discrete_features=np.ones(X.shape[1], dtype=bool))
-    # FIXME copy & paste from regression, refactor
     top_k = np.argsort(f)[-show_top:][::-1]
-    n_cols = min(5, features.shape[1])
-    n_rows = int(np.ceil(show_top / n_cols))
-    max_levels = X.nunique().max()
-    if max_levels <= 5:
-        height = 3
-    else:
-        height = 5
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
-                             constrained_layout=True)
+    # large number of categories -> taller plot
+    row_height = 3 if X.nunique().max() <= 5 else 5
+    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
     # FIXME mosaic doesn't like constraint layout?
-    if n_rows * n_cols <= 1:
-        # we don't want ravel to fail, this is awkward!
-        axes = np.array([axes])
     plt.suptitle("Categorical Features vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[col_ind]
@@ -405,7 +387,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
             raise ValueError("Unknown plot kind {}".format(kind))
         _short_tick_names(ax)
 
-    for j in range(i + 1, n_rows * n_cols):
+    for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
 

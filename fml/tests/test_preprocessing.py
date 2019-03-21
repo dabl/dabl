@@ -13,6 +13,7 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME features that are always missing are constant!
 # FIXME need to test dealing with categorical dtype
 # FIXME make sure in plotting single axes objects work everywhere (ravel issue)
+# FIXME Fail early on duplicate column names!!!
 
 
 def make_dirty_float():

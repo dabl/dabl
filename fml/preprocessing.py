@@ -20,7 +20,8 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         for col in X.columns:
             floats = X[col].str.match(_FLOAT_REGEX)
             # FIXME sparse
-            encoders[col] = OneHotEncoder(sparse=False).fit(
+            encoders[col] = OneHotEncoder(sparse=False,
+                                          handle_unknown='ignore').fit(
                 X.loc[~floats, [col]])
         self.encoders_ = encoders
         self.columns_ = X.columns
@@ -36,7 +37,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             new_col = new_col.astype(np.float)
             enc = self.encoders_[col]
             cats = pd.DataFrame(0, index=X.index,
-                                columns=enc.get_feature_names())
+                                columns=enc.get_feature_names([str(col)]))
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
             # FIXME use types to distinguish outputs instead?
@@ -45,17 +46,42 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return pd.concat(result, axis=1)
 
 
+def guess_ordinal():
+    # compare against http://proceedings.mlr.press/v70/valera17a/valera17a.pdf
+    pass
+
+
+def _find_string_floats(X, dirty_float_threshold):
+    is_float = X.apply(lambda x: x.str.match(_FLOAT_REGEX))
+    clean_float_string = is_float.all()
+    # remove 5 most common string values before checking if the rest is float
+    # FIXME 5 hardcoded!!
+    dirty_float = pd.Series(0, index=X.columns, dtype=bool)
+    for col in X.columns:
+        if clean_float_string[col]:
+            # already know it's clean
+            continue
+        column = X[col]
+        common_values = column.value_counts()[:5].index
+        is_common = column.isin(common_values)
+        if is_float[col][~is_common].mean() > dirty_float_threshold:
+            dirty_float[col] = 1
+
+    return clean_float_string, dirty_float
+
+
 def detect_types_dataframe(X, max_int_cardinality='auto',
-                           dirty_float_threshold=.5, verbose=0):
+                           dirty_float_threshold=.9, verbose=0):
     """
     Parameters
     ----------
     X : dataframe
         input
 
-    dirty_float_threshold : float, default=.5
+    dirty_float_threshold : float, default=.9
         The fraction of floats required in a dirty continuous
-        column before it's considered "useless".
+        column before it's considered "useless" or categorical
+        (after removing top 5 string values)
 
     max_int_cardinality: int or 'auto', default='auto'
         Maximum number of distinct integers for an integer column
@@ -73,20 +99,23 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     recognized types:
     continuous
     categorical
+    low cardinality int
     dirty float string
-    free string TODO
     dirty category string TODO
     date
     useless
     """
-    # TODO detect top coding
-    # Todo: detect index / unique integers
-    # todo: detect near constant features
-    # TODO subsample large datsets? one level up?
+    # FIXME integer indices are not dropped!
+    # TODO: detect near constant features, nearly always missing (same?)
     # TODO detect encoding missing values as strings /weird values
+    # TODO detect top coding
+    # FIXME dirty int is detected as dirty float right now
+    # TODO discard all constant and binary columns at the beginning?
+
+    # TODO subsample large datsets? one level up?
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
-        max_int_cardinality = max(42, n_samples / 10)
+        max_int_cardinality = max(42, n_samples / 100)
     # FIXME only apply nunique to non-continuous?
     n_values = X.apply(lambda x: x.nunique())
     if verbose > 3:
@@ -100,32 +129,38 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     dates = kinds == "M"
     other = - (floats | integers | objects | dates)
     # check if we can cast strings to float
-    # we don't need to cast all, could
+    # we don't need to cast all, could so something smarter?
     if objects.any():
-        float_frequencies = X.loc[:, objects].apply(
-            lambda x: x.str.match(_FLOAT_REGEX).mean())
+        clean_float_string, dirty_float = _find_string_floats(
+            X.loc[:, objects], dirty_float_threshold)
     else:
-        float_frequencies = pd.Series(0, index=X.columns)
-    clean_float_string = float_frequencies == 1.0
-    dirty_float = ((float_frequencies > dirty_float_threshold)
-                   & (~clean_float_string))
+        dirty_float = clean_float_string = pd.Series(0, index=X.columns)
 
     # using categories as integers is not that bad usually
-    cont_integers = integers.copy()
+    # cont_integers = integers.copy()
     # using integers as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
+    constant = n_values < 2
+    large_cardinality_int = integers & ~few_entries
     # dirty, dirty hack.
     # will still be "continuous"
+    # WTF is going on with binary FIXME
     binary = n_values == 2
-    cat_integers = few_entries & integers & ~binary
-    cat_string = few_entries & objects
-
+    cat_integers = few_entries & integers & ~binary & ~constant
+    non_float_objects = objects & ~dirty_float & ~clean_float_string
+    cat_string = few_entries & non_float_objects & ~constant
+    free_strings = ~few_entries & non_float_objects
+    continuous = floats | large_cardinality_int | clean_float_string
     res = pd.DataFrame(
-        {'continuous': floats | cont_integers | clean_float_string,
-         'categorical': cat_integers | cat_string, 'date': dates,
-         'dirty_float': dirty_float})
+        {'continuous': continuous & ~binary & ~constant,
+         'dirty_float': dirty_float, 'low_card_int': cat_integers,
+         'categorical': cat_string | binary, 'date': dates,
+         'free_string': free_strings, 'useless': constant,
+         })
     res = res.fillna(False)
-    res['useless'] = res.sum(axis=1) == 0
+    res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
+
+    assert np.all(res.sum(axis=1) == 1)
 
     if verbose >= 1:
         print("Detected feature types:")
@@ -134,12 +169,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
             other.sum())
         print(desc)
         print("Interpreted as:")
-        interp = ("{} continuous, {} categorical, {} date, "
-                  "{} dirty float, {} dropped").format(
-            res.continuous.sum(), res.categorical.sum(), res.date.sum(),
-            dirty_float.sum(), res.useless.sum()
-        )
-        print(interp)
+        print(res.sum())
     if verbose >= 2:
         if dirty_float.any():
             print("WARN Found dirty floats encoded as strings: {}".format(
@@ -160,8 +190,10 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def safe_cleanup(X, onehot=False):
+def _safe_cleanup(X, onehot=False):
     """Cleaning / preprocessing outside of cross-validation
+
+    FIXME this leads to duplicating integer columns! no good!
 
     This function is "safe" to use outside of cross-validation in that
     it only does preprocessing that doesn't use statistics that could
@@ -187,14 +219,20 @@ def safe_cleanup(X, onehot=False):
     res = []
     if types['dirty_float'].any():
         # don't use ColumnTransformer that can't return dataframe yet
-        res.append(DirtyFloatCleaner().fit_transform(X.loc[:, types['dirty_float']]))
+        res.append(DirtyFloatCleaner().fit_transform(
+            X.loc[:, types['dirty_float']]))
     if types['useless'].any() or types['dirty_float'].any():
         if onehot:
+            # FIXME REMOVE THIS HERE
             res.append(X.loc[:, types['continuous']])
             cat_indices = types.index[types['categorical']]
-            res.append(pd.get_dummies(X.loc[:, types['categorical']], columns=cat_indices))
+            res.append(pd.get_dummies(X.loc[:, types['categorical']],
+                                      columns=cat_indices))
         else:
-            res.append(X.loc[:, types['continuous'] | types['categorical']])
+            good_types = (types.continuous | types.categorical
+                          | types.low_card_int | types.date
+                          | types.free_string)
+            res.append(X.loc[:, good_types])
         return pd.concat(res, axis=1)
     return X
 
@@ -266,7 +304,8 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         # go over variable blocks
         # check for missing values
         # scale etc
-        pipe_categorical = OneHotEncoder(categories='auto')
+        pipe_categorical = OneHotEncoder(categories='auto',
+                                         handle_unknown='ignore')
 
         steps_continuous = [FunctionTransformer(_make_float, validate=False)]
         if self.scale:
@@ -276,10 +315,11 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         steps_continuous.insert(0, SimpleImputer(strategy='median'))
         pipe_continuous = make_pipeline(*steps_continuous)
         # FIXME only have one imputer/standard scaler in all
+        # (right now copied in dirty floats and floats)
         pipe_dirty_float = make_pipeline(
             DirtyFloatCleaner(),
             make_column_transformer(
-                (select_cont, pipe_continuous), remainder="passthrough"))
+                (pipe_continuous, select_cont), remainder="passthrough"))
         # construct column transformer
         transformer_cols = []
         if types['continuous'].any():

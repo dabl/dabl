@@ -67,3 +67,6 @@ target/
 .vscode/launch.json
 .vscode/settings.json
 .pytest_cache
+pipe_cache
+some_cache
+.ipynb_checkpoints

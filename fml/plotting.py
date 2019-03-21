@@ -12,6 +12,7 @@ from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from statsmodels.graphics.mosaicplot import mosaic
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -275,7 +276,7 @@ def plot_classification_continuous(X, target_col):
     # TODO fancy manifolds?
 
 
-def plot_classification_categorical(X, target_col, proportions=True):
+def plot_classification_categorical(X, target_col, kind='count'):
     X = X.copy()
     X = X.astype('category')
     features = X.drop(target_col, axis=1)
@@ -296,13 +297,13 @@ def plot_classification_categorical(X, target_col, proportions=True):
         height = 3
     else:
         height = 5
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows),
-                             constrained_layout=True)
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, height * n_rows))
+    # FIXME mosaic doesn't like constraint layout?
     plt.suptitle("Categorical Feature Proportions vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
-        col = features.columns[i]
+        col = features.columns[col_ind]
         X_new = _prune_category_make_X(X, col, target_col)
-        if proportions:
+        if kind == 'proportion':
             df = (X_new.groupby(col)[target_col]
                   .value_counts(normalize=True)
                   .unstack()
@@ -310,10 +311,21 @@ def plot_classification_categorical(X, target_col, proportions=True):
             df.plot(kind='barh', stacked='True', ax=ax, legend=i == 0)
             ax.set_title(col)
             ax.set_ylabel(None)
+        elif kind == 'mosaic':
+            warn("Mosaic plots are buggy right now, come back later.",
+                 UserWarning)
+            # This seems pretty broken, abandoning for now
+            # counts = pd.crosstab(X_new[col], X_new[target_col])
 
-        else:
+            mosaic(X_new, [col, target_col],
+                   horizontal=False, ax=ax)
+            # ,
+            # labelizer=lambda k: counts.loc[k[0], k[1]])
+        elif kind == 'count':
             # absolute counts
             sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
+        else:
+            raise ValueError("Unknown plot kind {}".format(kind))
         _short_tick_names(ax)
 
     for j in range(i + 1, n_rows * n_cols):

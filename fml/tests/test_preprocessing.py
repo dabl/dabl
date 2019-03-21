@@ -13,6 +13,7 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME features that are always missing are constant!
 # FIXME need to test dealing with categorical dtype
 
+
 def make_dirty_float():
     rng = np.random.RandomState(0)
     cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]

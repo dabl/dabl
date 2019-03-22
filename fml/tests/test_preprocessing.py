@@ -50,7 +50,7 @@ def test_detect_types_dataframe():
          'categorical_int': np.random.randint(0, 4, size=100),
          'low_card_float': np.random.randint(0, 4, size=100).astype(np.float),
          'binary_float': np.random.randint(0, 2, size=100).astype(np.float),
-         'cont_int': np.random.binomial(40, .3, size=100),
+         'cont_int': np.repeat(np.arange(50), 2),
          'unique_string': [random_str() for i in range(100)],
          'continuous_float': np.random.normal(size=100),
          'constant_nan': np.repeat(np.NaN, repeats=100),
@@ -64,13 +64,13 @@ def test_detect_types_dataframe():
     types = res.T.idxmax()
     assert types['categorical_string'] == 'categorical'
     assert types['binary_int'] == 'categorical'
-    # assert types['categorical_int'] == 'categorical'
+    assert types['categorical_int'] == 'categorical'
+    # assert types['low_card_int_binomial'] == 'continuous'
     # a bit inconsistent: we're treating cardinality 2
     # floats as categorical but cardinality 3 or 4 not
     assert types['low_card_float'] == 'continuous'
     assert types['binary_float'] == 'categorical'
-
-    # assert types['cont_int'] == 'continuous'
+    assert types['cont_int'] == 'continuous'
     assert types['unique_string'] == 'free_string'
     assert types['continuous_float'] == 'continuous'
     assert types['constant_nan'] == 'useless'
@@ -92,6 +92,24 @@ def test_detect_types_dataframe():
     assert res_iris.continuous.sum() == 4
 
 
+def test_detect_low_cardinality_int():
+    df_all = pd.DataFrame(
+        {
+         'binary_int': np.random.randint(0, 2, size=1000),
+         'categorical_int': np.random.randint(0, 4, size=1000),
+         'low_card_int_uniform': np.random.randint(0, 20, size=1000),
+         'low_card_int_binomial': np.random.binomial(20, .3, size=1000),
+         'cont_int': np.repeat(np.arange(500), 2),
+        })
+
+    res = detect_types_dataframe(df_all)
+    types = res.T.idxmax()
+
+    assert types['binary_int'] == 'categorical'
+    assert types['categorical_int'] == 'categorical'
+    assert types['low_card_int_uniform'] == 'low_card_int'
+    assert types['low_card_int_binomial'] == 'low_card_int'
+    assert types['cont_int'] == 'continuous'
 
 
 def test_detect_string_floats():
@@ -175,7 +193,7 @@ def test_titanic_detection():
         'dirty_float', 'categorical', 'dirty_float', 'free_string',
         'categorical', 'dirty_float', 'free_string', 'free_string',
         'low_card_int', 'low_card_int',
-        'categorical', 'low_card_int', 'categorical', 'free_string']
+        'categorical', 'categorical', 'categorical', 'free_string']
     assert (types == true_types).all()
     titanic_nan = pd.read_csv(os.path.join(path, 'titanic.csv'), na_values='?')
     types_table = detect_types_dataframe(titanic_nan)

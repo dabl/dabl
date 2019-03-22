@@ -167,26 +167,27 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
         dirty_float = clean_float_string = pd.Series(0, index=X.columns,
                                                      dtype=bool)
 
-    # using categories as integers is not that bad usually
-    # cont_integers = integers.copy()
-    # using integers as categories only if low cardinality
+    # using integers or string as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
     # constant features are useless
     useless = (n_values < 2) | useless
     large_cardinality_int = integers & ~few_entries
-    # dirty, dirty hack.
-    # will still be "continuous"
-    # WTF is going on with binary FIXME
     binary = n_values == 2
-    cat_integers = few_entries & integers & ~binary & ~useless
+    # hard coded very low cardinality integers are categorical
+    cat_integers = integers & (n_values <= 5) & ~useless
+    low_card_integers = (few_entries & integers
+                         & ~binary & ~useless & ~cat_integers)
     non_float_objects = objects & ~dirty_float & ~clean_float_string
     cat_string = few_entries & non_float_objects & ~useless
     free_strings = ~few_entries & non_float_objects
     continuous = floats | large_cardinality_int | clean_float_string
+
     res = pd.DataFrame(
         {'continuous': continuous & ~binary & ~useless,
-         'dirty_float': dirty_float, 'low_card_int': cat_integers,
-         'categorical': cat_string | binary | categorical, 'date': dates,
+         'dirty_float': dirty_float,
+         'low_card_int': low_card_integers,
+         'categorical': cat_string | binary | categorical | cat_integers,
+         'date': dates,
          'free_string': free_strings, 'useless': useless,
          })
     res = res.fillna(False)

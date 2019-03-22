@@ -1,4 +1,10 @@
-from .preprocessing import detect_types_dataframe
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import itertools
+from warnings import warn
+
 
 from sklearn.feature_selection import (f_regression,
                                        mutual_info_regression,
@@ -13,12 +19,8 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_val_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from statsmodels.graphics.mosaicplot import mosaic
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import itertools
-from warnings import warn
+
+from .preprocessing import detect_types_dataframe
 
 
 def find_pretty_grid(n_plots, max_cols=5):
@@ -88,6 +90,7 @@ def _prune_category_make_X(X, col, target_col):
         X_new[col] = col_values
     else:
         X_new = X
+        X_new[col] = X_new[col].astype('category')
     return X_new
 
 
@@ -395,18 +398,20 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
 def plot_supervised(X, target_col, types=None, verbose=10):
     if types is None:
         types = detect_types_dataframe(X)
-    features = [c for c in X.columns if c != target_col]
+    # aggressively low_cardinality integers plot better as categorical
+    if types.low_card_int.any():
+        for col in types.index[types.low_card_int]:
+            # yes we con't need a loop
+            types.loc[col, 'low_card_int'] = False
+            types.loc[col, 'categorical'] = True
+
     # if any dirty floats, tell user to clean them first
     if types.dirty_float.any():
         warn("Found some dirty floats! "
              "Clean em up first:\n{}".format(
                  types.index[types.dirty_float]),
              UserWarning)
-    if types.low_card_int[features].any():
-        warn("Found some low cardinality ints. "
-             "No idea what to do, ignoring for now:\n{}".format(
-                 types.index[types.low_card_int]),
-             UserWarning)
+
     if types.continuous[target_col]:
         print("Target looks like regression")
         # regression

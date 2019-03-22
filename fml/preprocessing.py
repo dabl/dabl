@@ -47,11 +47,23 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return pd.concat(result, axis=1)
 
 
-def guess_ordinal():
+def guess_ordinal(values):
     # compare against http://proceedings.mlr.press/v70/valera17a/valera17a.pdf
     # there's some ways to guess month, day, week, year
     # but even if we have that, is that ordinal or categorical?
-    pass
+    # worst hack in the history of probability distributions, maybe ever
+    # we compute second derivatives on the histogram. If they look smoother
+    # than the shuffled histograms, we assume order is meaningful
+    # why second derivatives? Why absolute norms? Why 1.5? good questions!
+    counts = np.bincount(values)
+
+    def norm(x):
+        return np.abs(np.diff(np.diff(x))).sum()
+    grad_norm = norm(counts)
+    # shuffle 100 times
+    grad_norm_shuffled = np.mean([
+        norm(counts[np.random.permutation(len(counts))]) for i in range(100)])
+    return grad_norm * 1.5 < grad_norm_shuffled
 
 
 def _find_string_floats(X, dirty_float_threshold):
@@ -178,7 +190,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     near_constant = most_common_count / X.count() > near_constant_threshold
     if near_constant.any():
         warn("Discarding near constant features: {}".format(
-             near_constant.index[near_constant]))
+             near_constant.index[near_constant].tolist()))
     useless = useless | near_constant
     large_cardinality_int = integers & ~few_entries
     binary = n_values == 2

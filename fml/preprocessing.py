@@ -195,7 +195,8 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
         {'continuous': continuous & ~binary & ~useless,
          'dirty_float': dirty_float,
          'low_card_int': low_card_integers,
-         'categorical': cat_string | binary | categorical | cat_integers,
+         'categorical': ((cat_string | binary | categorical | cat_integers)
+                         & ~useless),
          'date': dates,
          'free_string': free_strings, 'useless': useless,
          })

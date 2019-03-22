@@ -44,6 +44,9 @@ def test_detect_types_dataframe():
         return "".join([random.choice(string.ascii_letters)
                         for i in range(length)])
 
+    near_constant_float = np.repeat(np.pi, repeats=100)
+    near_constant_float[:2] = 0
+
     df_all = pd.DataFrame(
         {'categorical_string': ['a', 'b'] * 50,
          'binary_int': np.random.randint(0, 2, size=100),
@@ -56,6 +59,7 @@ def test_detect_types_dataframe():
          'constant_nan': np.repeat(np.NaN, repeats=100),
          'constant_string': ['every_day'] * 100,
          'constant_float': np.repeat(np.pi, repeats=100),
+         'near_constant_float': near_constant_float,
          'index_0_based': np.arange(100),
          'index_1_based': np.arange(1, 101),
          'index_shuffled': np.random.permutation(100)
@@ -76,6 +80,7 @@ def test_detect_types_dataframe():
     assert types['constant_nan'] == 'useless'
     assert types['constant_string'] == 'useless'
     assert types['constant_float'] == 'useless'
+    assert types['near_constant_float'] == 'useless'
     assert types['index_0_based'] == 'useless'
     assert types['index_1_based'] == 'useless'
     # Not detecting a shuffled index right now :-/
@@ -192,8 +197,8 @@ def test_titanic_detection():
     true_types = [
         'dirty_float', 'categorical', 'dirty_float', 'free_string',
         'categorical', 'dirty_float', 'free_string', 'free_string',
-        'low_card_int', 'low_card_int',
-        'categorical', 'categorical', 'categorical', 'free_string']
+        'low_card_int', 'categorical',
+        'categorical', 'low_card_int', 'categorical', 'free_string']
     assert (types == true_types).all()
     titanic_nan = pd.read_csv(os.path.join(path, 'titanic.csv'), na_values='?')
     types_table = detect_types_dataframe(titanic_nan)

@@ -40,6 +40,47 @@ def test_detect_constant():
 
 
 def test_detect_types_dataframe():
+    def random_str(length=7):
+        return "".join([random.choice(string.ascii_letters)
+                        for i in range(length)])
+
+    df_all = pd.DataFrame(
+        {'categorical_string': ['a', 'b'] * 50,
+         'binary_int': np.random.randint(0, 2, size=100),
+         'categorical_int': np.random.randint(0, 4, size=100),
+         'low_card_float': np.random.randint(0, 4, size=100).astype(np.float),
+         'binary_float': np.random.randint(0, 2, size=100).astype(np.float),
+         'cont_int': np.random.binomial(40, .3, size=100),
+         'unique_string': [random_str() for i in range(100)],
+         'continuous_float': np.random.normal(size=100),
+         'constant_nan': np.repeat(np.NaN, repeats=100),
+         'constant_string': ['every_day'] * 100,
+         'constant_float': np.repeat(np.pi, repeats=100),
+         'index_0_based': np.arange(100),
+         'index_1_based': np.arange(1, 101),
+         'index_shuffled': np.random.permutation(100)
+         })
+    res = detect_types_dataframe(df_all)
+    types = res.T.idxmax()
+    assert types['categorical_string'] == 'categorical'
+    assert types['binary_int'] == 'categorical'
+    # assert types['categorical_int'] == 'categorical'
+    # a bit inconsistent: we're treating cardinality 2
+    # floats as categorical but cardinality 3 or 4 not
+    assert types['low_card_float'] == 'continuous'
+    assert types['binary_float'] == 'categorical'
+
+    # assert types['cont_int'] == 'continuous'
+    assert types['unique_string'] == 'free_string'
+    assert types['continuous_float'] == 'continuous'
+    assert types['constant_nan'] == 'useless'
+    assert types['constant_string'] == 'useless'
+    assert types['constant_float'] == 'useless'
+    assert types['index_0_based'] == 'useless'
+    assert types['index_1_based'] == 'useless'
+    # Not detecting a shuffled index right now :-/
+    assert types['index_shuffled'] == 'continuous'
+
     res = detect_types_dataframe(X_cat)
     assert len(res) == 3
     assert res.categorical.all()
@@ -50,24 +91,7 @@ def test_detect_types_dataframe():
     assert (res_iris.sum(axis=1) == 1).all()
     assert res_iris.continuous.sum() == 4
 
-    def random_str(length=7):
-        return "".join([random.choice(string.ascii_letters) for i in range(length)])
 
-    df_all = pd.DataFrame({'categorical_string': ['a', 'b'] * 50,
-         'binary_int': np.random.randint(0, 2, size=100),
-         'categorical_int': np.random.randint(0, 4, size=100),
-         'cont_int': np.random.binomial(40, .3, size=100),
-         'unique_string': [random_str() for i in range(100)],
-         'continuous_float': np.random.normal(size=100)
-         })
-    res = detect_types_dataframe(df_all)
-    types = res.T.idxmax()
-    assert types['categorical_string'] == 'categorical'
-    assert types['binary_int'] == 'categorical'
-    # assert types['categorical_int'] == 'categorical'
-    # assert types['cont_int'] == 'continuous'
-    assert types['continuous_float'] == 'continuous'
-    assert types['unique_string'] == 'free_string'
 
 
 def test_detect_string_floats():

@@ -1,9 +1,14 @@
 import os
-from fml.preprocessing import (detect_types_dataframe, FriendlyPreprocessor,
-                               DirtyFloatCleaner)
+import string
+import random
+
 import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
+
+from fml.preprocessing import (detect_types_dataframe, FriendlyPreprocessor,
+                               DirtyFloatCleaner)
+
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
                       'second': ['word', 'no', ''],
@@ -33,6 +38,7 @@ def test_detect_constant():
     res = detect_types_dataframe(X)
     assert res.useless.sum() == 4
 
+
 def test_detect_types_dataframe():
     res = detect_types_dataframe(X_cat)
     assert len(res) == 3
@@ -43,6 +49,25 @@ def test_detect_types_dataframe():
     res_iris = detect_types_dataframe(pd.DataFrame(iris.data))
     assert (res_iris.sum(axis=1) == 1).all()
     assert res_iris.continuous.sum() == 4
+
+    def random_str(length=7):
+        return "".join([random.choice(string.ascii_letters) for i in range(length)])
+
+    df_all = pd.DataFrame({'categorical_string': ['a', 'b'] * 50,
+         'binary_int': np.random.randint(0, 2, size=100),
+         'categorical_int': np.random.randint(0, 4, size=100),
+         'cont_int': np.random.binomial(40, .3, size=100),
+         'unique_string': [random_str() for i in range(100)],
+         'continuous_float': np.random.normal(size=100)
+         })
+    res = detect_types_dataframe(df_all)
+    types = res.T.idxmax()
+    assert types['categorical_string'] == 'categorical'
+    assert types['binary_int'] == 'categorical'
+    # assert types['categorical_int'] == 'categorical'
+    # assert types['cont_int'] == 'continuous'
+    assert types['continuous_float'] == 'continuous'
+    assert types['unique_string'] == 'free_string'
 
 
 def test_detect_string_floats():

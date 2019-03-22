@@ -74,7 +74,8 @@ def _find_string_floats(X, dirty_float_threshold):
 
 
 def detect_types_dataframe(X, max_int_cardinality='auto',
-                           dirty_float_threshold=.9, verbose=0):
+                           dirty_float_threshold=.9,
+                           near_constant_threshold=.95, verbose=0):
     """
     Parameters
     ----------
@@ -135,6 +136,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     integers = (kinds == "i") | (kinds == "u")
     useless = pd.Series(0, index=X.columns, dtype=bool)
 
+    # check if we have something that trivially is an index
     suspicious_index = (n_values == X.shape[0]) & integers
     if suspicious_index.any():
         warn_for = []
@@ -171,6 +173,13 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     few_entries = n_values < max_int_cardinality
     # constant features are useless
     useless = (n_values < 2) | useless
+    # also throw out near constant:
+    most_common_count = X.apply(lambda x: x.value_counts().max())
+    near_constant = most_common_count / X.count() > near_constant_threshold
+    if near_constant.any():
+        warn("Discarding near constant features: {}".format(
+             near_constant.index[near_constant]))
+    useless = useless | near_constant
     large_cardinality_int = integers & ~few_entries
     binary = n_values == 2
     # hard coded very low cardinality integers are categorical

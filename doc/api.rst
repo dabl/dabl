@@ -4,31 +4,47 @@ project-template API
 
 This is an example on how to document the API of your own project.
 
-.. currentmodule:: skltemplate
+.. currentmodule:: fml
 
-Estimator
+Supervised Models
+=================
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   FriendlyClassifier
+
+Preprocessing
+=============
+
+.. currentmodule:: fml.preprocessing
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   FriendlyPreprocessor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+    detect_types_dataframe
+    cleanup
+
+Plotting
 =========
 
+.. currentmodule:: fml.plotting
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: function.rst
 
-   TemplateEstimator
+    find_pretty_grid
+    plot_supervised
+    plot_classification_categorical
+    plot_classification_continuous
+    plot_regression_categorical
+    plot_regression_continuous
 
-Transformer
-===========
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   TemplateTransformer
-
-Predictor
-=========
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-    TemplateClassifier

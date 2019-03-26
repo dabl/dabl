@@ -56,7 +56,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.aggressive_elimination = aggressive_elimination
         self.exhaust_budget = exhaust_budget
 
-    def _check_input_parameters(self, X, y, n_candidates):
+    def _check_input_parameters(self, X, y, groups, n_candidates):
 
         if self.budget_on != 'n_samples':
             raise ValueError('budget_on must be n_samples for now')
@@ -66,8 +66,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
             if self.budget_on == 'n_samples':
                 cv = check_cv(self.cv, y,
                               classifier=is_classifier(self.estimator))
-                n_splits = cv.get_n_splits(X, y)  # FIXME: should pass group :/
+                n_splits = cv.get_n_splits(X, y, groups)
 
+                # please see https://gph.is/1KjihQe for a justification
                 magic_factor = 2
                 self.r_min_ = n_splits * magic_factor
                 if is_classifier(self.estimator):
@@ -78,79 +79,95 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         self.max_budget_ = self.max_budget
         if self.max_budget_ == 'auto':
-            self.max_budget_ = X.shape[0]  # only budget_on=n_samples allowed
+            self.max_budget_ = X.shape[0]
 
-        # We want resources to be in units of r_min_
-        self.max_budget_ = self.max_budget_ // self.r_min_
+        if self.r_min_ > self.max_budget_:
+            raise ValueError(
+                'r_min_={} is greater than max_budget_={}.'
+                .format(self.r_min_, self.max_budget_)
+            )
 
-    def _run_search(self, evaluate_candidates, X, y):
+    def _run_search(self, evaluate_candidates, X, y, groups):
 
         candidate_params = list(self._generate_candidate_params())
         n_candidates = len(candidate_params)
 
+        rng = check_random_state(self.random_state)
+
         self._check_input_parameters(
             X=X,
             y=y,
+            groups=groups,
             n_candidates=n_candidates
         )
-        rng = check_random_state(self.random_state)
-
-        # n_iterations_required is the number of iterations needed so that the
+        # n_required_iterations is the number of iterations needed so that the
         # last iterations evaluates less than `ratio` candidates.
-        n_required_iterations = floor(log(n_candidates, self.ratio)) + 1
+        n_required_iterations = 1 + floor(log(n_candidates, self.ratio))
 
-        actual_max_resources = self.max_budget_ * self.r_min_
-        last_iter = n_required_iterations - 1
-        r_last_iter = self.ratio**last_iter * self.r_min_
-        if self.exhaust_budget:
-            # To exhaust we want to start with the biggest
-            # r_min possible so that the last iteration uses as much resources
-            # as possible
-            self.r_min_ = actual_max_resources // self.ratio**last_iter
-
+        if self.exhaust_budget and self.r_min == 'auto':
+            # To exhaust the budget, we want to start with the biggest r_min
+            # possible so that the last (required) iteration uses as many
+            # resources as possible
+            # We only force exhausting the budget if r_min wasn't specified by
+            # the user.
+            last_iteration = n_required_iterations - 1
+            self.r_min_ = max(self.r_min_,
+                              self.max_budget_ // self.ratio**last_iteration)
 
         # n_possible iterations is the number of iterations that we can
         # actually do starting from r_min and without exceeding the budget.
-        n_possible_iterations = floor(log(self.max_budget_, self.ratio)) + 1
-
-        print(f'n_required_iterations: {n_required_iterations}')
-        print(f'n_possible_iterations: {n_possible_iterations}')
-        print(f'r_min: {self.r_min_}')
-        print(f'max_budget_: {self.max_budget_}')
-        print(f'aggressive_elimination: {self.aggressive_elimination}')
-        print(f'ratio: {self.ratio}')
-
-        self._r_i_list = []
-
+        # Depending on budget size the number of candidates, this may be higher
+        # or smaller than n_required_iterations.
+        n_possible_iterations = 1 + floor(log(self.max_budget_ // self.r_min_,
+                                              self.ratio))
 
         if self.aggressive_elimination:
             n_iterations = n_required_iterations
         else:
             n_iterations = min(n_possible_iterations, n_required_iterations)
 
+        if self.verbose:
+            print(f'n_iterations: {n_iterations}')
+            print(f'n_required_iterations: {n_required_iterations}')
+            print(f'n_possible_iterations: {n_possible_iterations}')
+            print(f'r_min_: {self.r_min_}')
+            print(f'max_budget_: {self.max_budget_}')
+            print(f'aggressive_elimination: {self.aggressive_elimination}')
+            print(f'exhaust_budget: {self.exhaust_budget}')
+            print(f'ratio: {self.ratio}')
+
+        self._r_i_list = []  # list of r_i for each iteration, used in tests
+
         for iter_i in range(n_iterations):
 
             power = iter_i  # default
             if self.aggressive_elimination:
-                power = max(0, iter_i - n_required_iterations + n_possible_iterations)
+                # this will set r_i to the initial value (i.e. the value of r_i
+                # at the first iteration) for as many iterations as needed
+                # (while candidates are being eliminated), and then go on as
+                # usual.
+                power = max(
+                    0,
+                    iter_i - n_required_iterations + n_possible_iterations
+                )
 
             r_i = int(self.ratio**power * self.r_min_)
-            r_i = min(r_i, self.max_budget_ * self.r_min_)
+            r_i = min(r_i, self.max_budget_)  # guard, probably not needed
             self._r_i_list.append(r_i)
 
             n_candidates = len(candidate_params)
-            print('-' * 10)
-            print(f'iter_i: {iter_i}')
-            print(f'n_candidates: {n_candidates}')
-            print(f'r_i: {r_i}')
-            print(f'r_i (in r_min units): {r_i // self.r_min_}')
+            if self.verbose:
+                print('-' * 10)
+                print(f'iter_i: {iter_i}')
+                print(f'n_candidates: {n_candidates}')
+                print(f'r_i: {r_i}')
+                print(f'r_i (in r_min units): {r_i // self.r_min_}')
 
             if self.budget_on == 'n_samples':
-                # ideally use train_test_split, but doesn't work lololollol
-                # stratify = y if is_classifier(self.estimator) else None
-                # X_iter, _, y_iter, _ = train_test_split(
-                #     X, y, stratify=stratify, train_size=r_i, test_size=None,
-                #     random_state=rng)
+                # XXX FIXME TODO
+                # subsampling should be stratified. We can't use
+                # train_test_split because it complains about testset being too
+                # small in some cases
                 indexes = rng.choice(r_i, X.shape[0])
                 X_iter, y_iter = X[indexes], y[indexes]
             else:
@@ -159,13 +176,14 @@ class BaseSuccessiveHalving(BaseSearchCV):
             more_results= {'iter': [iter_i] * n_candidates,
                            'r_i': [r_i] * n_candidates}
             results = evaluate_candidates(candidate_params, X_iter, y_iter,
-                                          more_results=more_results)
+                                          groups, more_results=more_results)
 
             n_candidates_to_keep = ceil(n_candidates/ self.ratio)
             candidate_params = self._keep_k_best(results,
                                                  n_candidates_to_keep,
                                                  iter_i)
 
+        self.remaining_candidates_ = candidate_params
         self.n_required_iterations_ = n_required_iterations
         self.n_possible_iterations_ = n_possible_iterations
         self.n_iterations_ = n_iterations

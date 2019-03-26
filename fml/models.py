@@ -33,6 +33,8 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
         self.refit = refit
 
     def fit(self, X, y):
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
 
         target_type = type_of_target(y)
         y = pd.Series(LabelEncoder().fit_transform(y))

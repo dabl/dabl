@@ -6,7 +6,6 @@ import numpy as np
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection import ParameterGrid, ParameterSampler
-from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
@@ -57,19 +56,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.aggressive_elimination = aggressive_elimination
         self.force_exhaust_budget = force_exhaust_budget
 
-    def _check_input_parameters(self, X, y, groups, candidates):
-
-        if (self.budget_on != 'n_samples' and
-                self.budget_on not in self.estimator.get_params()):
-            raise ValueError(
-                'Cannot budget on parameter {} which is not supported '
-                'by estimator {}'.format(self.budget_on,
-                                         self.estimator.__class__.__name__))
-
-        if any(self.budget_on in candidate for candidate in candidates):
-                raise ValueError(
-                    "Cannot budget on parameter {} since it is part of "
-                    "the searched parameters.".format(self.budget_on))
+    def _check_input_parameters(self, X, y, groups):
 
         self.r_min_ = self.r_min
         if self.r_min_ == 'auto':
@@ -105,24 +92,33 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 'r_min must be set to auto if force_exhaust_budget is True.'
             )
 
-
     def _run_search(self, evaluate_candidates, X, y, groups):
-
-        candidate_params = list(self._generate_candidate_params())
-        n_candidates = len(candidate_params)
-
-        rng = check_random_state(self.random_state)
 
         self._check_input_parameters(
             X=X,
             y=y,
             groups=groups,
-            candidates=candidate_params
         )
+        rng = check_random_state(self.random_state)
+
+        candidate_params = list(self._generate_candidate_params())
+        self.n_candidates_ = len(candidate_params)
+
+        if (self.budget_on != 'n_samples' and
+                self.budget_on not in self.estimator.get_params()):
+            raise ValueError(
+                'Cannot budget on parameter {} which is not supported '
+                'by estimator {}'.format(self.budget_on,
+                                         self.estimator.__class__.__name__))
+
+        if any(self.budget_on in candidate for candidate in candidate_params):
+            raise ValueError(
+                "Cannot budget on parameter {} since it is part of "
+                "the searched parameters.".format(self.budget_on))
 
         # n_required_iterations is the number of iterations needed so that the
         # last iterations evaluates less than `ratio` candidates.
-        n_required_iterations = 1 + floor(log(n_candidates, self.ratio))
+        n_required_iterations = 1 + floor(log(self.n_candidates_, self.ratio))
 
         if self.force_exhaust_budget:
             # To exhaust the budget, we want to start with the biggest r_min
@@ -176,6 +172,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             self._r_i_list.append(r_i)
 
             n_candidates = len(candidate_params)
+
             if self.verbose:
                 print('-' * 10)
                 print(f'iter_i: {iter_i}')
@@ -196,12 +193,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     candidate[self.budget_on] = r_i
                 X_iter, y_iter = X, y
 
-            more_results= {'iter': [iter_i] * n_candidates,
-                           'r_i': [r_i] * n_candidates}
+            more_results = {'iter': [iter_i] * n_candidates,
+                            'r_i': [r_i] * n_candidates}
             results = evaluate_candidates(candidate_params, X_iter, y_iter,
                                           groups, more_results=more_results)
 
-            n_candidates_to_keep = ceil(n_candidates/ self.ratio)
+            n_candidates_to_keep = ceil(n_candidates / self.ratio)
             candidate_params = self._top_k(results,
                                            n_candidates_to_keep,
                                            iter_i)
@@ -254,8 +251,8 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
 
 class RandomSuccessiveHalving(BaseSuccessiveHalving):
 
-    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 n_jobs=None, refit=True, verbose=0, cv=None,
+    def __init__(self, estimator, param_distributions, n_candidates='auto',
+                 scoring=None, n_jobs=None, refit=True, verbose=0, cv=None,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,
@@ -270,8 +267,13 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
                          aggressive_elimination=aggressive_elimination,
                          force_exhaust_budget=force_exhaust_budget)
         self.param_distributions = param_distributions
-        self.n_iter = n_iter
+        self.n_candidates = n_candidates
 
     def _generate_candidate_params(self):
-        return ParameterSampler(self.param_distributions, self.n_iter,
+        n_candidates_ = self.n_candidates
+        if n_candidates_ == 'auto':
+            # This will generate enough candidate so that the last iteration
+            # uses as much budget as possible
+            n_candidates_ = self.max_budget_ // self.r_min_
+        return ParameterSampler(self.param_distributions, n_candidates_,
                                 self.random_state)

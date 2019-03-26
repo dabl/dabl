@@ -30,7 +30,7 @@ def test_aggressive_elimination():
 
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
-    parameters = {'a': ('l1', 'l2'), 'b': list(range(1, 30))}
+    parameters = {'a': ('l1', 'l2'), 'b': list(range(30))}
     base_estimator = FastClassifier()
     ratio = 3
 
@@ -40,21 +40,32 @@ def test_aggressive_elimination():
 
     # aggressive_elimination=True
     # In this case, the first iterations only use r_min_ resources
-    sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
                                aggressive_elimination=True,
                                max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
-
     assert sh.n_iterations_ == 4
     assert sh.n_required_iterations_ == 4
     assert sh.n_possible_iterations_ == 3
     assert sh._r_i_list == [20, 20, 60, 180]  # see how it loops at the start
-    assert len(sh.remaining_candidates_) == 1
+    assert sh.n_remaining_candidates_ == 1
+
+    # Make sure we get the same results with randomized search
+    sh = RandomSuccessiveHalving(base_estimator, parameters,
+                                 n_candidates=60, cv=5,
+                                 aggressive_elimination=True,
+                                 max_budget=max_budget, ratio=ratio)
+    sh.fit(X, y)
+    assert sh.n_iterations_ == 4
+    assert sh.n_required_iterations_ == 4
+    assert sh.n_possible_iterations_ == 3
+    assert sh._r_i_list == [20, 20, 60, 180]  # see how it loops at the start
+    assert sh.n_remaining_candidates_ == 1
 
     # aggressive_elimination=False
     # In this case we don't loop at the start, and might end up with a lot of
     # candidates at the last iteration
-    sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
                                aggressive_elimination=False,
                                max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
@@ -63,14 +74,14 @@ def test_aggressive_elimination():
     assert sh.n_required_iterations_ == 4
     assert sh.n_possible_iterations_ == 3
     assert sh._r_i_list == [20, 60, 180]
-    assert len(sh.remaining_candidates_) == 3
+    assert sh.n_remaining_candidates_ == 3
 
     max_budget = n_samples
     # with enough budget, aggressive_elimination has no effect since it is not
     # needed
 
     # aggressive_elimination=True
-    sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
                                aggressive_elimination=True,
                                max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
@@ -79,10 +90,10 @@ def test_aggressive_elimination():
     assert sh.n_required_iterations_ == 4
     assert sh.n_possible_iterations_ == 4
     assert sh._r_i_list == [20, 60, 180, 540]
-    assert len(sh.remaining_candidates_) == 1
+    assert sh.n_remaining_candidates_ == 1
 
     # aggressive_elimination=False
-    sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
                                aggressive_elimination=False,
                                max_budget=max_budget, ratio=ratio)
     sh.fit(X, y)
@@ -91,7 +102,7 @@ def test_aggressive_elimination():
     assert sh.n_required_iterations_ == 4
     assert sh.n_possible_iterations_ == 4
     assert sh._r_i_list == [20, 60, 180, 540]
-    assert len(sh.remaining_candidates_) == 1
+    assert sh.n_remaining_candidates_ == 1
 
 
 def test_force_exhaust_budget_false():
@@ -106,7 +117,7 @@ def test_force_exhaust_budget_false():
     ratio = 3
 
     # with enough budget
-    sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
                                force_exhaust_budget=False, ratio=ratio)
     sh.fit(X, y)
     assert sh.n_iterations_ == 2
@@ -115,7 +126,7 @@ def test_force_exhaust_budget_false():
     assert sh._r_i_list == [20, 60]
 
     # with enough budget but r_min!='auto': ignored
-    sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
                                force_exhaust_budget=False, ratio=ratio,
                                r_min=50)
     sh.fit(X, y)
@@ -125,7 +136,7 @@ def test_force_exhaust_budget_false():
     assert sh._r_i_list == [50, 150]
 
     # without enough budget (budget is exhausted anyway)
-    sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
                                force_exhaust_budget=False, ratio=ratio,
                                max_budget=30)
     sh.fit(X, y)
@@ -156,9 +167,18 @@ def test_force_exhaust_budget_true(max_budget, r_i_list):
     parameters = {'a': [1, 2], 'b': [1, 2, 3]}
     base_estimator = FastClassifier()
     ratio = 3
-    sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
                                force_exhaust_budget=True, ratio=ratio,
                                max_budget=max_budget)
+    sh.fit(X, y)
+
+    assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh._r_i_list)
+    assert sh._r_i_list == r_i_list
+
+    # Test same for randomized search
+    sh = RandomSuccessiveHalving(base_estimator, parameters, n_candidates=6,
+                                 cv=5, force_exhaust_budget=True,
+                                 ratio=ratio, max_budget=max_budget)
     sh.fit(X, y)
 
     assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh._r_i_list)

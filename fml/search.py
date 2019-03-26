@@ -58,6 +58,38 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
     def _check_input_parameters(self, X, y, groups):
 
+        if (self.budget_on != 'n_samples' and
+                self.budget_on not in self.estimator.get_params()):
+            raise ValueError(
+                'Cannot budget on parameter {} which is not supported '
+                'by estimator {}'.format(self.budget_on,
+                                        self.estimator.__class__.__name__))
+
+        if isinstance(self.max_budget, str) and self.max_budget != 'auto':
+            raise ValueError(
+                "max_budget must be either 'auto' or a positive number"
+            )
+        if self.max_budget != 'auto' and self.max_budget <= 0:
+            raise ValueError(
+                "max_budget must be either 'auto' or a positive number"
+            )
+
+        if isinstance(self.r_min, str) and self.r_min != 'auto':
+            raise ValueError(
+                "r_min must be either 'auto' or a positive number no greater "
+                "than max_budget."
+            )
+        if self.r_min != 'auto' and self.r_min <= 0:
+            raise ValueError(
+                "r_min must be either 'auto' or a positive number no greater "
+                "than max_budget."
+            )
+
+        if self.force_exhaust_budget and self.r_min != 'auto':
+            raise ValueError(
+                'r_min must be set to auto if force_exhaust_budget is True.'
+            )
+
         self.r_min_ = self.r_min
         if self.r_min_ == 'auto':
             if self.budget_on == 'n_samples':
@@ -79,17 +111,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
             if self.budget_on == 'n_samples':
                 self.max_budget_ = X.shape[0]
             else:
-                self.max_budget_ = 20  # FIXME
+                self.max_budget_ = 20  # FIXME  # n_candidates * r_min??
 
         if self.r_min_ > self.max_budget_:
             raise ValueError(
                 'r_min_={} is greater than max_budget_={}.'
                 .format(self.r_min_, self.max_budget_)
-            )
-
-        if self.force_exhaust_budget and self.r_min != 'auto':
-            raise ValueError(
-                'r_min must be set to auto if force_exhaust_budget is True.'
             )
 
     def _run_search(self, evaluate_candidates, X, y, groups):
@@ -104,14 +131,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
         candidate_params = list(self._generate_candidate_params())
         self.n_candidates_ = len(candidate_params)
 
-        if (self.budget_on != 'n_samples' and
-                self.budget_on not in self.estimator.get_params()):
-            raise ValueError(
-                'Cannot budget on parameter {} which is not supported '
-                'by estimator {}'.format(self.budget_on,
-                                         self.estimator.__class__.__name__))
-
-        if any(self.budget_on in candidate for candidate in candidate_params):
+        if self.budget_on != 'n_samples' and any(
+                self.budget_on in candidate for candidate in candidate_params):
+            # Can only check this now since we need the candidates list
             raise ValueError(
                 "Cannot budget on parameter {} since it is part of "
                 "the searched parameters.".format(self.budget_on))
@@ -203,7 +225,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                                            n_candidates_to_keep,
                                            iter_i)
 
-        self.remaining_candidates_ = candidate_params
+        self.n_remaining_candidates_ = len(candidate_params)
         self.n_required_iterations_ = n_required_iterations
         self.n_possible_iterations_ = n_possible_iterations
         self.n_iterations_ = n_iterations

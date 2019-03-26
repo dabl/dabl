@@ -12,6 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import sys
+import os
+
+import sphinx_gallery
 import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -19,13 +23,6 @@ import sphinx_rtd_theme
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
-# -- General configuration ---------------------------------------------------
-
-# Try to override the matplotlib configuration as early as possible
-try:
-    import gen_rst
-except:
-    pass
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -36,15 +33,17 @@ except:
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'numpydoc',
-    'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    # 'sphinx_gallery.gen_gallery'
-
+    'numpydoc',
+    'sphinx_gallery.gen_gallery',
 ]
+
+# this is needed for some reason...
+# see https://github.com/numpy/numpydoc/issues/69
+numpydoc_show_class_members = False
 
 # pngmath / imgmath compatibility layer for different sphinx versions
 import sphinx
@@ -54,14 +53,13 @@ if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
 else:
     extensions.append('sphinx.ext.imgmath')
 
-sphinx_gallery_conf = {
-    # path to your examples scripts
-    'examples_dirs' : '../examples',
-    # path where to save gallery generated examples
-    'gallery_dirs'  : 'auto_examples'}
+autodoc_default_flags = ['members', 'inherited-members']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+# generate autosummary even if no references
+autosummary_generate = True
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -70,7 +68,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # Generate the plots for the gallery
-plot_gallery = False
+plot_gallery = True
 
 # The master toctree document.
 master_doc = 'index'
@@ -98,7 +96,7 @@ version = '0.0.1'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', '_templates']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -117,6 +115,9 @@ exclude_patterns = ['_build']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+
+# Custom style
+html_style = 'css/project-template.css'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
@@ -276,7 +277,6 @@ texinfo_documents = [
    'Miscellaneous'),
 ]
 
-
 # Documents to append as an appendix to all manuals.
 #texinfo_appendices = []
 
@@ -291,4 +291,24 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+# intersphinx configuration
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/{.major}'.format(
+        sys.version_info), None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'matplotlib': ('https://matplotlib.org/', None),
+    'sklearn': ('http://scikit-learn.org/stable', None)
+}
+
+# sphinx-gallery configuration
+sphinx_gallery_conf = {
+    'doc_module': 'skltemplate',
+    'backreferences_dir': os.path.join('generated'),
+    'reference_url': {
+        'skltemplate': None}
+}
+
+def setup(app):
+    # a copy button to copy snippet of code from the documentation
+    app.add_javascript('js/copybutton.js')

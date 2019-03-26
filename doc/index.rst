@@ -7,23 +7,46 @@ Welcome to sklearn-template's documentation!
 ============================================
 
 This project is a reference implementation to anyone who wishes to develop
-scikit-learn compatible classes. It comes with a `template` module which
-contains a single estimator with unit tests.
+scikit-learn compatible classes.
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Getting Started
 
-    .. toctree::
-       :maxdepth: 2
-       
-       api
+   quick_start
 
-See the `README <https://github.com/vighneshbirodkar/project-template/blob/master/README.md>`_
-for more information.
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Documentation
 
+   user_guide
+   api
 
-Indices and tables
-==================
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Tutorial - Examples
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   auto_examples/index
 
+`Getting started <quick_start.html>`_
+-------------------------------------
+
+Information regarding this template and how to modify it for your own project.
+
+`User Guide <user_guide.html>`_
+-------------------------------
+
+An example of narrative documentation.
+
+`API Documentation <api.html>`_
+-------------------------------
+
+An example of API documentation.
+
+`Examples <auto_examples/index.html>`_
+--------------------------------------
+
+A set of examples. It complements the `User Guide <user_guide.html>`_.

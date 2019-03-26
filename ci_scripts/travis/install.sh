@@ -24,15 +24,12 @@ popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-      numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION
+conda create -n testenv --yes python=$PYTHON_VERSION pip pytest matplotlib seaborn\
+      numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION pandas scikit-learn=0.20.*
 
 source activate testenv
 
 
-if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage coveralls
-fi
 
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"

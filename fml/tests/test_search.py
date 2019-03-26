@@ -8,20 +8,6 @@ from sklearn.dummy import DummyClassifier
 from fml.search import GridSuccessiveHalving, RandomSuccessiveHalving
 
 
-parameters = {'kernel': ('linear', 'rbf'), 'C': [1, 10]}
-base_estimator = SVC(gamma='scale')
-
-
-# @pytest.mark.parametrize('sh', (
-#     GridSuccessiveHalving(base_estimator, parameters),
-#     RandomSuccessiveHalving(base_estimator, parameters, n_iter=4)
-# ))
-# def test_basic(sh):
-#     X, y = make_classification(n_samples=1000, random_state=0)
-#     sh.set_params(random_state=0, cv=5)
-#     sh.fit(X, y)
-#     assert sh.score(X, y) > .98
-
 class FastClassifier(DummyClassifier):
     """Dummy classifier that accepts parameters a, b, ... z.
 
@@ -104,8 +90,8 @@ def test_aggressive_elimination():
     assert len(sh.remaining_candidates_) == 1
 
 
-def test_exhaust_budget_false():
-    # Test the exhaust_budget parameter when it's false or ignored.
+def test_force_exhaust_budget_false():
+    # Test the force_exhaust_budget parameter when it's false or ignored.
     # This is the default case: we start at the beginning no matter what since
     # we do not overwrite r_min_
 
@@ -117,7 +103,7 @@ def test_exhaust_budget_false():
 
     # with enough budget
     sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
-                               exhaust_budget=False, ratio=ratio)
+                               force_exhaust_budget=False, ratio=ratio)
     sh.fit(X, y)
     assert sh.n_iterations_ ==  2
     assert sh.n_required_iterations_ ==  2
@@ -126,7 +112,7 @@ def test_exhaust_budget_false():
 
     # with enough budget but r_min!='auto': ignored
     sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
-                               exhaust_budget=False, ratio=ratio,
+                               force_exhaust_budget=False, ratio=ratio,
                                r_min=50)
     sh.fit(X, y)
     assert sh.n_iterations_ ==  2
@@ -136,7 +122,7 @@ def test_exhaust_budget_false():
 
     # without enough budget (budget is exhausted anyway)
     sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
-                               exhaust_budget=False, ratio=ratio,
+                               force_exhaust_budget=False, ratio=ratio,
                                max_budget=30)
     sh.fit(X, y)
     assert sh.n_iterations_ ==  1
@@ -156,8 +142,8 @@ def test_exhaust_budget_false():
     (50, [20]),
     (20, [20]),
 ])
-def test_exhaust_budget_true(max_budget, r_i_list):
-    # Test the exhaust_budget parameter when it's true
+def test_force_exhaust_budget_true(max_budget, r_i_list):
+    # Test the force_exhaust_budget parameter when it's true
     # in this case we need to change r_min so that the last iteration uses as
     # much budget as possible
 
@@ -167,9 +153,74 @@ def test_exhaust_budget_true(max_budget, r_i_list):
     base_estimator = FastClassifier()
     ratio = 3
     sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
-                               exhaust_budget=True, ratio=ratio,
+                               force_exhaust_budget=True, ratio=ratio,
                                max_budget=max_budget)
     sh.fit(X, y)
 
     assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh._r_i_list)
     assert sh._r_i_list == r_i_list
+
+
+@pytest.mark.parametrize(
+    'max_budget, n_iterations, n_possible_iterations', [
+        ('auto', 5, 10),  # whole budget is used
+        (1024, 5, 10),
+        (700, 5, 9),
+        (512, 5, 9),
+        (511, 5, 8),
+        (32, 5, 5),
+        (31, 4, 4),
+        (16, 4, 4),
+        (4, 2, 2),
+        (2, 1, 1),  # max_budget == r_min, only one iteration is possible
+        # (1, 1, 1),  Raises ValueError as expected (r_min > budget)
+    ])
+def test_n_iterations(max_budget, n_iterations, n_possible_iterations):
+    # test the number of actual iterations that were run depending on
+    # max_budget
+
+    n_samples = 1024
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+    parameters = {'a': [1, 2], 'b': list(range(10))}
+    base_estimator = FastClassifier()
+    ratio = 2
+
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5, ratio=ratio,
+                               max_budget=max_budget, r_min=2)
+    sh.fit(X, y)
+    assert sh.n_required_iterations_ ==  5
+    assert sh.n_iterations_ ==  n_iterations
+    assert sh.n_possible_iterations_ ==  n_possible_iterations
+
+
+def test_budget_on():
+    # Test the budget_on parameter
+
+    n_samples = 1000
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+    parameters = {'a': [1, 2], 'b': list(range(10))}
+    base_estimator = FastClassifier()
+    sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
+                               budget_on='c', ratio=3)
+    sh.fit(X, y)
+    assert set(sh._r_i_list) == set([1, 3, 9])
+    for r_i, params, param_c in zip(sh.cv_results_['r_i'],
+                                    sh.cv_results_['params'],
+                                    sh.cv_results_['param_c']):
+        assert r_i == params['c'] == param_c
+
+    with pytest.raises(
+            ValueError,
+            match='Cannot budget on parameter 1234 which is not supported '):
+        sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
+                                   budget_on='1234')
+        sh.fit(X, y)
+
+    with pytest.raises(
+            ValueError,
+            match='Cannot budget on parameter c since it is part of the '
+                  'searched parameters.'):
+        parameters = {'a': [1, 2], 'b': [1, 2], 'c': [1, 3]}
+        sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
+                                   budget_on='c')
+        sh.fit(X, y)

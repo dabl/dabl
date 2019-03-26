@@ -210,7 +210,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 indexes = rng.choice(r_i, X.shape[0])
                 X_iter, y_iter = X[indexes], y[indexes]
             else:
-                candidate_params = deepcopy(candidate_params)
+                # Need copy so that r_i of next iteration do not overwrite
+                candidate_params = [c.copy() for c in candidate_params]
                 for candidate in candidate_params:
                     candidate[self.budget_on] = r_i
                 X_iter, y_iter = X, y

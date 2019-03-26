@@ -30,9 +30,6 @@ conda create -n testenv --yes python=$PYTHON_VERSION pip pytest \
 source activate testenv
 
 
-if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage coveralls
-fi
 
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"

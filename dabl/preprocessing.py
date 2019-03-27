@@ -100,7 +100,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     Integers of intermediate cardinality are labeled as "low_card_int".
     Float variables that sometimes take string values are labeled "dirty_float"
     String variables with many unique values are labeled "free_text"
-    (and currently not processed by fml).
+    (and currently not processed by dabl).
     Date types are labeled as "date" (and currently not processed by dabl).
     Anything that is constant, nearly constant, detected as an integer index,
     or doesn't match any of the above categories is labeled "useless".

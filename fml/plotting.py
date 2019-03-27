@@ -24,6 +24,36 @@ from .preprocessing import detect_types
 
 
 def find_pretty_grid(n_plots, max_cols=5):
+    """Determine a good grid shape for n_plots subplots.
+
+    Tries to find a way to arange n_plots many subplots on a grid in a way
+    that fills as many grid-cells as possible, while keeping the number
+    of rows low and the number of columns below max_cols.
+
+    Parameters
+    ----------
+    n_plots : int
+        Number of plots to arrange.
+    max_cols : int, default=5
+        Maximum number of columns.
+
+    Returns
+    -------
+    n_rows : int
+        Number of rows in grid.
+    n_cols : int
+        Number of columns in grid.
+
+    Examples
+    --------
+    >>> find_pretty_grid(16, 5)
+    (4, 4)
+    >>> find_pretty_grid(11, 5)
+    (3, 4)
+    >>> find_pretty_grid(10, 5)
+    (2, 5)
+    """
+
     # we could probably do something with prime numbers here
     # but looks like that becomes a combinatorial problem again?
     if n_plots % max_cols == 0:
@@ -47,14 +77,31 @@ def find_pretty_grid(n_plots, max_cols=5):
 
 
 def plot_continuous_unsupervised(X):
+    """Not implemented yet"""
     pass
 
 
 def plot_categorical_unsupervised(X):
+    """not implemented yet"""
     pass
 
 
 def _shortname(some_string, maxlen=20):
+    """Shorten a string given a maximum length.
+
+    Longer strings will be shortened and the rest replaced by ...
+
+    Parameters
+    ----------
+    some_string : string
+        Input string to shorten
+    maxlen : int, default=20
+
+    Returns
+    -------
+    return_string : string
+        Output string of size ``min(len(some_string), maxlen)``.
+    """
     some_string = str(some_string)
     if len(some_string) > maxlen:
         return some_string[:maxlen - 3] + "..."
@@ -108,6 +155,7 @@ def _fill_missing_categorical(X):
 
 
 def plot_unsupervised(X, verbose=10):
+    """Not implemented yet"""
     types = detect_types(X)
     # if any dirty floats, tell user to clean them first
     plot_continuous_unsupervised(X.loc[:, types.continous])
@@ -115,6 +163,21 @@ def plot_unsupervised(X, verbose=10):
 
 
 def plot_regression_continuous(X, target_col, types=None):
+    """Exploration plots for continuous features in regression.
+
+    Creates plots of all the continuous features vs the target.
+    Relevant features are determined using F statistics.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
     if types is None:
         types = detect_types(X)
     features = X.loc[:, types.continuous]
@@ -158,6 +221,24 @@ def _make_subplots(n_plots, max_cols=5, row_height=3):
 
 
 def plot_regression_categorical(X, target_col, types=None):
+    """Exploration plots for categorical features in regression.
+
+    Creates box plots of target distribution for important categorical
+    features. Relevant features are identified using mutual information.
+
+    For high cardinality categorical variables (variables with many categories)
+    only the most frequent categories are shown.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
     if types is None:
         types = detect_types(X)
     features = X.loc[:, types.categorical]
@@ -234,6 +315,28 @@ def _discrete_scatter(x, y, c, ax):
 
 
 def plot_classification_continuous(X, target_col, types=None):
+    """Exploration plots for continuous features in classification.
+
+    Selects important continuous features according to F statistics.
+    Creates univariate distribution plots for these, as well as scatterplots
+    for selected pairs of features, and scatterplots for selected pairs of
+    PCA directions.
+    If there are more than 2 classes, scatter plots from Linear Discriminant
+    Analysis are also shown.
+    Scatter plots are determined "interesting" is a decision tree on the
+    two-dimensional projection performs well. The cross-validated macro-average
+    recall of a decision tree is shown in the title for each scatterplot.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
     if types is None:
         types = detect_types(X)
     features = X.loc[:, types.continuous]
@@ -337,6 +440,24 @@ def plot_classification_continuous(X, target_col, types=None):
 
 
 def plot_classification_categorical(X, target_col, types=None, kind='count'):
+    """Exploration plots for categorical features in classification.
+
+    Creates plots of categorical variable distributions for each target class.
+    Relevant features are identified via mutual information.
+
+    For high cardinality categorical variables (variables with many categories)
+    only the most frequent categories are shown.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
     if types is None:
         types = detect_types(X)
     features = X.loc[:, types.categorical]
@@ -398,6 +519,32 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
 
 
 def plot_supervised(X, target_col, types=None, verbose=10):
+    """Exploration plots for classification and regression.
+
+    Determines whether the target is categorical or continuous and plots the
+    target distribution. Then calls the relevant plotting functions
+    accordingly.
+
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    verbose : int, default=10
+        Controls the verbosity (output).
+
+    See also
+    --------
+    plot_regression_continuous
+    plot_regression_categorical
+    plot_classification_continuous
+    plot_classification_categorical
+    """
     if types is None:
         types = detect_types(X)
     # aggressively low_cardinality integers plot better as categorical

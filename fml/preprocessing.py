@@ -42,7 +42,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
             # FIXME use types to distinguish outputs instead?
-            cats["{}_fml_continuous".format(col)] = new_col
+            cats["{}_dabl_continuous".format(col)] = new_col
             result.append(cats)
         return pd.concat(result, axis=1)
 
@@ -238,7 +238,7 @@ def detect_types(X, max_int_cardinality='auto',
 
 
 def select_cont(X):
-    return X.columns.str.endswith("_fml_continuous")
+    return X.columns.str.endswith("_dabl_continuous")
 
 
 def _make_float(X):

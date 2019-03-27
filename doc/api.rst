@@ -2,9 +2,9 @@
 Friendly Machine Learning API
 #############################
 
-This is a list of all functions and classes provided by fml.
+This is a list of all functions and classes provided by dabl.
 
-.. currentmodule:: fml
+.. currentmodule:: dabl
 
 Supervised Models
 =================
@@ -18,7 +18,7 @@ Supervised Models
 Preprocessing
 =============
 
-.. currentmodule:: fml.preprocessing
+.. currentmodule:: dabl.preprocessing
 
 .. autosummary::
    :toctree: generated/
@@ -36,7 +36,7 @@ Preprocessing
 Plotting
 =========
 
-.. currentmodule:: fml.plotting
+.. currentmodule:: dabl.plotting
 .. autosummary::
    :toctree: generated/
    :template: function.rst

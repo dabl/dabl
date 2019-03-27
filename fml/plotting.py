@@ -124,7 +124,7 @@ def _prune_categories(series, max_categories=10):
     series = series.astype('category')
     small_categories = series.value_counts()[max_categories:].index
     res = series.cat.remove_categories(small_categories)
-    res = res.cat.add_categories(['fml_other']).fillna("fml_other")
+    res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
     return res
 
 
@@ -148,7 +148,7 @@ def _fill_missing_categorical(X):
     max_value = X.max(numeric_only=True).max()
     for col in X.columns:
         if X[col].dtype == 'object':
-            X[col].fillna("fml_missing", inplace=True)
+            X[col].fillna("dabl_missing", inplace=True)
         else:
             X[col].fillna(max_value + 1, inplace=True)
     return X

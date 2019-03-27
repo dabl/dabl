@@ -1,4 +1,4 @@
-from fml.models import FriendlyClassifier
+from dabl.models import FriendlyClassifier
 from sklearn.datasets import load_iris
 
 

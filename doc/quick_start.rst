@@ -20,10 +20,10 @@ columns, what do they look like?
     >>> titanic.head()
 
 So far so good! There's already a bunch of things going on in the data that we
-can see here, but let's ask our friendly helper what it thinks by asking fml to
+can see here, but let's ask our friendly helper what it thinks by asking dabl to
 clean up the data:
 
-    >>> titanic_clean = fml.clean(titanic, verbose=0)
+    >>> titanic_clean = dabl.clean(titanic, verbose=0)
 
 This provides us with lots of information about what is happening in the
 different columns. In this case, we might have been able to figure this out
@@ -31,11 +31,11 @@ quickly from the call to head,
 but in larger datasets this might be a bit tricky.
 For example we can see that there are several dirty columns with "?" in it.
 This is probably a marker for a missing value and we could go back and fix our
-parsing of the CSV, but let's try an continue with what fml is doing
-automatically for now.  In fml, we can also get a best guess of the column
+parsing of the CSV, but let's try an continue with what dabl is doing
+automatically for now.  In dabl, we can also get a best guess of the column
 types in a convenient format:
 
-    >>> types = fml.detect_types_dataframe(titanic_clean)
+    >>> types = dabl.detect_types_dataframe(titanic_clean)
     >>> print(types)
 
 Having a very rough idea of the shape of our data, we can now start looking at the actual content.

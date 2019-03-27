@@ -74,7 +74,7 @@ plot_gallery = True
 master_doc = 'index'
 
 # General information about the project.
-project = u'fml'
+project = u'dabl'
 copyright = u'2018, Andreas Mueller'
 
 # The version info for the project you're documenting, acts as replacement for

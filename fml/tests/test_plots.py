@@ -7,8 +7,8 @@ import itertools
 
 from sklearn.datasets import make_regression
 from sklearn.preprocessing import KBinsDiscretizer
-from fml.preprocessing import clean, detect_types
-from fml.plotting import plot_supervised, find_pretty_grid
+from dabl.preprocessing import clean, detect_types
+from dabl.plotting import plot_supervised, find_pretty_grid
 
 
 def test_find_pretty_grid():

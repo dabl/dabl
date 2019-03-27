@@ -3,7 +3,7 @@ Boston Housing Dataset Visualization
 ====================================
 """
 from sklearn.datasets import load_boston
-from fml import plot_supervised
+from dabl import plot_supervised
 import matplotlib.pyplot as plt
 import pandas as pd
 

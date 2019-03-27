@@ -1,5 +1,5 @@
 from sklearn.utils.estimator_checks import check_estimator
-from fml.preprocessing import FriendlyPreprocessor
+from dabl.preprocessing import FriendlyPreprocessor
 import pytest
 
 

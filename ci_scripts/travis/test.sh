@@ -6,5 +6,5 @@ mkdir -p $TEST_DIR
 cd $TEST_DIR
 
 
-pytest --pyargs fml
+pytest --pyargs dabl
 

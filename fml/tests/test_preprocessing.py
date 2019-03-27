@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
 
-from fml.preprocessing import (detect_types, FriendlyPreprocessor,
+from dabl.preprocessing import (detect_types, FriendlyPreprocessor,
                                DirtyFloatCleaner)
 
 

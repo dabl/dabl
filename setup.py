@@ -15,7 +15,7 @@ except ImportError:
     print('scipy is required during installation')
     sys.exit(1)
 
-setup(name='fml',
+setup(name='dabl',
       version='0.0.1',
       description='A Friendlier Machine Learning Library',
       author='Andreas Mueller',

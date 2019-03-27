@@ -266,7 +266,7 @@ def plot_classification_continuous(X, target_col, types=None):
 
         best_features[target_col] = target
         df = best_features.melt(target_col)
-        rows, cols = find_pretty_grid(top_k)
+        rows, cols = find_pretty_grid(show_top)
         g = sns.FacetGrid(df, col='variable', hue=target_col, col_wrap=cols,
                           sharey=False, sharex=False)
         g = g.map(sns.kdeplot, "value", shade=True)

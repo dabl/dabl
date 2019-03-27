@@ -245,8 +245,8 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def cleanup(X, type_hints=None, unsafe=False):
-    """Public cleanup interface
+def clean(X, type_hints=None, unsafe=False):
+    """Public clean interface
 
     Parameters
     ----------
@@ -260,7 +260,7 @@ def cleanup(X, type_hints=None, unsafe=False):
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
     # get rid of dirty floats, add indicators
-    X = _safe_cleanup(X, types=types)
+    X = _safe_clean(X, types=types)
     # deal with low cardinality ints
     for col in types.index[types.low_card_int]:
         # for now let's just check for smooth distributions
@@ -275,7 +275,7 @@ def cleanup(X, type_hints=None, unsafe=False):
     return X
 
 
-def _safe_cleanup(X, onehot=False, types=None):
+def _safe_clean(X, onehot=False, types=None):
     """Cleaning / preprocessing outside of cross-validation
 
     FIXME this leads to duplicating integer columns! no good!

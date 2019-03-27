@@ -187,30 +187,28 @@ def test_force_exhaust_budget_true(max_budget, r_i_list):
 
 @pytest.mark.parametrize(
     'max_budget, n_iterations, n_possible_iterations', [
-        ('auto', 5, 10),  # whole budget is used
-        (1024, 5, 10),
-        (700, 5, 9),
-        (512, 5, 9),
-        (511, 5, 8),
-        (32, 5, 5),
-        (31, 4, 4),
-        (16, 4, 4),
-        (4, 2, 2),
-        (2, 1, 1),  # max_budget == r_min, only one iteration is possible
-        # (1, 1, 1),  Raises ValueError as expected (r_min > budget)
+        ('auto', 5, 9),  # whole budget is used
+        (1024, 5, 9),
+        (700, 5, 8),
+        (512, 5, 8),
+        (511, 5, 7),
+        (32, 4, 4),
+        (31, 3, 3),
+        (16, 3, 3),
+        (4, 1, 1),   # max_budget == r_min, only one iteration is possible
     ])
 def test_n_iterations(max_budget, n_iterations, n_possible_iterations):
     # test the number of actual iterations that were run depending on
     # max_budget
 
     n_samples = 1024
-    X, y = make_classification(n_samples=n_samples, random_state=0)
+    X, y = make_classification(n_samples=n_samples, random_state=1)
     parameters = {'a': [1, 2], 'b': list(range(10))}
     base_estimator = FastClassifier()
     ratio = 2
 
     sh = GridSuccessiveHalving(base_estimator, parameters, cv=2, ratio=ratio,
-                               max_budget=max_budget, r_min=2)
+                               max_budget=max_budget, r_min=4)
     sh.fit(X, y)
     assert sh.n_required_iterations_ == 5
     assert sh.n_iterations_ == n_iterations
@@ -252,11 +250,11 @@ def test_budget_on():
 
 @pytest.mark.parametrize(
     'max_budget, n_candidates, expected_n_candidates_', [
-        (512, 'auto', 256),  # generate exactly as much as needed
-        (32, 'auto', 16),
-        (32, 16, 16),
-        (32, 15, 15),  # ask for less than what we could
-        (32, 17, 17),  # ask for more than 'reasonable'
+        (512, 'auto', 128),  # generate exactly as much as needed
+        (32, 'auto', 8),
+        (32, 8, 8),
+        (32, 7, 7),  # ask for less than what we could
+        (32, 9, 9),  # ask for more than 'reasonable'
     ])
 def test_random_search(max_budget, n_candidates, expected_n_candidates_):
     # Test random search and make sure the number of generated candidates is as
@@ -269,7 +267,7 @@ def test_random_search(max_budget, n_candidates, expected_n_candidates_):
     sh = RandomSuccessiveHalving(base_estimator, parameters,
                                  n_candidates=n_candidates,
                                  cv=2,
-                                 max_budget=max_budget, ratio=2, r_min=2)
+                                 max_budget=max_budget, ratio=2, r_min=4)
     sh.fit(X, y)
     assert sh.n_candidates_ == expected_n_candidates_
     if n_candidates == 'auto':

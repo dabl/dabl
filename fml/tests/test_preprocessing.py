@@ -1,9 +1,14 @@
 import os
-from fml.preprocessing import (detect_types_dataframe, FriendlyPreprocessor,
-                               DirtyFloatCleaner)
+import string
+import random
+
 import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
+
+from fml.preprocessing import (detect_types_dataframe, FriendlyPreprocessor,
+                               DirtyFloatCleaner)
+
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
                       'second': ['word', 'no', ''],
@@ -13,6 +18,7 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME features that are always missing are constant!
 # FIXME need to test dealing with categorical dtype
 # FIXME make sure in plotting single axes objects work everywhere (ravel issue)
+# FIXME Fail early on duplicate column names!!!
 
 
 def make_dirty_float():
@@ -32,7 +38,54 @@ def test_detect_constant():
     res = detect_types_dataframe(X)
     assert res.useless.sum() == 4
 
+
 def test_detect_types_dataframe():
+    def random_str(length=7):
+        return "".join([random.choice(string.ascii_letters)
+                        for i in range(length)])
+
+    near_constant_float = np.repeat(np.pi, repeats=100)
+    near_constant_float[:2] = 0
+
+    df_all = pd.DataFrame(
+        {'categorical_string': ['a', 'b'] * 50,
+         'binary_int': np.random.randint(0, 2, size=100),
+         'categorical_int': np.random.randint(0, 4, size=100),
+         'low_card_float': np.random.randint(0, 4, size=100).astype(np.float),
+         'binary_float': np.random.randint(0, 2, size=100).astype(np.float),
+         'cont_int': np.repeat(np.arange(50), 2),
+         'unique_string': [random_str() for i in range(100)],
+         'continuous_float': np.random.normal(size=100),
+         'constant_nan': np.repeat(np.NaN, repeats=100),
+         'constant_string': ['every_day'] * 100,
+         'constant_float': np.repeat(np.pi, repeats=100),
+         'near_constant_float': near_constant_float,
+         'index_0_based': np.arange(100),
+         'index_1_based': np.arange(1, 101),
+         'index_shuffled': np.random.permutation(100)
+         })
+    res = detect_types_dataframe(df_all)
+    types = res.T.idxmax()
+    assert types['categorical_string'] == 'categorical'
+    assert types['binary_int'] == 'categorical'
+    assert types['categorical_int'] == 'categorical'
+    # assert types['low_card_int_binomial'] == 'continuous'
+    # a bit inconsistent: we're treating cardinality 2
+    # floats as categorical but cardinality 3 or 4 not
+    assert types['low_card_float'] == 'continuous'
+    assert types['binary_float'] == 'categorical'
+    assert types['cont_int'] == 'continuous'
+    assert types['unique_string'] == 'free_string'
+    assert types['continuous_float'] == 'continuous'
+    assert types['constant_nan'] == 'useless'
+    assert types['constant_string'] == 'useless'
+    assert types['constant_float'] == 'useless'
+    assert types['near_constant_float'] == 'useless'
+    assert types['index_0_based'] == 'useless'
+    assert types['index_1_based'] == 'useless'
+    # Not detecting a shuffled index right now :-/
+    assert types['index_shuffled'] == 'continuous'
+
     res = detect_types_dataframe(X_cat)
     assert len(res) == 3
     assert res.categorical.all()
@@ -42,6 +95,26 @@ def test_detect_types_dataframe():
     res_iris = detect_types_dataframe(pd.DataFrame(iris.data))
     assert (res_iris.sum(axis=1) == 1).all()
     assert res_iris.continuous.sum() == 4
+
+
+def test_detect_low_cardinality_int():
+    df_all = pd.DataFrame(
+        {
+         'binary_int': np.random.randint(0, 2, size=1000),
+         'categorical_int': np.random.randint(0, 4, size=1000),
+         'low_card_int_uniform': np.random.randint(0, 20, size=1000),
+         'low_card_int_binomial': np.random.binomial(20, .3, size=1000),
+         'cont_int': np.repeat(np.arange(500), 2),
+        })
+
+    res = detect_types_dataframe(df_all)
+    types = res.T.idxmax()
+
+    assert types['binary_int'] == 'categorical'
+    assert types['categorical_int'] == 'categorical'
+    assert types['low_card_int_uniform'] == 'low_card_int'
+    assert types['low_card_int_binomial'] == 'low_card_int'
+    assert types['cont_int'] == 'continuous'
 
 
 def test_detect_string_floats():
@@ -124,7 +197,7 @@ def test_titanic_detection():
     true_types = [
         'dirty_float', 'categorical', 'dirty_float', 'free_string',
         'categorical', 'dirty_float', 'free_string', 'free_string',
-        'low_card_int', 'low_card_int',
+        'low_card_int', 'categorical',
         'categorical', 'low_card_int', 'categorical', 'free_string']
     assert (types == true_types).all()
     titanic_nan = pd.read_csv(os.path.join(path, 'titanic.csv'), na_values='?')

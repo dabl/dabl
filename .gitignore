@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.vscode
 
 # C extensions
 *.so
@@ -71,3 +72,5 @@ pipe_cache
 some_cache
 .ipynb_checkpoints/
 .vscode/.ropeproject/objectdb
+.vscode
+doc/generated

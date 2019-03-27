@@ -47,11 +47,23 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return pd.concat(result, axis=1)
 
 
-def guess_ordinal():
+def guess_ordinal(values):
     # compare against http://proceedings.mlr.press/v70/valera17a/valera17a.pdf
     # there's some ways to guess month, day, week, year
     # but even if we have that, is that ordinal or categorical?
-    pass
+    # worst hack in the history of probability distributions, maybe ever
+    # we compute second derivatives on the histogram. If they look smoother
+    # than the shuffled histograms, we assume order is meaningful
+    # why second derivatives? Why absolute norms? Why 1.5? good questions!
+    counts = np.bincount(values)
+
+    def norm(x):
+        return np.abs(np.diff(np.diff(x))).sum()
+    grad_norm = norm(counts)
+    # shuffle 100 times
+    grad_norm_shuffled = np.mean([
+        norm(counts[np.random.permutation(len(counts))]) for i in range(100)])
+    return grad_norm * 1.5 < grad_norm_shuffled
 
 
 def _find_string_floats(X, dirty_float_threshold):
@@ -74,7 +86,8 @@ def _find_string_floats(X, dirty_float_threshold):
 
 
 def detect_types_dataframe(X, max_int_cardinality='auto',
-                           dirty_float_threshold=.9, verbose=0):
+                           dirty_float_threshold=.9,
+                           near_constant_threshold=.95, verbose=0):
     """
     Parameters
     ----------
@@ -108,6 +121,10 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     date
     useless
     """
+    duplicated = X.columns.duplicated()
+    if duplicated.any():
+        raise ValueError("Duplicate Columns: {}".format(
+            X.columns[duplicated]))
     # FIXME integer indices are not dropped!
     # TODO: detect near constant features, nearly always missing (same?)
     # TODO detect encoding missing values as strings /weird values
@@ -131,6 +148,7 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
     integers = (kinds == "i") | (kinds == "u")
     useless = pd.Series(0, index=X.columns, dtype=bool)
 
+    # check if we have something that trivially is an index
     suspicious_index = (n_values == X.shape[0]) & integers
     if suspicious_index.any():
         warn_for = []
@@ -163,26 +181,35 @@ def detect_types_dataframe(X, max_int_cardinality='auto',
         dirty_float = clean_float_string = pd.Series(0, index=X.columns,
                                                      dtype=bool)
 
-    # using categories as integers is not that bad usually
-    # cont_integers = integers.copy()
-    # using integers as categories only if low cardinality
+    # using integers or string as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
     # constant features are useless
     useless = (n_values < 2) | useless
+    # also throw out near constant:
+    most_common_count = X.apply(lambda x: x.value_counts().max())
+    near_constant = most_common_count / X.count() > near_constant_threshold
+    if near_constant.any():
+        warn("Discarding near constant features: {}".format(
+             near_constant.index[near_constant].tolist()))
+    useless = useless | near_constant
     large_cardinality_int = integers & ~few_entries
-    # dirty, dirty hack.
-    # will still be "continuous"
-    # WTF is going on with binary FIXME
     binary = n_values == 2
-    cat_integers = few_entries & integers & ~binary & ~useless
+    # hard coded very low cardinality integers are categorical
+    cat_integers = integers & (n_values <= 5) & ~useless
+    low_card_integers = (few_entries & integers
+                         & ~binary & ~useless & ~cat_integers)
     non_float_objects = objects & ~dirty_float & ~clean_float_string
     cat_string = few_entries & non_float_objects & ~useless
     free_strings = ~few_entries & non_float_objects
     continuous = floats | large_cardinality_int | clean_float_string
+
     res = pd.DataFrame(
         {'continuous': continuous & ~binary & ~useless,
-         'dirty_float': dirty_float, 'low_card_int': cat_integers,
-         'categorical': cat_string | binary | categorical, 'date': dates,
+         'dirty_float': dirty_float,
+         'low_card_int': low_card_integers,
+         'categorical': ((cat_string | binary | categorical | cat_integers)
+                         & ~useless),
+         'date': dates,
          'free_string': free_strings, 'useless': useless,
          })
     res = res.fillna(False)

@@ -32,12 +32,14 @@ def make_dirty_float():
 
 
 def test_duplicate_index():
-    X_cat.index = np.ones(len(X_cat), np.int)
+    X = X_cat.copy()
+    X.index = np.ones(len(X), np.int)
+    assert not X.index.is_unique
     with pytest.raises(ValueError):
-        detect_types(X_cat)
+        detect_types(X)
     with pytest.warns(UserWarning):
-        X = clean(X_cat)
-    assert X.index.is_unique
+        X_clean = clean(X)
+    assert X_clean.index.is_unique
 
 
 def test_detect_constant():

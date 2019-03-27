@@ -25,6 +25,9 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
+    refit : boolean, False
+        Whether to refit the model on the full dataset (I think).
+
     verbose : integer, default=1
         Verbosity (higher is more output)
     """
@@ -79,8 +82,10 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
                                             class_weight="balanced"),
                      DecisionTreeClassifier(max_depth=max(5, n_classes),
                                             class_weight="balanced"),
-                     DecisionTreeClassifier(class_weight="balanced", min_impurity_decrease=.01),
-                     LogisticRegression(C=.1, solver='lbfgs', class_weight='balanced')
+                     DecisionTreeClassifier(class_weight="balanced",
+                                            min_impurity_decrease=.01),
+                     LogisticRegression(C=.1, solver='lbfgs',
+                                        class_weight='balanced')
                      ]
 
         scorers, _ = _check_multimetric_scoring(fast_ests[1],
@@ -128,7 +133,8 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
             name = nice_repr(estimator)
         if self.verbose:
             print(name)
-            res_string = "".join("{}: {:.4f}    ".format(m, s) for m, s in res_mean.items())
+            res_string = "".join("{}: {:.4f}    ".format(m, s)
+                                 for m, s in res_mean.items())
             print(res_string)
         res_mean.name = name
         self.log_.append(res_mean)

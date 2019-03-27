@@ -20,7 +20,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from statsmodels.graphics.mosaicplot import mosaic
 
-from .preprocessing import detect_types_dataframe
+from .preprocessing import detect_types
 
 
 def find_pretty_grid(n_plots, max_cols=5):
@@ -108,7 +108,7 @@ def _fill_missing_categorical(X):
 
 
 def plot_unsupervised(X, verbose=10):
-    types = detect_types_dataframe(X)
+    types = detect_types(X)
     # if any dirty floats, tell user to clean them first
     plot_continuous_unsupervised(X.loc[:, types.continous])
     plot_categorical_unsupervised(X.loc[:, types.categorical])
@@ -116,7 +116,7 @@ def plot_unsupervised(X, verbose=10):
 
 def plot_regression_continuous(X, target_col, types=None):
     if types is None:
-        types = detect_types_dataframe(X)
+        types = detect_types(X)
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -159,7 +159,7 @@ def _make_subplots(n_plots, max_cols=5, row_height=3):
 
 def plot_regression_categorical(X, target_col, types=None):
     if types is None:
-        types = detect_types_dataframe(X)
+        types = detect_types(X)
     features = X.loc[:, types.categorical]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -235,7 +235,7 @@ def _discrete_scatter(x, y, c, ax):
 
 def plot_classification_continuous(X, target_col, types=None):
     if types is None:
-        types = detect_types_dataframe(X)
+        types = detect_types(X)
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -338,7 +338,7 @@ def plot_classification_continuous(X, target_col, types=None):
 
 def plot_classification_categorical(X, target_col, types=None, kind='count'):
     if types is None:
-        types = detect_types_dataframe(X)
+        types = detect_types(X)
     features = X.loc[:, types.categorical]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -399,7 +399,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
 
 def plot_supervised(X, target_col, types=None, verbose=10):
     if types is None:
-        types = detect_types_dataframe(X)
+        types = detect_types(X)
     # aggressively low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:

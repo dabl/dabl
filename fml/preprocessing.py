@@ -85,7 +85,7 @@ def _find_string_floats(X, dirty_float_threshold):
     return clean_float_string, dirty_float
 
 
-def detect_types_dataframe(X, max_int_cardinality='auto',
+def detect_types(X, max_int_cardinality='auto',
                            dirty_float_threshold=.9,
                            near_constant_threshold=.95, verbose=0):
     """
@@ -245,8 +245,8 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def cleanup(X, type_hints=None, unsafe=False):
-    """Public cleanup interface
+def clean(X, type_hints=None, unsafe=False):
+    """Public clean interface
 
     Parameters
     ----------
@@ -256,11 +256,11 @@ def cleanup(X, type_hints=None, unsafe=False):
     unsafe : bool, default=False
         Whether to adhere to type_hints that seem inconsistent with the data.
     """
-    types = detect_types_dataframe(X)
+    types = detect_types(X)
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
     # get rid of dirty floats, add indicators
-    X = _safe_cleanup(X, types=types)
+    X = _safe_clean(X, types=types)
     # deal with low cardinality ints
     for col in types.index[types.low_card_int]:
         # for now let's just check for smooth distributions
@@ -269,13 +269,13 @@ def cleanup(X, type_hints=None, unsafe=False):
     # we could certainly do this nicer, but at this point calling
     # detect_types shouldn't be expensive any more
     # though if we have actual string columns that are free strings... hum
-    types = detect_types_dataframe(X)
+    types = detect_types(X)
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
     return X
 
 
-def _safe_cleanup(X, onehot=False, types=None):
+def _safe_clean(X, onehot=False, types=None):
     """Cleaning / preprocessing outside of cross-validation
 
     FIXME this leads to duplicating integer columns! no good!
@@ -301,7 +301,7 @@ def _safe_cleanup(X, onehot=False, types=None):
         Slightly cleaner dataframe.
     """
     if types is None:
-        types = detect_types_dataframe(X)
+        types = detect_types(X)
     res = []
     if types['dirty_float'].any():
         # don't use ColumnTransformer that can't return dataframe yet
@@ -383,7 +383,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         self.dtypes_ = X.dtypes
         if self.types is None:
             # FIXME some sanity check?
-            types = detect_types_dataframe(X, verbose=self.verbose)
+            types = detect_types(X, verbose=self.verbose)
         else:
             types = self.types
 

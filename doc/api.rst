@@ -1,8 +1,8 @@
-####################
-project-template API
-####################
+#############################
+Friendly Machine Learning API
+#############################
 
-This is an example on how to document the API of your own project.
+This is a list of all functions and classes provided by fml.
 
 .. currentmodule:: fml
 

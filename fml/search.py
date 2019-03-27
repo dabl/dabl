@@ -128,7 +128,10 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
         )
         rng = check_random_state(self.random_state)
 
-        candidate_params = list(self._generate_candidate_params())
+        candidate_params = self._generate_candidate_params()
+        # Remove duplicates (may happen with random sampling)
+        candidate_params = set(tuple(d.items()) for d in candidate_params)
+        candidate_params = [dict(t) for t in candidate_params]
         self.n_candidates_ = len(candidate_params)
 
         if self.budget_on != 'n_samples' and any(
@@ -207,7 +210,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
                 # subsampling should be stratified. We can't use
                 # train_test_split because it complains about testset being too
                 # small in some cases
-                indexes = rng.choice(r_i, X.shape[0])
+                indexes = rng.choice(X.shape[0], r_i)
                 X_iter, y_iter = X[indexes], y[indexes]
             else:
                 # Need copy so that r_i of next iteration do not overwrite

@@ -3,13 +3,13 @@ from abc import abstractmethod
 from copy import deepcopy
 
 import numpy as np
-from sklearn.model_selection._search import BaseSearchCV
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.utils import check_random_state
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
 
+from ._search import CustomBaseSearchCV
 
 __all__ = ['GridSuccessiveHalving', 'RandomSuccessiveHalving']
 
@@ -26,7 +26,7 @@ def _refit_callable(results):
     return best_index
 
 
-class BaseSuccessiveHalving(BaseSearchCV):
+class BaseSuccessiveHalving(CustomBaseSearchCV):
     """Implements successive halving.
 
     Ref:

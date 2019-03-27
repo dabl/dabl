@@ -20,7 +20,7 @@ Cs = [1, 10, 100, 1e3, 1e4, 1e5]
 param_grid = {'gamma': gammas, 'C': Cs}
 
 clf = SVC(random_state=rng)
-rsh = GridSuccessiveHalving(
+gsh = GridSuccessiveHalving(
     estimator=clf,
     param_grid=param_grid,
     budget_on='n_samples',  # budget is the number of samples
@@ -29,9 +29,9 @@ rsh = GridSuccessiveHalving(
     cv=5,
     ratio=2,
     random_state=rng)
-rsh.fit(X, y)
+gsh.fit(X, y)
 
-results = pd.DataFrame.from_dict(rsh.cv_results_)
+results = pd.DataFrame.from_dict(gsh.cv_results_)
 results['params_str'] = results.params.apply(str)
 iterations = results.groupby(['param_gamma', 'param_C']).iter.max()
 iterations_matrix = iterations.values.reshape(len(gammas), len(Cs))
@@ -59,8 +59,8 @@ plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
 # Loop over data dimensions and create text annotations.
 for i in range(len(gammas)):
     for j in range(len(Cs)):
-        text = ax.text(j, i, iterations_matrix[i, j],
-                       ha="center", va="center", color="w", fontsize=20)
+        ax.text(j, i, iterations_matrix[i, j],
+                ha="center", va="center", color="w", fontsize=20)
 
 ax.set_title("Highest score and highest reached iteration for each "
              "parameter combination")

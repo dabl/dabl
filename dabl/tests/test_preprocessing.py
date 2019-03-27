@@ -20,6 +20,8 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME need to test dealing with categorical dtype
 # FIXME make sure in plotting single axes objects work everywhere (ravel issue)
 # FIXME Fail early on duplicate column names!!!
+# TODO add test that weird missing values in strings are correctly interpreted
+# TODO test non-trivial case of EasyPreprocessor?!"!"
 
 
 def make_dirty_float():
@@ -29,6 +31,15 @@ def make_dirty_float():
     dirty[::12] = "missing"
     dirty.iloc[3, 0] = "garbage"
     return dirty
+
+
+def test_duplicate_columns():
+    X = pd.DataFrame([[0, 1]], columns=['a', 'a'])
+    with pytest.raises(ValueError, match="Duplicate Columns"):
+        clean(X)
+
+    with pytest.raises(ValueError, match="Duplicate Columns"):
+        detect_types(X)
 
 
 def test_duplicate_index():
@@ -193,14 +204,6 @@ def test_simple_preprocessor_dirty_float():
 
     # make sure we can transform a clean column
     fp.transform(pd.DataFrame(['0', '1', '2'], columns=['a_column']))
-
-
-# TODO add tests that floats as strings are correctly interpreted
-# TODO add test that weird missing values in strings are correctly interpreted
-# TODO check that we detect ID columns
-# TODO test for weirdly indexed dataframes
-# TODO test select cont
-# TODO test non-trivial case of EasyPreprocessor?!"!"
 
 
 def test_titanic_detection():

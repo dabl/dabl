@@ -72,3 +72,5 @@ pipe_cache
 some_cache
 .ipynb_checkpoints/
 .vscode/.ropeproject/objectdb
+.vscode
+doc/generated

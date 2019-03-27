@@ -10,7 +10,7 @@ from fml import RandomSuccessiveHalving
 
 rng = np.random.RandomState(0)
 
-X, y = datasets.make_classification(n_samples=1024, random_state=rng)
+X, y = datasets.make_classification(n_samples=700, random_state=rng)
 
 clf = RandomForestClassifier(n_estimators=20, random_state=rng)
 
@@ -35,8 +35,11 @@ results = pd.DataFrame(rsh.cv_results_)
 results['params_str'] = results.params.apply(str)
 mean_scores = results.pivot(index='iter', columns='params_str',
                             values='mean_test_score')
-mean_scores.plot(legend=False, alpha=.6)
+ax = mean_scores.plot(legend=False, alpha=.6)
 
-plt.title('Candidate scores over iterations')
-plt.ylabel('score')
+labels = ['{}\nn_samples={}'.format(i, rsh._r_i_list[i])
+          for i in range(rsh.n_iterations_)]
+ax.set_xticklabels(labels)
+ax.set_title('Candidate scores over iterations')
+ax.set_ylabel('score')
 plt.show()

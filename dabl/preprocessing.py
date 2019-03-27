@@ -86,23 +86,39 @@ def _find_string_floats(X, dirty_float_threshold):
 
 
 def detect_types(X, max_int_cardinality='auto',
-                           dirty_float_threshold=.9,
-                           near_constant_threshold=.95, verbose=0):
-    """
+                 dirty_float_threshold=.9,
+                 near_constant_threshold=.95, verbose=0):
+    """Detect types of dataframe columns.
+
+    Columns are labeled as one of the following types:
+    'continuous', 'categorical', 'low_card_int', 'dirty_float',
+    'free_string', 'date', 'useless'
+
+    Pandas categorical variables, strings and integers of low cardinality and
+    float values with two columns are labeled as categorical.
+    Integers of high cardinality are labeled as continuous.
+    Integers of intermediate cardinality are labeled as "low_card_int".
+    Float variables that sometimes take string values are labeled "dirty_float"
+    String variables with many unique values are labeled "free_text"
+    (and currently not processed by fml).
+    Date types are labeled as "date" (and currently not processed by dabl).
+    Anything that is constant, nearly constant, detected as an integer index,
+    or doesn't match any of the above categories is labeled "useless".
+
     Parameters
     ----------
     X : dataframe
         input
 
-    dirty_float_threshold : float, default=.9
-        The fraction of floats required in a dirty continuous
-        column before it's considered "useless" or categorical
-        (after removing top 5 string values)
-
     max_int_cardinality: int or 'auto', default='auto'
         Maximum number of distinct integers for an integer column
         to be considered categorical. 'auto' is ``max(42, n_samples/10)``.
         Integers are also always considered as continuous variables.
+
+    dirty_float_threshold : float, default=.9
+        The fraction of floats required in a dirty continuous
+        column before it's considered "useless" or categorical
+        (after removing top 5 string values)
 
     verbose : int
         How verbose to be
@@ -255,6 +271,7 @@ def clean(X, type_hints=None, unsafe=False):
         Keys are column names, values are types as provided by detect_types.
     unsafe : bool, default=False
         Whether to adhere to type_hints that seem inconsistent with the data.
+        Ignored for now?
     """
     types = detect_types(X)
     for col in types.index[types.categorical]:

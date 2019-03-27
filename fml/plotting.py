@@ -89,7 +89,7 @@ def _prune_category_make_X(X, col, target_col):
         X_new = X[[target_col]].copy()
         X_new[col] = col_values
     else:
-        X_new = X
+        X_new = X.copy()
         X_new[col] = X_new[col].astype('category')
     return X_new
 
@@ -266,8 +266,8 @@ def plot_classification_continuous(X, target_col, types=None):
 
         best_features[target_col] = target
         df = best_features.melt(target_col)
-
-        g = sns.FacetGrid(df, col='variable', hue=target_col, col_wrap=5,
+        rows, cols = find_pretty_grid(top_k)
+        g = sns.FacetGrid(df, col='variable', hue=target_col, col_wrap=cols,
                           sharey=False, sharex=False)
         g = g.map(sns.kdeplot, "value", shade=True)
         # FIXME remove "variable = " from title, add f score
@@ -385,6 +385,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
             # labelizer=lambda k: counts.loc[k[0], k[1]])
         elif kind == 'count':
             # absolute counts
+            # FIXME show f value
+            # FIXME shorten titles?
             sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
         else:
             raise ValueError("Unknown plot kind {}".format(kind))

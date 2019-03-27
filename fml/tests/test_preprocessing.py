@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
 
-from fml.preprocessing import (detect_types_dataframe, FriendlyPreprocessor,
+from fml.preprocessing import (detect_types, FriendlyPreprocessor,
                                DirtyFloatCleaner)
 
 
@@ -35,11 +35,11 @@ def test_detect_constant():
                       'second': ['no', 'no', 'no', 'no'],
                       'b': [0.0, 0.0, 0.0, 0],
                       'weird': ['0', '0', '0', '0']})
-    res = detect_types_dataframe(X)
+    res = detect_types(X)
     assert res.useless.sum() == 4
 
 
-def test_detect_types_dataframe():
+def test_detect_types():
     def random_str(length=7):
         return "".join([random.choice(string.ascii_letters)
                         for i in range(length)])
@@ -64,7 +64,7 @@ def test_detect_types_dataframe():
          'index_1_based': np.arange(1, 101),
          'index_shuffled': np.random.permutation(100)
          })
-    res = detect_types_dataframe(df_all)
+    res = detect_types(df_all)
     types = res.T.idxmax()
     assert types['categorical_string'] == 'categorical'
     assert types['binary_int'] == 'categorical'
@@ -86,13 +86,13 @@ def test_detect_types_dataframe():
     # Not detecting a shuffled index right now :-/
     assert types['index_shuffled'] == 'continuous'
 
-    res = detect_types_dataframe(X_cat)
+    res = detect_types(X_cat)
     assert len(res) == 3
     assert res.categorical.all()
     assert ~res.continuous.any()
 
     iris = load_iris()
-    res_iris = detect_types_dataframe(pd.DataFrame(iris.data))
+    res_iris = detect_types(pd.DataFrame(iris.data))
     assert (res_iris.sum(axis=1) == 1).all()
     assert res_iris.continuous.sum() == 4
 
@@ -107,7 +107,7 @@ def test_detect_low_cardinality_int():
          'cont_int': np.repeat(np.arange(500), 2),
         })
 
-    res = detect_types_dataframe(df_all)
+    res = detect_types(df_all)
     types = res.T.idxmax()
 
     assert types['binary_int'] == 'categorical'
@@ -128,13 +128,13 @@ def test_detect_string_floats():
     # FIXME whitespace?
     dirty[::12] = "missing"
     # only dirty:
-    res = detect_types_dataframe(pd.DataFrame(dirty))
+    res = detect_types(pd.DataFrame(dirty))
     assert len(res) == 1
     assert res.dirty_float[0]
 
     # dirty and clean
     X = pd.DataFrame({'a': cont_clean, 'b': dirty})
-    res = detect_types_dataframe(X)
+    res = detect_types(X)
     assert len(res) == 2
     assert res.continuous['a']
     assert ~res.continuous['b']
@@ -192,7 +192,7 @@ def test_simple_preprocessor_dirty_float():
 def test_titanic_detection():
     path = os.path.dirname(__file__)
     titanic = pd.read_csv(os.path.join(path, 'titanic.csv'))
-    types_table = detect_types_dataframe(titanic)
+    types_table = detect_types(titanic)
     types = types_table.T.idxmax()
     true_types = [
         'dirty_float', 'categorical', 'dirty_float', 'free_string',
@@ -201,7 +201,7 @@ def test_titanic_detection():
         'categorical', 'low_card_int', 'categorical', 'free_string']
     assert (types == true_types).all()
     titanic_nan = pd.read_csv(os.path.join(path, 'titanic.csv'), na_values='?')
-    types_table = detect_types_dataframe(titanic_nan)
+    types_table = detect_types(titanic_nan)
     types = types_table.T.idxmax()
     true_types_clean = [t if t != 'dirty_float' else 'continuous'
                         for t in true_types]

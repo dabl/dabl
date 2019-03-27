@@ -7,7 +7,7 @@ import itertools
 
 from sklearn.datasets import make_regression
 from sklearn.preprocessing import KBinsDiscretizer
-from fml.preprocessing import clean, detect_types_dataframe
+from fml.preprocessing import clean, detect_types
 from fml.plotting import plot_supervised, find_pretty_grid
 
 
@@ -56,7 +56,7 @@ def test_plots_smoke(continuous_features, categorical_features, task):
     X_clean['target'] = y
     if task == "classification":
         X_clean['target'] = X_clean['target'].astype('category')
-    types = detect_types_dataframe(X_clean)
+    types = detect_types(X_clean)
     column_types = types.T.idxmax()
     assert np.all(column_types[:continuous_features] == 'continuous')
     assert np.all(column_types[continuous_features:-1] == 'categorical')

@@ -85,7 +85,7 @@ def _find_string_floats(X, dirty_float_threshold):
     return clean_float_string, dirty_float
 
 
-def detect_types(X, max_int_cardinality='auto',
+def detect_types(X, type_hints=None, max_int_cardinality='auto',
                  dirty_float_threshold=.9,
                  near_constant_threshold=.95, verbose=0):
     """Detect types of dataframe columns.
@@ -125,32 +125,25 @@ def detect_types(X, max_int_cardinality='auto',
 
     Returns
     -------
-    res : dataframe
-        boolean dataframe of detected types.
-
-    recognized types:
-    continuous
-    categorical
-    low cardinality int
-    dirty float string
-    dirty category string TODO
-    date
-    useless
+    res : dataframe, shape (n_columns, 7)
+        Boolean dataframe of detected types. Rows are columns in input X,
+        columns are possible types (see above).
     """
+    # FIXME integer indices are not dropped!
+    # TODO detect encoding missing values as strings /weird values
+    # TODO detect top coding
+    # FIXME dirty int is detected as dirty float right now
+    # TODO discard all constant and binary columns at the beginning?
+    # TODO subsample large datsets? one level up?
+
     if not X.index.is_unique:
         raise ValueError("Non-unique index found. Reset index or call clean.")
     duplicated = X.columns.duplicated()
     if duplicated.any():
         raise ValueError("Duplicate Columns: {}".format(
             X.columns[duplicated]))
-    # FIXME integer indices are not dropped!
-    # TODO: detect near constant features, nearly always missing (same?)
-    # TODO detect encoding missing values as strings /weird values
-    # TODO detect top coding
-    # FIXME dirty int is detected as dirty float right now
-    # TODO discard all constant and binary columns at the beginning?
+    X = _apply_type_hints(X, type_hints=type_hints)
 
-    # TODO subsample large datsets? one level up?
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
         max_int_cardinality = max(42, n_samples / 100)
@@ -158,6 +151,14 @@ def detect_types(X, max_int_cardinality='auto',
     n_values = X.apply(lambda x: x.nunique())
     if verbose > 3:
         print(n_values)
+
+    binary = n_values == 2
+    if type_hints is not None:
+        # force binary variables to be continuous
+        # if type hints say so
+        for k, v in type_hints.items():
+            if v == 'continuous':
+                binary[k] = False
 
     dtypes = X.dtypes
     kinds = dtypes.apply(lambda x: x.kind)
@@ -184,8 +185,8 @@ def detect_types(X, max_int_cardinality='auto',
                 else:
                     warn_for.append(c)
         if len(warn_for):
-            warn("Suspiciously looks like an index: {}".format(
-                warn_for), UserWarning)
+            warn("Suspiciously looks like an index: {}, but unsure,"
+                 " so keeping it for now".format(warn_for), UserWarning)
     categorical = dtypes == 'category'
     objects = (kinds == "O") & ~categorical  # FIXME string?
     dates = kinds == "M"
@@ -211,7 +212,6 @@ def detect_types(X, max_int_cardinality='auto',
              near_constant.index[near_constant].tolist()))
     useless = useless | near_constant
     large_cardinality_int = integers & ~few_entries
-    binary = n_values == 2
     # hard coded very low cardinality integers are categorical
     cat_integers = integers & (n_values <= 5) & ~useless
     low_card_integers = (few_entries & integers
@@ -230,6 +230,10 @@ def detect_types(X, max_int_cardinality='auto',
          'date': dates,
          'free_string': free_strings, 'useless': useless,
          })
+    # ensure we respected type hints
+    if type_hints is not None:
+        for k, v in type_hints.items():
+            res.loc[k, v] = True
     res = res.fillna(False)
     res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
 
@@ -255,6 +259,22 @@ def detect_types(X, max_int_cardinality='auto',
     return res
 
 
+def _apply_type_hints(X, type_hints):
+    if type_hints is not None:
+        # use type hints to convert columns
+        # to possibly avoid some work.
+        # means we need to copy X though.
+        X = X.copy()
+        for k, v in type_hints.items():
+            if v == "continuous":
+                X[k] = X[k].astype(np.float)
+            elif v == "categorical":
+                X[k] = X[k].astype('category')
+            elif v == 'useless' and k in X.columns:
+                X = X.drop(k, axis=1)
+    return X
+
+
 def select_cont(X):
     return X.columns.str.endswith("_dabl_continuous")
 
@@ -263,7 +283,7 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def clean(X, type_hints=None, unsafe=False):
+def clean(X, type_hints=None):
     """Public clean interface
 
     Parameters
@@ -271,16 +291,14 @@ def clean(X, type_hints=None, unsafe=False):
     type_hints : dict or None
         If dict, provide type information for columns.
         Keys are column names, values are types as provided by detect_types.
-    unsafe : bool, default=False
-        Whether to adhere to type_hints that seem inconsistent with the data.
-        Ignored for now?
     """
+    X = _apply_type_hints(X, type_hints=type_hints)
     if not isinstance(X, pd.DataFrame):
         X = pd.DataFrame(X)
     if not X.index.is_unique:
         warn("Index not unique, resetting index!", UserWarning)
         X = X.reset_index()
-    types = detect_types(X)
+    types = detect_types(X, type_hints=type_hints)
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
     # get rid of dirty floats, add indicators
@@ -293,7 +311,7 @@ def clean(X, type_hints=None, unsafe=False):
     # we could certainly do this nicer, but at this point calling
     # detect_types shouldn't be expensive any more
     # though if we have actual string columns that are free strings... hum
-    types = detect_types(X)
+    types = detect_types(X, type_hints=type_hints)
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
     return X

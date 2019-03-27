@@ -179,6 +179,32 @@ def test_transform_dirty_float():
     assert res.a_column_garbage.sum() == 1
 
 
+@pytest.mark.parametrize(
+    "type_hints",
+    [{'a': 'continuous', 'b': 'categorical', 'c': 'useless'},
+     {'a': 'useless', 'b': 'continuous', 'c': 'categorical'},
+     ])
+def test_type_hints(type_hints):
+    X = pd.DataFrame({'a': [0, 1, 0, 1, 0],
+                      'b': [0.1, 0.2, 0.3, 0.1, 0.1],
+                      'c': ['a', 'b', 'a', 'b', 'a']})
+    types = detect_types(X, type_hints=type_hints)
+    X_clean = clean(X, type_hints=type_hints)
+
+    # dropped a column:
+    assert X_clean.shape[1] == 2
+
+    for k, v in type_hints.items():
+        # detect_types respects hints
+        assert types.T.idxmax()[k] == v
+        # conversion successful
+        if v == 'continuous':
+            assert X_clean[k].dtype == np.float
+        elif v == 'categorical':
+            assert X_clean[k].dtype == 'category'
+
+
+
 def test_simple_preprocessor():
     sp = EasyPreprocessor()
     sp.fit(X_cat)

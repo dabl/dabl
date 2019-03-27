@@ -323,7 +323,7 @@ def _safe_clean(X, onehot=False, types=None):
     return X
 
 
-class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
+class EasyPreprocessor(BaseEstimator, TransformerMixin):
     """A simple preprocessor
 
     Detects variable types, encodes everything as floats

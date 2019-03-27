@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
 
-from dabl.preprocessing import (detect_types, FriendlyPreprocessor,
+from dabl.preprocessing import (detect_types, EasyPreprocessor,
                                DirtyFloatCleaner)
 
 
@@ -155,19 +155,19 @@ def test_transform_dirty_float():
 
 
 def test_simple_preprocessor():
-    sp = FriendlyPreprocessor()
+    sp = EasyPreprocessor()
     sp.fit(X_cat)
     trans = sp.transform(X_cat)
     assert trans.shape == (3, 7)  # FIXME should be 6?
 
     iris = load_iris()
-    sp = FriendlyPreprocessor()
+    sp = EasyPreprocessor()
     sp.fit(iris.data)
 
 
 def test_simple_preprocessor_dirty_float():
     dirty = pd.DataFrame(make_dirty_float())
-    fp = FriendlyPreprocessor()
+    fp = EasyPreprocessor()
     fp.fit(dirty)
     res = fp.transform(dirty)
     assert res.shape == (100, 3)
@@ -186,7 +186,7 @@ def test_simple_preprocessor_dirty_float():
 # TODO check that we detect ID columns
 # TODO test for weirdly indexed dataframes
 # TODO test select cont
-# TODO test non-trivial case of FriendlyPreprocessor?!"!"
+# TODO test non-trivial case of EasyPreprocessor?!"!"
 
 
 def test_titanic_detection():

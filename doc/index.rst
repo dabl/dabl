@@ -4,6 +4,9 @@ Welcome to Friendly Machine Learning
 This project tries to help make supervised machine learning more accessible for
 beginners, and reduce boiler plate for common tasks.
 
+WARNING: This is a prototype and in a pre-alpha state.
+Don't rely on these friendly helper for critical applications for now.
+
 .. toctree::
    :maxdepth: 2
    :hidden:

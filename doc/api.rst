@@ -1,5 +1,5 @@
 #############################
-Friendly Machine Learning API
+dabl API
 #############################
 
 This is a list of all functions and classes provided by dabl.
@@ -13,7 +13,7 @@ Supervised Models
    :toctree: generated/
    :template: class.rst
 
-   FriendlyClassifier
+   EasyClassifier
 
 Preprocessing
 =============
@@ -24,7 +24,7 @@ Preprocessing
    :toctree: generated/
    :template: class.rst
 
-   FriendlyPreprocessor
+   EasyPreprocessor
 
 .. autosummary::
    :toctree: generated/

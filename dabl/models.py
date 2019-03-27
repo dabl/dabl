@@ -16,11 +16,11 @@ from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _multimetric_score
 from sklearn.linear_model import LogisticRegression
 
-from .preprocessing import FriendlyPreprocessor
+from .preprocessing import EasyPreprocessor
 from .utils import nice_repr
 
 
-class FriendlyClassifier(BaseEstimator, ClassifierMixin):
+class EasyClassifier(BaseEstimator, ClassifierMixin):
     """Automagic anytime classifier.
 
     Parameters
@@ -69,7 +69,7 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
             # to search over treatment of categorical variables etc
             # Also filter?
             verbose = self.verbose if i == 0 else 0
-            sp = FriendlyPreprocessor(verbose=verbose)
+            sp = EasyPreprocessor(verbose=verbose)
             X_train = sp.fit_transform(X.iloc[train], y.iloc[train])
             X_test = sp.transform(X.iloc[test])
             data_preproc.append((X_train, X_test, y.iloc[train], y.iloc[test]))
@@ -102,7 +102,7 @@ class FriendlyClassifier(BaseEstimator, ClassifierMixin):
                 self.current_best_ = this_score
                 best_est = est
         if self.refit:
-            self.est_ = make_pipeline(FriendlyPreprocessor(), best_est)
+            self.est_ = make_pipeline(EasyPreprocessor(), best_est)
             self.est_.fit(X, y)
 
     def predict(self, X):

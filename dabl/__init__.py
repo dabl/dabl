@@ -1,7 +1,7 @@
-from .preprocessing import FriendlyPreprocessor
-from .models import FriendlyClassifier
+from .preprocessing import EasyPreprocessor
+from .models import EasyClassifier
 from .plotting import plot_supervised
 from .search import GridSuccessiveHalving, RandomSuccessiveHalving
 
-__all__ = ['FriendlyPreprocessor', 'FriendlyClassifier', 'plot_supervised',
+__all__ = ['EasyPreprocessor', 'EasyClassifier', 'plot_supervised',
            'GridSuccessiveHalving, RandomSuccessiveHalving']

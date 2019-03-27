@@ -1,5 +1,5 @@
 ###############################################
-Getting started with Friendly Machine Learning
+Getting started with Machine Learning with dabl
 ###############################################
 
 Let's dive right in!
@@ -20,8 +20,7 @@ columns, what do they look like?
     >>> titanic.head()
 
 So far so good! There's already a bunch of things going on in the data that we
-can see here, but let's ask our friendly helper what it thinks by asking dabl to
-clean up the data:
+can see here, but let's ask dabl what it thinks by cleaning up the data:
 
     >>> titanic_clean = dabl.clean(titanic, verbose=0)
 
@@ -39,16 +38,16 @@ types in a convenient format:
     >>> print(types)
 
 Having a very rough idea of the shape of our data, we can now start looking at the actual content.
-The most friendly way to do that is using visualization of univariate and bivariate patterns. With plot_supervised,
+The easiest way to do that is using visualization of univariate and bivariate patterns. With plot_supervised,
 we can create plot of the features deemed most important for our task.
 
     >>> plot_supervised(titanic, 'survived')
 
-Finally, we can find a good model for our data. The FriendlyClassifier does all
+Finally, we can find a good model for our data. The EasyClassifier does all
 the work for us. It implements the familiar scikit-learn api of fit and
 predict:
 
-    >>> fc = FriendlyClassifier()
+    >>> fc = EasyClassifier()
     >>> X = titanic_clean.drop("survived", axis=1)
     >>> y = titanic_clean.survived
     >>> fc.fit(X, y)

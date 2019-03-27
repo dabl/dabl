@@ -1,13 +1,8 @@
-.. project-template documentation master file, created by
-   sphinx-quickstart on Mon Jan 18 14:44:12 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to sklearn-template's documentation!
+Welcome to Friendly Machine Learning
 ============================================
 
-This project is a reference implementation to anyone who wishes to develop
-scikit-learn compatible classes.
+This project tries to help make supervised machine learning more accessible for
+beginners, and reduce boiler plate for common tasks.
 
 .. toctree::
    :maxdepth: 2
@@ -27,26 +22,27 @@ scikit-learn compatible classes.
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Tutorial - Examples
+   :caption: Examples
 
    auto_examples/index
 
 `Getting started <quick_start.html>`_
 -------------------------------------
 
-Information regarding this template and how to modify it for your own project.
+A quick guide on how to use these friendly tools in practice.
 
 `User Guide <user_guide.html>`_
 -------------------------------
 
-An example of narrative documentation.
+A full guide to the main concepts and ideas of the Friendly Machine Learning library.
 
 `API Documentation <api.html>`_
 -------------------------------
 
-An example of API documentation.
+A documentation of all the friendly classes and fuctions.
 
 `Examples <auto_examples/index.html>`_
 --------------------------------------
 
-A set of examples. It complements the `User Guide <user_guide.html>`_.
+Some examples to give you a taste how much you can achieve with little code
+with some friendly help!

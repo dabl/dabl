@@ -137,6 +137,8 @@ def detect_types(X, max_int_cardinality='auto',
     date
     useless
     """
+    if not X.index.is_unique:
+        raise ValueError("Non-unique index found. Reset index or call clean.")
     duplicated = X.columns.duplicated()
     if duplicated.any():
         raise ValueError("Duplicate Columns: {}".format(
@@ -273,6 +275,11 @@ def clean(X, type_hints=None, unsafe=False):
         Whether to adhere to type_hints that seem inconsistent with the data.
         Ignored for now?
     """
+    if not isinstance(X, pd.DataFrame):
+        X = pd.DataFrame(X)
+    if not X.index.is_unique:
+        warn("Index not unique, resetting index!", UserWarning)
+        X = X.reset_index()
     types = detect_types(X)
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)

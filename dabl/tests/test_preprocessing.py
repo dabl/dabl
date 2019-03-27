@@ -1,13 +1,14 @@
 import os
 import string
 import random
+import pytest
 
 import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
 
 from dabl.preprocessing import (detect_types, EasyPreprocessor,
-                               DirtyFloatCleaner)
+                                DirtyFloatCleaner, clean)
 
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
@@ -28,6 +29,15 @@ def make_dirty_float():
     dirty[::12] = "missing"
     dirty.iloc[3, 0] = "garbage"
     return dirty
+
+
+def test_duplicate_index():
+    X_cat.index = np.ones(len(X_cat), np.int)
+    with pytest.raises(ValueError):
+        detect_types(X_cat)
+    with pytest.warns(UserWarning):
+        X = clean(X_cat)
+    assert X.index.is_unique
 
 
 def test_detect_constant():

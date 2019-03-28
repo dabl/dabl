@@ -220,13 +220,12 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     cat_string = few_entries & non_float_objects & ~useless
     free_strings = ~few_entries & non_float_objects
     continuous = floats | large_cardinality_int | clean_float_string
-
+    categorical = cat_string | binary | categorical | cat_integers
     res = pd.DataFrame(
-        {'continuous': continuous & ~binary & ~useless,
+        {'continuous': continuous & ~binary & ~useless & ~categorical,
          'dirty_float': dirty_float,
          'low_card_int': low_card_integers,
-         'categorical': ((cat_string | binary | categorical | cat_integers)
-                         & ~useless),
+         'categorical': categorical & ~useless,
          'date': dates,
          'free_string': free_strings, 'useless': useless,
          })

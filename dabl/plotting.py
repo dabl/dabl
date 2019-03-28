@@ -542,7 +542,8 @@ def plot_classification_continuous(X, target_col, types=None):
     # TODO fancy manifolds?
 
 
-def plot_classification_categorical(X, target_col, types=None, kind='count'):
+def plot_classification_categorical(X, target_col, types=None, kind='count',
+                                    hue_order=None):
     """Exploration plots for categorical features in classification.
 
     Creates plots of categorical variable distributions for each target class.
@@ -611,7 +612,10 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
             # absolute counts
             # FIXME show f value
             # FIXME shorten titles?
-            sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
+            sns.countplot(y=col, data=X_new, ax=ax, hue=target_col,
+                          hue_order=hue_order)
+            if i > 0:
+                ax.legend(())
         else:
             raise ValueError("Unknown plot kind {}".format(kind))
         _short_tick_names(ax)
@@ -681,9 +685,9 @@ def plot_supervised(X, target_col, types=None, verbose=10):
         # make sure we include the target column in X
         # even though it's not categorical
         plt.figure()
-        X[target_col].value_counts().plot(kind='barh', ax=plt.gca())
+        counts = pd.DataFrame(X[target_col].value_counts())
+        melted = counts.T.melt()
+        sns.barplot(y='variable', x='value', data=melted)
         plt.title("Target distribution")
-        plt.ylabel("Label")
-        plt.xlabel("Count")
         plot_classification_continuous(X, target_col, types=types)
-        plot_classification_categorical(X, target_col, types=types)
+        plot_classification_categorical(X, target_col, types=types, hue_order=counts.index)

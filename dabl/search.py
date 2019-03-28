@@ -257,6 +257,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
     amount a resource and iteratively selects the best candidates, using more
     and more resources.
 
+    Read more in the :ref:`User guide<successive_halving_user_guide>`.
 
     Parameters
     ----------
@@ -608,6 +609,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
     amount a resource and iteratively selects the best candidates, using more
     and more resources.
 
+    Read more in the :ref:`User guide<successive_halving_user_guide>`.
 
     Parameters
     ----------

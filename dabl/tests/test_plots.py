@@ -12,7 +12,8 @@ from dabl.plotting import (plot_supervised, find_pretty_grid,
                            plot_classification_categorical,
                            plot_classification_continuous,
                            plot_regression_categorical,
-                           plot_regression_continuous)
+                           plot_regression_continuous,
+                           plot_coefficients)
 
 
 # FIXME: check that target is not y but a column name
@@ -101,4 +102,18 @@ def test_plot_wrong_target_type():
         plot_classification_categorical(X, 'target')
     with pytest.raises(ValueError, match="need categorical"):
         plot_classification_continuous(X, 'target')
+
+
+@pytest.mark.parametrize("n_features, n_top_features",
+                         [(5, 10), (10, 5), (10, 40), (40, 10)])
+def test_plot_coefficients(n_features, n_top_features):
+    coef = np.arange(n_features) + .4
+    names = ["feature_{}".format(i) for i in range(n_features)]
+    plot_coefficients(coef, names, n_top_features=n_top_features)
+    ax = plt.gca()
+    assert len(ax.get_xticks()) == min(n_top_features, n_features)
+    coef[:-5] = 0
+    plot_coefficients(coef, names, n_top_features=n_top_features)
+    ax = plt.gca()
+    assert len(ax.get_xticks()) == 5
 

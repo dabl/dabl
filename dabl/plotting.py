@@ -243,7 +243,7 @@ def _make_subplots(n_plots, max_cols=5, row_height=3):
     return fig, axes
 
 
-def _check_X_target_col(X, target_col, types, classification=False):
+def _check_X_target_col(X, target_col, types, task=None):
     if types is None:
         types = detect_types(X)
     if not isinstance(target_col, str) and len(target_col) > 1:
@@ -257,11 +257,11 @@ def _check_X_target_col(X, target_col, types, classification=False):
                          " for classification.".format(X.loc[0, target_col]))
     # FIXME we get target types here with detect_types,
     # but in the estimator with type_of_target
-    if classification and not types.loc[target_col, 'categorical']:
+    if task == "classification" and not types.loc[target_col, 'categorical']:
         raise ValueError("Type for target column {} detected as {},"
                          " need categorical for classification.".format(
                              target_col, types.T.idxmax()[target_col]))
-    if (not classification) and (not types.loc[target_col, 'continuous']):
+    if task == "regression" and (not types.loc[target_col, 'continuous']):
         raise ValueError("Type for target column {} detected as {},"
                          " need continuous for regression.".format(
                              target_col, types.T.idxmax()[target_col]))
@@ -327,7 +327,7 @@ def plot_regression_continuous(X, target_col, types=None):
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
     """
-    types = _check_X_target_col(X, target_col, types)
+    types = _check_X_target_col(X, target_col, types, task="regression")
 
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
@@ -378,7 +378,7 @@ def plot_regression_categorical(X, target_col, types=None):
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
     """
-    types = _check_X_target_col(X, target_col, types)
+    types = _check_X_target_col(X, target_col, types, task="regression")
 
     if types is None:
         types = detect_types(X)
@@ -440,7 +440,7 @@ def plot_classification_continuous(X, target_col, types=None):
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
     """
-    types = _check_X_target_col(X, target_col, types, classification=True)
+    types = _check_X_target_col(X, target_col, types, task='classification')
 
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
@@ -561,7 +561,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
     """
-    types = _check_X_target_col(X, target_col, types, classification=True)
+    types = _check_X_target_col(X, target_col, types, task="classification")
 
     features = X.loc[:, types.categorical]
     if target_col in features.columns:

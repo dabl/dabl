@@ -18,10 +18,8 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME two float values is not a float but binary!
 # FIXME features that are always missing are constant!
 # FIXME need to test dealing with categorical dtype
-# FIXME make sure in plotting single axes objects work everywhere (ravel issue)
-# FIXME Fail early on duplicate column names!!!
 # TODO add test that weird missing values in strings are correctly interpreted
-# TODO test non-trivial case of EasyPreprocessor?!"!"
+# FIXME ensure easy preprocessor handles missing values in categorical data
 
 
 def make_dirty_float():
@@ -247,3 +245,21 @@ def test_titanic_detection():
     true_types_clean = [t if t != 'dirty_float' else 'continuous'
                         for t in true_types]
     assert (types == true_types_clean).all()
+
+
+def test_titanic_feature_names():
+    path = os.path.dirname(__file__)
+    titanic = pd.read_csv(os.path.join(path, 'titanic.csv'))
+    ep = EasyPreprocessor()
+    ep.fit(clean(titanic.drop('survived', axis=1)))
+    expected_names = [
+        'age_dabl_continuous', 'body_dabl_continuous', 'fare_dabl_continuous',
+        'age_?_0.0', 'age_?_1.0', 'body_?_0.0', 'body_?_1.0', 'pclass_1',
+        'pclass_2', 'pclass_3', 'sex_female', 'sex_male', 'embarked_?',
+        'embarked_C', 'embarked_Q', 'embarked_S', 'boat_1', 'boat_10',
+        'boat_11', 'boat_12', 'boat_13', 'boat_13 15', 'boat_13 15 B',
+        'boat_14', 'boat_15', 'boat_15 16', 'boat_16', 'boat_2', 'boat_3',
+        'boat_4', 'boat_5', 'boat_5 7', 'boat_5 9', 'boat_6', 'boat_7',
+        'boat_8', 'boat_8 10', 'boat_9', 'boat_?', 'boat_A', 'boat_B',
+        'boat_C', 'boat_C D', 'boat_D']
+    assert ep.get_feature_names() == expected_names

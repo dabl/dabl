@@ -10,7 +10,9 @@ from sklearn.preprocessing import KBinsDiscretizer
 from dabl.preprocessing import clean, detect_types
 from dabl.plotting import (plot_supervised, find_pretty_grid,
                            plot_classification_categorical,
-                           plot_classification_continuous)
+                           plot_classification_continuous,
+                           plot_regression_categorical,
+                           plot_regression_continuous)
 
 
 # FIXME: check that target is not y but a column name
@@ -83,3 +85,20 @@ def test_plot_classification_n_classes():
         plot_classification_categorical(X, 'target')
     with pytest.raises(ValueError, match="Less than two classes"):
         plot_classification_continuous(X, 'target')
+
+
+def test_plot_wrong_target_type():
+    X, y = make_blobs()
+    X = pd.DataFrame(X)
+    X['target'] = y
+    with pytest.raises(ValueError, match="need continuous"):
+        plot_regression_categorical(X, 'target')
+    with pytest.raises(ValueError, match="need continuous"):
+        plot_regression_continuous(X, 'target')
+
+    X['target'] = X[0]
+    with pytest.raises(ValueError, match="need categorical"):
+        plot_classification_categorical(X, 'target')
+    with pytest.raises(ValueError, match="need categorical"):
+        plot_classification_continuous(X, 'target')
+

@@ -1,6 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import (OneHotEncoder, StandardScaler,
-                                   FunctionTransformer)
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.compose import make_column_transformer, ColumnTransformer
@@ -434,15 +433,16 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         # go over variable blocks
         # check for missing values
         # scale etc
-        pipe_categorical = OneHotEncoder(categories='auto',
-                                         handle_unknown='ignore')
+        pipe_categorical = make_pipeline(
+            SimpleImputer(strategy='constant', fill_value='dabl_missing'),
+            OneHotEncoder(categories='auto', handle_unknown='ignore',
+                          sparse=False))
 
-        steps_continuous = [FunctionTransformer(_make_float, validate=False)]
+        steps_continuous = [SimpleImputer(strategy='median')]
         if self.scale:
             steps_continuous.append(StandardScaler())
         # if X.loc[:, types['continuous']].isnull().values.any():
         # FIXME doesn't work if missing values only in dirty column
-        steps_continuous.insert(0, SimpleImputer(strategy='median'))
         pipe_continuous = make_pipeline(*steps_continuous)
         # FIXME only have one imputer/standard scaler in all
         # (right now copied in dirty floats and floats)
@@ -459,6 +459,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             transformer_cols.append(('categorical',
                                      pipe_categorical, types['categorical']))
         if types['dirty_float'].any():
+            # FIXME we're not really handling this here any more?
             transformer_cols.append(('dirty_float',
                                      pipe_dirty_float, types['dirty_float']))
 
@@ -474,7 +475,28 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def get_feature_names(self):
-        return self.ct_.get_feature_names()
+        # this can go soon hopefully
+        feature_names = []
+        for name, trans, cols in self.ct_.transformers_:
+            if name == "continuous":
+                # three should be no all-nan columns in the imputer
+                if np.isnan(trans[0].statistics_).any():
+                    raise ValueError("So unexpected! Looks like the imputer"
+                                     " dropped some all-NaN columns."
+                                     "Try calling 'clean' on your data first.")
+                feature_names.extend(cols.index[cols])
+            elif name == 'categorical':
+                # this is the categorical pipe, extract one hot encoder
+                ohe = trans[-1]
+                # FIXME that is really strange?!
+                ohe_cols = self.columns_[self.columns_.map(cols)]
+                feature_names.extend(ohe.get_feature_names(ohe_cols))
+            elif name == "remainder":
+                assert trans == "drop"
+            else:
+                raise ValueError(
+                    "Can't compute feature names for {}".format(name))
+        return feature_names
 
     def transform(self, X):
         """ A reference implementation of a transform function.

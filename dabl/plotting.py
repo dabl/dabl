@@ -176,6 +176,16 @@ def _check_X_target_col(X, target_col, types, classification=False):
     if X[target_col].nunique() < 2:
         raise ValueError("Less than two classes present, {}, need at least two"
                          " for classification.".format(X.loc[0, target_col]))
+    # FIXME we get target types here with detect_types,
+    # but in the estimator with type_of_target
+    if classification and not types.loc[target_col, 'categorical']:
+        raise ValueError("Type for target column {} detected as {},"
+                         " need categorical for classification.".format(
+                             target_col, types.T.idxmax()[target_col]))
+    if (not classification) and (not types.loc[target_col, 'continuous']):
+        raise ValueError("Type for target column {} detected as {},"
+                         " need continuous for regression.".format(
+                             target_col, types.T.idxmax()[target_col]))
     return types
 
 

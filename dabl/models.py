@@ -13,7 +13,7 @@ from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _multimetric_score
 from sklearn.utils.validation import check_is_fitted
 
-from .preprocessing import EasyPreprocessor
+from .preprocessing import EasyPreprocessor, clean, detect_types
 from .pipelines import get_fast_classifiers
 from .utils import nice_repr
 
@@ -34,9 +34,11 @@ class EasyClassifier(BaseEstimator, ClassifierMixin):
         self.refit = refit
 
     def fit(self, X, y):
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X)
-
+        X = clean(X)
+        types = detect_types(X)
+        self.feature_names_ = X.columns
+        self.types_ = types
+        # fixme store types!? call clean with type hints?
         target_type = type_of_target(y)
         y = pd.Series(LabelEncoder().fit_transform(y))
 
@@ -66,29 +68,33 @@ class EasyClassifier(BaseEstimator, ClassifierMixin):
             # to search over treatment of categorical variables etc
             # Also filter?
             verbose = self.verbose if i == 0 else 0
-            sp = EasyPreprocessor(verbose=verbose)
+            sp = EasyPreprocessor(verbose=verbose, types=types)
             X_train = sp.fit_transform(X.iloc[train], y.iloc[train])
             X_test = sp.transform(X.iloc[test])
             data_preproc.append((X_train, X_test, y.iloc[train], y.iloc[test]))
-        # Heuristic: start with fast / instantaneous models
 
+        # Heuristic: start with fast / instantaneous models
         fast_classifiers = get_fast_classifiers(n_classes=y.nunique())
         scorers, _ = _check_multimetric_scoring(fast_classifiers[1],
                                                 scoring=self.scoring_)
 
-        self.current_best_ = -np.inf
+        self.current_best_ = {'recall_macro': -np.inf}
         for est in fast_classifiers:
             scores = self._evaluate_one(est, data_preproc, scorers)
             # make scoring configurable
-            this_score = scores['recall_macro']
-            if this_score > self.current_best_:
+            if scores['recall_macro'] > self.current_best_['recall_macro']:
                 if self.verbose:
-                    print("new best: {:.4f}".format(this_score))
-                self.current_best_ = this_score
+                    print("new best (using recall macro):\n{}".format(
+                        scores))
+                self.current_best_ = scores
                 best_est = est
+        if self.verbose:
+            print("Best model:\n{}\nBest Scores:\n{}".format(
+                nice_repr(best_est), self.current_best_))
         if self.refit:
             self.est_ = make_pipeline(EasyPreprocessor(), best_est)
             self.est_.fit(X, y)
+        return self
 
     def predict(self, X):
         if not self.refit:
@@ -118,6 +124,7 @@ class EasyClassifier(BaseEstimator, ClassifierMixin):
             name = nice_repr(estimator.steps[-1][1])
         except AttributeError:
             name = nice_repr(estimator)
+        name = name.replace("\s", " ")
         if self.verbose:
             print(name)
             res_string = "".join("{}: {:.4f}    ".format(m, s)

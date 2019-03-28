@@ -73,9 +73,8 @@ iterations of a random forest::
                            n_jobs=None, oob_score=False, random_state=None,
                            verbose=0, warm_start=False)
 
-Unsurprisingly, the best estimator is one that uses the highest number of
-iterations. Note that it is not possible to budget on a parameter that is part
-of the parameter space.
+Note that it is not possible to budget on a parameter that is part of the
+parameter space.
 
 Exhausting the budget
 ^^^^^^^^^^^^^^^^^^^^^
@@ -197,3 +196,4 @@ eliminated enough candidates during the first iterations, using ``r_i = r_min =
        `Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
        <https://arxiv.org/abs/1603.06560>`_, in Machine Learning Research
        18, 2018.
+

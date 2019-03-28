@@ -30,8 +30,8 @@ Preprocessing
    :toctree: generated/
    :template: function.rst
 
-    detect_types_dataframe
-    cleanup
+    detect_types
+    clean
 
 Plotting
 =========

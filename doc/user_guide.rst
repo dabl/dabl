@@ -80,7 +80,7 @@ of the parameter space.
 Exhausting the budget
 ^^^^^^^^^^^^^^^^^^^^^
 
-As mentionned above, the first iteration uses ``r_min`` resources. If you have
+As mentioned above, the first iteration uses ``r_min`` resources. If you have
 a big budget, this may be a waste of resource::
 
     >>> from sklearn.datasets import make_classification
@@ -156,7 +156,7 @@ the number of candidates, the last iteration may have to evaluate more than
         Name: r_i, dtype: int64
 
 Since we cannot use more than ``max_budget=40`` resources, the process has to
-stop at the second iteration which evalutes more than ``ratio=2`` candidates.
+stop at the second iteration which evaluates more than ``ratio=2`` candidates.
 
 Using the ``aggressive_elimination`` parameter, you can force the search
 process to end up with less than ``ratio`` candidates at the last
@@ -183,7 +183,7 @@ necessary using ``r_min`` resources::
         Name: r_i, dtype: int64
 
 Notice that we end with 2 candidates at the last iteration since we have
-elinimated enough candidates during the first iterations, using ``r_i = r_min =
+eliminated enough candidates during the first iterations, using ``r_i = r_min =
 20``.
 
 

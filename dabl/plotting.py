@@ -686,8 +686,10 @@ def plot_supervised(X, target_col, types=None, verbose=10):
         # even though it's not categorical
         plt.figure()
         counts = pd.DataFrame(X[target_col].value_counts())
-        melted = counts.T.melt()
-        sns.barplot(y='variable', x='value', data=melted)
+        melted = counts.T.melt().rename(
+            columns={'variable': 'class', 'value': 'count'})
+        sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")
         plot_classification_continuous(X, target_col, types=types)
-        plot_classification_categorical(X, target_col, types=types, hue_order=counts.index)
+        plot_classification_categorical(X, target_col, types=types,
+                                        hue_order=counts.index)

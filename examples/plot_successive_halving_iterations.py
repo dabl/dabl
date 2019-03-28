@@ -1,6 +1,6 @@
 """
-Scores parameter combinations at each iteration of Successive Halving
-=====================================================================
+Scores of parameter combinations at each iteration of Successive Halving
+========================================================================
 """
 import pandas as pd
 from sklearn import datasets
@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from scipy.stats import randint
 import numpy as np
 
-from fml import RandomSuccessiveHalving
+from dabl import RandomSuccessiveHalving
 
 
 rng = np.random.RandomState(0)

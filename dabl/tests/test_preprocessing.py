@@ -1,13 +1,14 @@
 import os
 import string
 import random
+import pytest
 
 import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris
 
-from fml.preprocessing import (detect_types, FriendlyPreprocessor,
-                               DirtyFloatCleaner)
+from dabl.preprocessing import (detect_types, EasyPreprocessor,
+                                DirtyFloatCleaner, clean)
 
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
@@ -17,8 +18,8 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME two float values is not a float but binary!
 # FIXME features that are always missing are constant!
 # FIXME need to test dealing with categorical dtype
-# FIXME make sure in plotting single axes objects work everywhere (ravel issue)
-# FIXME Fail early on duplicate column names!!!
+# TODO add test that weird missing values in strings are correctly interpreted
+# FIXME ensure easy preprocessor handles missing values in categorical data
 
 
 def make_dirty_float():
@@ -30,12 +31,33 @@ def make_dirty_float():
     return dirty
 
 
+def test_duplicate_columns():
+    X = pd.DataFrame([[0, 1]], columns=['a', 'a'])
+    with pytest.raises(ValueError, match="Duplicate Columns"):
+        clean(X)
+
+    with pytest.raises(ValueError, match="Duplicate Columns"):
+        detect_types(X)
+
+
+def test_duplicate_index():
+    X = X_cat.copy()
+    X.index = np.ones(len(X), np.int)
+    assert not X.index.is_unique
+    with pytest.raises(ValueError):
+        detect_types(X)
+    with pytest.warns(UserWarning):
+        X_clean = clean(X)
+    assert X_clean.index.is_unique
+
+
 def test_detect_constant():
     X = pd.DataFrame({'a': [0, 0, 0, 0],
                       'second': ['no', 'no', 'no', 'no'],
                       'b': [0.0, 0.0, 0.0, 0],
                       'weird': ['0', '0', '0', '0']})
-    res = detect_types(X)
+    with pytest.warns(UserWarning, match="Discarding near-constant"):
+        res = detect_types(X)
     assert res.useless.sum() == 4
 
 
@@ -64,7 +86,8 @@ def test_detect_types():
          'index_1_based': np.arange(1, 101),
          'index_shuffled': np.random.permutation(100)
          })
-    res = detect_types(df_all)
+    with pytest.warns(UserWarning, match="Discarding near-constant"):
+        res = detect_types(df_all)
     types = res.T.idxmax()
     assert types['categorical_string'] == 'categorical'
     assert types['binary_int'] == 'categorical'
@@ -99,13 +122,12 @@ def test_detect_types():
 
 def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(
-        {
-         'binary_int': np.random.randint(0, 2, size=1000),
+        {'binary_int': np.random.randint(0, 2, size=1000),
          'categorical_int': np.random.randint(0, 4, size=1000),
          'low_card_int_uniform': np.random.randint(0, 20, size=1000),
          'low_card_int_binomial': np.random.binomial(20, .3, size=1000),
          'cont_int': np.repeat(np.arange(500), 2),
-        })
+         })
 
     res = detect_types(df_all)
     types = res.T.idxmax()
@@ -154,20 +176,45 @@ def test_transform_dirty_float():
     assert res.a_column_garbage.sum() == 1
 
 
+@pytest.mark.parametrize(
+    "type_hints",
+    [{'a': 'continuous', 'b': 'categorical', 'c': 'useless'},
+     {'a': 'useless', 'b': 'continuous', 'c': 'categorical'},
+     ])
+def test_type_hints(type_hints):
+    X = pd.DataFrame({'a': [0, 1, 0, 1, 0],
+                      'b': [0.1, 0.2, 0.3, 0.1, 0.1],
+                      'c': ['a', 'b', 'a', 'b', 'a']})
+    types = detect_types(X, type_hints=type_hints)
+    X_clean = clean(X, type_hints=type_hints)
+
+    # dropped a column:
+    assert X_clean.shape[1] == 2
+
+    for k, v in type_hints.items():
+        # detect_types respects hints
+        assert types.T.idxmax()[k] == v
+        # conversion successful
+        if v == 'continuous':
+            assert X_clean[k].dtype == np.float
+        elif v == 'categorical':
+            assert X_clean[k].dtype == 'category'
+
+
 def test_simple_preprocessor():
-    sp = FriendlyPreprocessor()
+    sp = EasyPreprocessor()
     sp.fit(X_cat)
     trans = sp.transform(X_cat)
     assert trans.shape == (3, 7)  # FIXME should be 6?
 
     iris = load_iris()
-    sp = FriendlyPreprocessor()
+    sp = EasyPreprocessor()
     sp.fit(iris.data)
 
 
 def test_simple_preprocessor_dirty_float():
     dirty = pd.DataFrame(make_dirty_float())
-    fp = FriendlyPreprocessor()
+    fp = EasyPreprocessor()
     fp.fit(dirty)
     res = fp.transform(dirty)
     assert res.shape == (100, 3)
@@ -179,14 +226,6 @@ def test_simple_preprocessor_dirty_float():
 
     # make sure we can transform a clean column
     fp.transform(pd.DataFrame(['0', '1', '2'], columns=['a_column']))
-
-
-# TODO add tests that floats as strings are correctly interpreted
-# TODO add test that weird missing values in strings are correctly interpreted
-# TODO check that we detect ID columns
-# TODO test for weirdly indexed dataframes
-# TODO test select cont
-# TODO test non-trivial case of FriendlyPreprocessor?!"!"
 
 
 def test_titanic_detection():
@@ -206,3 +245,21 @@ def test_titanic_detection():
     true_types_clean = [t if t != 'dirty_float' else 'continuous'
                         for t in true_types]
     assert (types == true_types_clean).all()
+
+
+def test_titanic_feature_names():
+    path = os.path.dirname(__file__)
+    titanic = pd.read_csv(os.path.join(path, 'titanic.csv'))
+    ep = EasyPreprocessor()
+    ep.fit(clean(titanic.drop('survived', axis=1)))
+    expected_names = [
+        'age_dabl_continuous', 'body_dabl_continuous', 'fare_dabl_continuous',
+        'age_?_0.0', 'age_?_1.0', 'body_?_0.0', 'body_?_1.0', 'pclass_1',
+        'pclass_2', 'pclass_3', 'sex_female', 'sex_male', 'embarked_?',
+        'embarked_C', 'embarked_Q', 'embarked_S', 'boat_1', 'boat_10',
+        'boat_11', 'boat_12', 'boat_13', 'boat_13 15', 'boat_13 15 B',
+        'boat_14', 'boat_15', 'boat_15 16', 'boat_16', 'boat_2', 'boat_3',
+        'boat_4', 'boat_5', 'boat_5 7', 'boat_5 9', 'boat_6', 'boat_7',
+        'boat_8', 'boat_8 10', 'boat_9', 'boat_?', 'boat_A', 'boat_B',
+        'boat_C', 'boat_C D', 'boat_D']
+    assert ep.get_feature_names() == expected_names

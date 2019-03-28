@@ -3,7 +3,7 @@
 .. _user_guide:
 
 ==================================================
-Friendly Machine Learning
+Machine Learning with dabl
 ==================================================
 
 Estimator

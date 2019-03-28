@@ -1,5 +1,8 @@
-# fml
-Friendly Machine Learning
+# dabl
+The data analysis baseline library.
+
+- Are you a data scientist?
+- I dabl, Mr president.
 
 ## Todo
 - add classifiers with anytime cabability

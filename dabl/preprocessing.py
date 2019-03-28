@@ -1,6 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import (OneHotEncoder, StandardScaler,
-                                   FunctionTransformer)
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.compose import make_column_transformer, ColumnTransformer
@@ -42,7 +41,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
             # FIXME use types to distinguish outputs instead?
-            cats["{}_fml_continuous".format(col)] = new_col
+            cats["{}_dabl_continuous".format(col)] = new_col
             result.append(cats)
         return pd.concat(result, axis=1)
 
@@ -85,54 +84,66 @@ def _find_string_floats(X, dirty_float_threshold):
     return clean_float_string, dirty_float
 
 
-def detect_types(X, max_int_cardinality='auto',
-                           dirty_float_threshold=.9,
-                           near_constant_threshold=.95, verbose=0):
-    """
+def detect_types(X, type_hints=None, max_int_cardinality='auto',
+                 dirty_float_threshold=.9,
+                 near_constant_threshold=.95, verbose=0):
+    """Detect types of dataframe columns.
+
+    Columns are labeled as one of the following types:
+    'continuous', 'categorical', 'low_card_int', 'dirty_float',
+    'free_string', 'date', 'useless'
+
+    Pandas categorical variables, strings and integers of low cardinality and
+    float values with two columns are labeled as categorical.
+    Integers of high cardinality are labeled as continuous.
+    Integers of intermediate cardinality are labeled as "low_card_int".
+    Float variables that sometimes take string values are labeled "dirty_float"
+    String variables with many unique values are labeled "free_text"
+    (and currently not processed by dabl).
+    Date types are labeled as "date" (and currently not processed by dabl).
+    Anything that is constant, nearly constant, detected as an integer index,
+    or doesn't match any of the above categories is labeled "useless".
+
     Parameters
     ----------
     X : dataframe
         input
-
-    dirty_float_threshold : float, default=.9
-        The fraction of floats required in a dirty continuous
-        column before it's considered "useless" or categorical
-        (after removing top 5 string values)
 
     max_int_cardinality: int or 'auto', default='auto'
         Maximum number of distinct integers for an integer column
         to be considered categorical. 'auto' is ``max(42, n_samples/10)``.
         Integers are also always considered as continuous variables.
 
+    dirty_float_threshold : float, default=.9
+        The fraction of floats required in a dirty continuous
+        column before it's considered "useless" or categorical
+        (after removing top 5 string values)
+
     verbose : int
         How verbose to be
 
     Returns
     -------
-    res : dataframe
-        boolean dataframe of detected types.
-
-    recognized types:
-    continuous
-    categorical
-    low cardinality int
-    dirty float string
-    dirty category string TODO
-    date
-    useless
+    res : dataframe, shape (n_columns, 7)
+        Boolean dataframe of detected types. Rows are columns in input X,
+        columns are possible types (see above).
     """
-    duplicated = X.columns.duplicated()
-    if duplicated.any():
-        raise ValueError("Duplicate Columns: {}".format(
-            X.columns[duplicated]))
     # FIXME integer indices are not dropped!
-    # TODO: detect near constant features, nearly always missing (same?)
     # TODO detect encoding missing values as strings /weird values
     # TODO detect top coding
     # FIXME dirty int is detected as dirty float right now
     # TODO discard all constant and binary columns at the beginning?
-
     # TODO subsample large datsets? one level up?
+    if not isinstance(X, pd.DataFrame):
+        raise TypeError("X is not a dataframe. Convert or call `clean`.")
+    if not X.index.is_unique:
+        raise ValueError("Non-unique index found. Reset index or call clean.")
+    duplicated = X.columns.duplicated()
+    if duplicated.any():
+        raise ValueError("Duplicate Columns: {}".format(
+            X.columns[duplicated]))
+    X = _apply_type_hints(X, type_hints=type_hints)
+
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
         max_int_cardinality = max(42, n_samples / 100)
@@ -140,6 +151,14 @@ def detect_types(X, max_int_cardinality='auto',
     n_values = X.apply(lambda x: x.nunique())
     if verbose > 3:
         print(n_values)
+
+    binary = n_values == 2
+    if type_hints is not None:
+        # force binary variables to be continuous
+        # if type hints say so
+        for k, v in type_hints.items():
+            if v == 'continuous':
+                binary[k] = False
 
     dtypes = X.dtypes
     kinds = dtypes.apply(lambda x: x.kind)
@@ -166,8 +185,8 @@ def detect_types(X, max_int_cardinality='auto',
                 else:
                     warn_for.append(c)
         if len(warn_for):
-            warn("Suspiciously looks like an index: {}".format(
-                warn_for), UserWarning)
+            warn("Suspiciously looks like an index: {}, but unsure,"
+                 " so keeping it for now".format(warn_for), UserWarning)
     categorical = dtypes == 'category'
     objects = (kinds == "O") & ~categorical  # FIXME string?
     dates = kinds == "M"
@@ -189,11 +208,10 @@ def detect_types(X, max_int_cardinality='auto',
     most_common_count = X.apply(lambda x: x.value_counts().max())
     near_constant = most_common_count / X.count() > near_constant_threshold
     if near_constant.any():
-        warn("Discarding near constant features: {}".format(
+        warn("Discarding near-constant features: {}".format(
              near_constant.index[near_constant].tolist()))
     useless = useless | near_constant
     large_cardinality_int = integers & ~few_entries
-    binary = n_values == 2
     # hard coded very low cardinality integers are categorical
     cat_integers = integers & (n_values <= 5) & ~useless
     low_card_integers = (few_entries & integers
@@ -212,6 +230,10 @@ def detect_types(X, max_int_cardinality='auto',
          'date': dates,
          'free_string': free_strings, 'useless': useless,
          })
+    # ensure we respected type hints
+    if type_hints is not None:
+        for k, v in type_hints.items():
+            res.loc[k, v] = True
     res = res.fillna(False)
     res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
 
@@ -237,15 +259,31 @@ def detect_types(X, max_int_cardinality='auto',
     return res
 
 
+def _apply_type_hints(X, type_hints):
+    if type_hints is not None:
+        # use type hints to convert columns
+        # to possibly avoid some work.
+        # means we need to copy X though.
+        X = X.copy()
+        for k, v in type_hints.items():
+            if v == "continuous":
+                X[k] = X[k].astype(np.float)
+            elif v == "categorical":
+                X[k] = X[k].astype('category')
+            elif v == 'useless' and k in X.columns:
+                X = X.drop(k, axis=1)
+    return X
+
+
 def select_cont(X):
-    return X.columns.str.endswith("_fml_continuous")
+    return X.columns.str.endswith("_dabl_continuous")
 
 
 def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def clean(X, type_hints=None, unsafe=False):
+def clean(X, type_hints=None):
     """Public clean interface
 
     Parameters
@@ -253,10 +291,15 @@ def clean(X, type_hints=None, unsafe=False):
     type_hints : dict or None
         If dict, provide type information for columns.
         Keys are column names, values are types as provided by detect_types.
-    unsafe : bool, default=False
-        Whether to adhere to type_hints that seem inconsistent with the data.
     """
-    types = detect_types(X)
+    if not isinstance(X, pd.DataFrame):
+        X = pd.DataFrame(X)
+    X = _apply_type_hints(X, type_hints=type_hints)
+
+    if not X.index.is_unique:
+        warn("Index not unique, resetting index!", UserWarning)
+        X = X.reset_index()
+    types = detect_types(X, type_hints=type_hints)
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
     # get rid of dirty floats, add indicators
@@ -269,7 +312,7 @@ def clean(X, type_hints=None, unsafe=False):
     # we could certainly do this nicer, but at this point calling
     # detect_types shouldn't be expensive any more
     # though if we have actual string columns that are free strings... hum
-    types = detect_types(X)
+    types = detect_types(X, type_hints=type_hints)
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
     return X
@@ -323,7 +366,7 @@ def _safe_clean(X, onehot=False, types=None):
     return X
 
 
-class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
+class EasyPreprocessor(BaseEstimator, TransformerMixin):
     """A simple preprocessor
 
     Detects variable types, encodes everything as floats
@@ -390,15 +433,16 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         # go over variable blocks
         # check for missing values
         # scale etc
-        pipe_categorical = OneHotEncoder(categories='auto',
-                                         handle_unknown='ignore')
+        pipe_categorical = make_pipeline(
+            SimpleImputer(strategy='constant', fill_value='dabl_missing'),
+            OneHotEncoder(categories='auto', handle_unknown='ignore',
+                          sparse=False))
 
-        steps_continuous = [FunctionTransformer(_make_float, validate=False)]
+        steps_continuous = [SimpleImputer(strategy='median')]
         if self.scale:
             steps_continuous.append(StandardScaler())
         # if X.loc[:, types['continuous']].isnull().values.any():
         # FIXME doesn't work if missing values only in dirty column
-        steps_continuous.insert(0, SimpleImputer(strategy='median'))
         pipe_continuous = make_pipeline(*steps_continuous)
         # FIXME only have one imputer/standard scaler in all
         # (right now copied in dirty floats and floats)
@@ -415,6 +459,7 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
             transformer_cols.append(('categorical',
                                      pipe_categorical, types['categorical']))
         if types['dirty_float'].any():
+            # FIXME we're not really handling this here any more?
             transformer_cols.append(('dirty_float',
                                      pipe_dirty_float, types['dirty_float']))
 
@@ -430,7 +475,28 @@ class FriendlyPreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def get_feature_names(self):
-        return self.ct_.get_feature_names()
+        # this can go soon hopefully
+        feature_names = []
+        for name, trans, cols in self.ct_.transformers_:
+            if name == "continuous":
+                # three should be no all-nan columns in the imputer
+                if np.isnan(trans[0].statistics_).any():
+                    raise ValueError("So unexpected! Looks like the imputer"
+                                     " dropped some all-NaN columns."
+                                     "Try calling 'clean' on your data first.")
+                feature_names.extend(cols.index[cols])
+            elif name == 'categorical':
+                # this is the categorical pipe, extract one hot encoder
+                ohe = trans[-1]
+                # FIXME that is really strange?!
+                ohe_cols = self.columns_[self.columns_.map(cols)]
+                feature_names.extend(ohe.get_feature_names(ohe_cols))
+            elif name == "remainder":
+                assert trans == "drop"
+            else:
+                raise ValueError(
+                    "Can't compute feature names for {}".format(name))
+        return feature_names
 
     def transform(self, X):
         """ A reference implementation of a transform function.

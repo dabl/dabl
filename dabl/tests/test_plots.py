@@ -5,10 +5,18 @@ import matplotlib.pyplot as plt
 
 import itertools
 
-from sklearn.datasets import make_regression
+from sklearn.datasets import make_regression, make_blobs
 from sklearn.preprocessing import KBinsDiscretizer
-from fml.preprocessing import clean, detect_types
-from fml.plotting import plot_supervised, find_pretty_grid
+from dabl.preprocessing import clean, detect_types
+from dabl.plotting import (plot_supervised, find_pretty_grid,
+                           plot_classification_categorical,
+                           plot_classification_continuous,
+                           plot_regression_categorical,
+                           plot_regression_continuous,
+                           plot_coefficients)
+
+
+# FIXME: check that target is not y but a column name
 
 
 def test_find_pretty_grid():
@@ -67,3 +75,45 @@ def test_plots_smoke(continuous_features, categorical_features, task):
 
     plot_supervised(X_clean, 'target')
     plt.close("all")
+
+
+@pytest.mark.filterwarnings('ignore:Discarding near-constant')
+def test_plot_classification_n_classes():
+    X, y = make_blobs()
+    X = pd.DataFrame(X)
+    X['target'] = 0
+    with pytest.raises(ValueError, match="Less than two classes"):
+        plot_classification_categorical(X, 'target')
+    with pytest.raises(ValueError, match="Less than two classes"):
+        plot_classification_continuous(X, 'target')
+
+
+def test_plot_wrong_target_type():
+    X, y = make_blobs()
+    X = pd.DataFrame(X)
+    X['target'] = y
+    with pytest.raises(ValueError, match="need continuous"):
+        plot_regression_categorical(X, 'target')
+    with pytest.raises(ValueError, match="need continuous"):
+        plot_regression_continuous(X, 'target')
+
+    X['target'] = X[0]
+    with pytest.raises(ValueError, match="need categorical"):
+        plot_classification_categorical(X, 'target')
+    with pytest.raises(ValueError, match="need categorical"):
+        plot_classification_continuous(X, 'target')
+
+
+@pytest.mark.parametrize("n_features, n_top_features",
+                         [(5, 10), (10, 5), (10, 40), (40, 10)])
+def test_plot_coefficients(n_features, n_top_features):
+    coef = np.arange(n_features) + .4
+    names = ["feature_{}".format(i) for i in range(n_features)]
+    plot_coefficients(coef, names, n_top_features=n_top_features)
+    ax = plt.gca()
+    assert len(ax.get_xticks()) == min(n_top_features, n_features)
+    coef[:-5] = 0
+    plot_coefficients(coef, names, n_top_features=n_top_features)
+    ax = plt.gca()
+    assert len(ax.get_xticks()) == 5
+

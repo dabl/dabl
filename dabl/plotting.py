@@ -24,6 +24,36 @@ from .preprocessing import detect_types
 
 
 def find_pretty_grid(n_plots, max_cols=5):
+    """Determine a good grid shape for n_plots subplots.
+
+    Tries to find a way to arange n_plots many subplots on a grid in a way
+    that fills as many grid-cells as possible, while keeping the number
+    of rows low and the number of columns below max_cols.
+
+    Parameters
+    ----------
+    n_plots : int
+        Number of plots to arrange.
+    max_cols : int, default=5
+        Maximum number of columns.
+
+    Returns
+    -------
+    n_rows : int
+        Number of rows in grid.
+    n_cols : int
+        Number of columns in grid.
+
+    Examples
+    --------
+    >>> find_pretty_grid(16, 5)
+    (4, 4)
+    >>> find_pretty_grid(11, 5)
+    (3, 4)
+    >>> find_pretty_grid(10, 5)
+    (2, 5)
+    """
+
     # we could probably do something with prime numbers here
     # but looks like that becomes a combinatorial problem again?
     if n_plots % max_cols == 0:
@@ -46,15 +76,111 @@ def find_pretty_grid(n_plots, max_cols=5):
     return int(np.ceil(n_plots / best_cols)), best_cols
 
 
+def plot_coefficients(coefficients, feature_names, n_top_features=10):
+    """Visualize coefficients of a linear model.
+
+    Parameters
+    ----------
+    coefficients : nd-array, shape (n_features,)
+        Model coefficients.
+
+    feature_names : list or nd-array of strings, shape (n_features,)
+        Feature names for labeling the coefficients.
+
+    n_top_features : int, default=10
+        How many features to show. The function will show the largest (most
+        positive) and smallest (most negative)  n_top_features coefficients,
+        for a total of 2 * n_top_features coefficients.
+    """
+    coefficients = coefficients.squeeze()
+    feature_names = np.asarray(feature_names)
+    if coefficients.ndim > 1:
+        # this is not a row or column vector
+        raise ValueError("coeffients must be 1d array or column vector, got"
+                         " shape {}".format(coefficients.shape))
+    coefficients = coefficients.ravel()
+
+    if len(coefficients) != len(feature_names):
+        raise ValueError("Number of coefficients {} doesn't match number of"
+                         "feature names {}.".format(len(coefficients),
+                                                    len(feature_names)))
+    # get coefficients with large absolute values
+    coef = coefficients.ravel()
+    mask = coef != 0
+    coef = coef[mask]
+    feature_names = feature_names[mask]
+    # FIXME this could be easier with pandas by sorting by a column
+    interesting_coefficients = np.argsort(np.abs(coef))[-n_top_features:]
+    new_inds = np.argsort(coef[interesting_coefficients])
+    interesting_coefficients = interesting_coefficients[new_inds]
+    # plot them
+    plt.figure(figsize=(15, 5))
+    colors = ['red' if c < 0 else 'blue'
+              for c in coef[interesting_coefficients]]
+    plt.bar(np.arange(len(interesting_coefficients)),
+            coef[interesting_coefficients],
+            color=colors)
+    feature_names = np.array(feature_names)
+    plt.subplots_adjust(bottom=0.3)
+    plt.xticks(np.arange(0, len(interesting_coefficients)),
+               feature_names[interesting_coefficients], rotation=60,
+               ha="right")
+    plt.ylabel("Coefficient magnitude")
+    plt.xlabel("Feature")
+
+
+def heatmap(values, xlabel, ylabel, xticklabels, yticklabels, cmap=None,
+            vmin=None, vmax=None, ax=None, fmt="%0.2f"):
+    if ax is None:
+        ax = plt.gca()
+    # plot the mean cross-validation scores
+    img = ax.pcolor(values, cmap=cmap, vmin=vmin, vmax=vmax)
+    img.update_scalarmappable()
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_xticks(np.arange(len(xticklabels)) + .5)
+    ax.set_yticks(np.arange(len(yticklabels)) + .5)
+    ax.set_xticklabels(xticklabels)
+    ax.set_yticklabels(yticklabels)
+    ax.set_aspect(1)
+
+    for p, color, value in zip(img.get_paths(), img.get_facecolors(),
+                               img.get_array()):
+        x, y = p.vertices[:-2, :].mean(0)
+        if np.mean(color[:3]) > 0.5:
+            c = 'k'
+        else:
+            c = 'w'
+        ax.text(x, y, fmt % value, color=c, ha="center", va="center")
+    return img
+
+
 def plot_continuous_unsupervised(X):
+    """Not implemented yet"""
     pass
 
 
 def plot_categorical_unsupervised(X):
+    """not implemented yet"""
     pass
 
 
 def _shortname(some_string, maxlen=20):
+    """Shorten a string given a maximum length.
+
+    Longer strings will be shortened and the rest replaced by ...
+
+    Parameters
+    ----------
+    some_string : string
+        Input string to shorten
+    maxlen : int, default=20
+
+    Returns
+    -------
+    return_string : string
+        Output string of size ``min(len(some_string), maxlen)``.
+    """
     some_string = str(some_string)
     if len(some_string) > maxlen:
         return some_string[:maxlen - 3] + "..."
@@ -77,7 +203,7 @@ def _prune_categories(series, max_categories=10):
     series = series.astype('category')
     small_categories = series.value_counts()[max_categories:].index
     res = series.cat.remove_categories(small_categories)
-    res = res.cat.add_categories(['fml_other']).fillna("fml_other")
+    res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
     return res
 
 
@@ -101,50 +227,10 @@ def _fill_missing_categorical(X):
     max_value = X.max(numeric_only=True).max()
     for col in X.columns:
         if X[col].dtype == 'object':
-            X[col].fillna("fml_missing", inplace=True)
+            X[col].fillna("dabl_missing", inplace=True)
         else:
             X[col].fillna(max_value + 1, inplace=True)
     return X
-
-
-def plot_unsupervised(X, verbose=10):
-    types = detect_types(X)
-    # if any dirty floats, tell user to clean them first
-    plot_continuous_unsupervised(X.loc[:, types.continous])
-    plot_categorical_unsupervised(X.loc[:, types.categorical])
-
-
-def plot_regression_continuous(X, target_col, types=None):
-    if types is None:
-        types = detect_types(X)
-    features = X.loc[:, types.continuous]
-    if target_col in features.columns:
-        features = features.drop(target_col, axis=1)
-    if features.shape[1] == 0:
-        return
-    show_top = _get_n_top(features, "continuous")
-
-    target = X[target_col]
-    # HACK we should drop them per column before feeding them into f_regression
-    # FIXME
-    features_imp = SimpleImputer().fit_transform(features)
-    f, p = f_regression(features_imp, target)
-    top_k = np.argsort(f)[-show_top:][::-1]
-    # we could do better lol
-    fig, axes = _make_subplots(n_plots=show_top)
-
-    # FIXME this could be a function or maybe using seaborn
-    plt.suptitle("Continuous Feature vs Target")
-    for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
-        if i % axes.shape[1] == 0:
-            ax.set_ylabel(target_col)
-        ax.plot(features.iloc[:, col], target, 'o', alpha=.6)
-        ax.set_xlabel(_shortname(features.columns[col]))
-        ax.set_title("F={:.2E}".format(f[col]))
-
-    for j in range(i + 1, axes.size):
-        # turn off axis if we didn't fill last row
-        axes.ravel()[j].set_axis_off()
 
 
 def _make_subplots(n_plots, max_cols=5, row_height=3):
@@ -157,45 +243,29 @@ def _make_subplots(n_plots, max_cols=5, row_height=3):
     return fig, axes
 
 
-def plot_regression_categorical(X, target_col, types=None):
+def _check_X_target_col(X, target_col, types, classification=False):
     if types is None:
         types = detect_types(X)
-    features = X.loc[:, types.categorical]
-    if target_col in features.columns:
-        features = features.drop(target_col, axis=1)
-    if features.shape[1] == 0:
-        return
-    features = features.astype('category')
-    show_top = _get_n_top(features, "categorical")
-    # for col in X.columns:
-    #    if col != target_col:
-    #        X[col] = X[col].astype("category")
-    # seaborn needs to know these are categories
-    # can't use OrdinalEncoder because we might have mix of int and string
-    ordinal_encoded = features.apply(lambda x: x.cat.codes)
-    target = X[target_col]
-    f = mutual_info_regression(
-        ordinal_encoded, target,
-        discrete_features=np.ones(X.shape[1], dtype=bool))
-    top_k = np.argsort(f)[-show_top:][::-1]
+    if not isinstance(target_col, str) and len(target_col) > 1:
+        raise ValueError("target_col should be a column in X, "
+                         "got {}".format(target_col))
+    if target_col not in X.columns:
+        raise ValueError("{} is not a valid column of X".format(target_col))
 
-    # large number of categories -> taller plot
-    row_height = 3 if X.nunique().max() <= 5 else 5
-    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
-    plt.suptitle("Categorical Feature vs Target")
-    for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
-        col = features.columns[i]
-        X_new = _prune_category_make_X(X, col, target_col)
-        medians = X_new.groupby(col)[target_col].median()
-        order = medians.sort_values().index
-        sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
-        ax.set_title("F={:.2E}".format(f[col_ind]))
-        # shorten long ticks and labels
-        _short_tick_names(ax)
-
-    for j in range(i + 1, axes.size):
-        # turn off axis if we didn't fill last row
-        axes.ravel()[j].set_axis_off()
+    if X[target_col].nunique() < 2:
+        raise ValueError("Less than two classes present, {}, need at least two"
+                         " for classification.".format(X.loc[0, target_col]))
+    # FIXME we get target types here with detect_types,
+    # but in the estimator with type_of_target
+    if classification and not types.loc[target_col, 'categorical']:
+        raise ValueError("Type for target column {} detected as {},"
+                         " need categorical for classification.".format(
+                             target_col, types.T.idxmax()[target_col]))
+    if (not classification) and (not types.loc[target_col, 'continuous']):
+        raise ValueError("Type for target column {} detected as {},"
+                         " need continuous for regression.".format(
+                             target_col, types.T.idxmax()[target_col]))
+    return types
 
 
 def _short_tick_names(ax):
@@ -233,9 +303,145 @@ def _discrete_scatter(x, y, c, ax):
     ax.legend()
 
 
-def plot_classification_continuous(X, target_col, types=None):
+def plot_unsupervised(X, verbose=10):
+    """Not implemented yet"""
+    types = detect_types(X)
+    # if any dirty floats, tell user to clean them first
+    plot_continuous_unsupervised(X.loc[:, types.continous])
+    plot_categorical_unsupervised(X.loc[:, types.categorical])
+
+
+def plot_regression_continuous(X, target_col, types=None):
+    """Exploration plots for continuous features in regression.
+
+    Creates plots of all the continuous features vs the target.
+    Relevant features are determined using F statistics.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
+    types = _check_X_target_col(X, target_col, types)
+
+    features = X.loc[:, types.continuous]
+    if target_col in features.columns:
+        features = features.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
+    show_top = _get_n_top(features, "continuous")
+
+    target = X[target_col]
+    # HACK we should drop them per column before feeding them into f_regression
+    # FIXME
+    features_imp = SimpleImputer().fit_transform(features)
+    f, p = f_regression(features_imp, target)
+    top_k = np.argsort(f)[-show_top:][::-1]
+    # we could do better lol
+    fig, axes = _make_subplots(n_plots=show_top)
+
+    # FIXME this could be a function or maybe using seaborn
+    plt.suptitle("Continuous Feature vs Target")
+    for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
+        if i % axes.shape[1] == 0:
+            ax.set_ylabel(target_col)
+        ax.plot(features.iloc[:, col], target, 'o', alpha=.6)
+        ax.set_xlabel(_shortname(features.columns[col]))
+        ax.set_title("F={:.2E}".format(f[col]))
+
+    for j in range(i + 1, axes.size):
+        # turn off axis if we didn't fill last row
+        axes.ravel()[j].set_axis_off()
+
+
+def plot_regression_categorical(X, target_col, types=None):
+    """Exploration plots for categorical features in regression.
+
+    Creates box plots of target distribution for important categorical
+    features. Relevant features are identified using mutual information.
+
+    For high cardinality categorical variables (variables with many categories)
+    only the most frequent categories are shown.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
+    types = _check_X_target_col(X, target_col, types)
+
     if types is None:
         types = detect_types(X)
+    features = X.loc[:, types.categorical]
+    if target_col in features.columns:
+        features = features.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
+    features = features.astype('category')
+    show_top = _get_n_top(features, "categorical")
+
+    # can't use OrdinalEncoder because we might have mix of int and string
+    ordinal_encoded = features.apply(lambda x: x.cat.codes)
+    target = X[target_col]
+    f = mutual_info_regression(
+        ordinal_encoded, target,
+        discrete_features=np.ones(X.shape[1], dtype=bool))
+    top_k = np.argsort(f)[-show_top:][::-1]
+
+    # large number of categories -> taller plot
+    row_height = 3 if X.nunique().max() <= 5 else 5
+    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
+    plt.suptitle("Categorical Feature vs Target")
+    for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
+        col = features.columns[i]
+        X_new = _prune_category_make_X(X, col, target_col)
+        medians = X_new.groupby(col)[target_col].median()
+        order = medians.sort_values().index
+        sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
+        ax.set_title("F={:.2E}".format(f[col_ind]))
+        # shorten long ticks and labels
+        _short_tick_names(ax)
+
+    for j in range(i + 1, axes.size):
+        # turn off axis if we didn't fill last row
+        axes.ravel()[j].set_axis_off()
+
+
+def plot_classification_continuous(X, target_col, types=None):
+    """Exploration plots for continuous features in classification.
+
+    Selects important continuous features according to F statistics.
+    Creates univariate distribution plots for these, as well as scatterplots
+    for selected pairs of features, and scatterplots for selected pairs of
+    PCA directions.
+    If there are more than 2 classes, scatter plots from Linear Discriminant
+    Analysis are also shown.
+    Scatter plots are determined "interesting" is a decision tree on the
+    two-dimensional projection performs well. The cross-validated macro-average
+    recall of a decision tree is shown in the title for each scatterplot.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
+    types = _check_X_target_col(X, target_col, types, classification=True)
+
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -337,8 +543,26 @@ def plot_classification_continuous(X, target_col, types=None):
 
 
 def plot_classification_categorical(X, target_col, types=None, kind='count'):
-    if types is None:
-        types = detect_types(X)
+    """Exploration plots for categorical features in classification.
+
+    Creates plots of categorical variable distributions for each target class.
+    Relevant features are identified via mutual information.
+
+    For high cardinality categorical variables (variables with many categories)
+    only the most frequent categories are shown.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
+    types = _check_X_target_col(X, target_col, types, classification=True)
+
     features = X.loc[:, types.categorical]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -398,8 +622,33 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
 
 
 def plot_supervised(X, target_col, types=None, verbose=10):
-    if types is None:
-        types = detect_types(X)
+    """Exploration plots for classification and regression.
+
+    Determines whether the target is categorical or continuous and plots the
+    target distribution. Then calls the relevant plotting functions
+    accordingly.
+
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    verbose : int, default=10
+        Controls the verbosity (output).
+
+    See also
+    --------
+    plot_regression_continuous
+    plot_regression_categorical
+    plot_classification_continuous
+    plot_classification_categorical
+    """
+    types = _check_X_target_col(X, target_col, types)
     # aggressively low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:

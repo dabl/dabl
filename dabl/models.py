@@ -4,20 +4,17 @@ import pandas as pd
 
 from sklearn.metrics import make_scorer, average_precision_score
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.dummy import DummyClassifier
+from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.multiclass import type_of_target
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder
-from sklearn.naive_bayes import GaussianNB, MultinomialNB
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _multimetric_score
-from sklearn.linear_model import LogisticRegression
 from sklearn.utils.validation import check_is_fitted
 
 from .preprocessing import EasyPreprocessor
+from .pipelines import get_fast_classifiers
 from .utils import nice_repr
 
 
@@ -59,7 +56,6 @@ class EasyClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("Unknown target type: {}".format(target_type))
         # speed up label encoding by not redoing it
         self.log_ = []
-        n_classes = len(np.unique(y))
 
         # reimplement cross-validation so we only do preprocessing once
         # This could/should be solved with dask?
@@ -76,24 +72,12 @@ class EasyClassifier(BaseEstimator, ClassifierMixin):
             data_preproc.append((X_train, X_test, y.iloc[train], y.iloc[test]))
         # Heuristic: start with fast / instantaneous models
 
-        fast_ests = [DummyClassifier(strategy="prior"),
-                     GaussianNB(),
-                     make_pipeline(MinMaxScaler(), MultinomialNB()),
-                     DecisionTreeClassifier(max_depth=1,
-                                            class_weight="balanced"),
-                     DecisionTreeClassifier(max_depth=max(5, n_classes),
-                                            class_weight="balanced"),
-                     DecisionTreeClassifier(class_weight="balanced",
-                                            min_impurity_decrease=.01),
-                     LogisticRegression(C=.1, solver='lbfgs', multi_class='auto',
-                                        class_weight='balanced')
-                     ]
-
-        scorers, _ = _check_multimetric_scoring(fast_ests[1],
+        fast_classifiers = get_fast_classifiers(n_classes=y.nunique())
+        scorers, _ = _check_multimetric_scoring(fast_classifiers[1],
                                                 scoring=self.scoring_)
 
         self.current_best_ = -np.inf
-        for est in fast_ests:
+        for est in fast_classifiers:
             scores = self._evaluate_one(est, data_preproc, scorers)
             # make scoring configurable
             this_score = scores['recall_macro']

@@ -74,6 +74,7 @@ def test_plots_smoke(continuous_features, categorical_features, task):
     plt.close("all")
 
 
+@pytest.mark.filterwarnings('ignore:Discarding near-constant')
 def test_plot_classification_n_classes():
     X, y = make_blobs()
     X = pd.DataFrame(X)

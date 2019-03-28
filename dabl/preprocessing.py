@@ -209,7 +209,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     most_common_count = X.apply(lambda x: x.value_counts().max())
     near_constant = most_common_count / X.count() > near_constant_threshold
     if near_constant.any():
-        warn("Discarding near constant features: {}".format(
+        warn("Discarding near-constant features: {}".format(
              near_constant.index[near_constant].tolist()))
     useless = useless | near_constant
     large_cardinality_int = integers & ~few_entries

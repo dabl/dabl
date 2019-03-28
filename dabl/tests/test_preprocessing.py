@@ -58,7 +58,7 @@ def test_detect_constant():
                       'second': ['no', 'no', 'no', 'no'],
                       'b': [0.0, 0.0, 0.0, 0],
                       'weird': ['0', '0', '0', '0']})
-    with pytest.warns(UserWarning, match="Discarding near constant"):
+    with pytest.warns(UserWarning, match="Discarding near-constant"):
         res = detect_types(X)
     assert res.useless.sum() == 4
 
@@ -88,7 +88,7 @@ def test_detect_types():
          'index_1_based': np.arange(1, 101),
          'index_shuffled': np.random.permutation(100)
          })
-    with pytest.warns(UserWarning, match="Discarding near constant"):
+    with pytest.warns(UserWarning, match="Discarding near-constant"):
         res = detect_types(df_all)
     types = res.T.idxmax()
     assert types['categorical_string'] == 'categorical'

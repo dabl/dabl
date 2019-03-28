@@ -1,3 +1,7 @@
+"""
+Successive Halving
+==================
+"""
 import pandas as pd
 from sklearn import datasets
 import matplotlib.pyplot as plt

@@ -4,7 +4,7 @@ from scipy.stats import norm
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
 
-from fml import GridSuccessiveHalving, RandomSuccessiveHalving
+from dabl import GridSuccessiveHalving, RandomSuccessiveHalving
 
 
 class FastClassifier(DummyClassifier):

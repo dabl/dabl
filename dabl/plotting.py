@@ -417,7 +417,7 @@ def plot_regression_categorical(X, target_col, types=None):
         axes.ravel()[j].set_axis_off()
 
 
-def plot_classification_continuous(X, target_col, types=None):
+def plot_classification_continuous(X, target_col, types=None, hue_order=None):
     """Exploration plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -474,8 +474,9 @@ def plot_classification_continuous(X, target_col, types=None):
         df = best_features.melt(target_col)
         rows, cols = find_pretty_grid(show_top)
         g = sns.FacetGrid(df, col='variable', hue=target_col, col_wrap=cols,
-                          sharey=False, sharex=False)
+                          sharey=False, sharex=False, hue_order=hue_order)
         g = g.map(sns.kdeplot, "value", shade=True)
+        g.axes[0].legend()
         # FIXME remove "variable = " from title, add f score
         plt.suptitle("Univariate Distributions", y=1.02)
 
@@ -690,6 +691,7 @@ def plot_supervised(X, target_col, types=None, verbose=10):
             columns={'variable': 'class', 'value': 'count'})
         sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")
-        plot_classification_continuous(X, target_col, types=types)
+        plot_classification_continuous(X, target_col, types=types,
+                                       hue_order=counts.index)
         plot_classification_categorical(X, target_col, types=types,
                                         hue_order=counts.index)

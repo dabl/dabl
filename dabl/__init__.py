@@ -4,4 +4,4 @@ from .plotting import plot_supervised
 from .search import GridSuccessiveHalving, RandomSuccessiveHalving
 
 __all__ = ['EasyPreprocessor', 'EasyClassifier', 'plot_supervised',
-           'GridSuccessiveHalving, RandomSuccessiveHalving']
+           'GridSuccessiveHalving', 'RandomSuccessiveHalving']

@@ -9,7 +9,7 @@ from sklearn.svm import SVC
 import numpy as np
 import pandas as pd
 
-from fml import GridSuccessiveHalving
+from dabl import GridSuccessiveHalving
 
 
 rng = np.random.RandomState(0)

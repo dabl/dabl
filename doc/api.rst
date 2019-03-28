@@ -10,10 +10,10 @@ Supervised Models
 =================
 
 .. autosummary::
-   :toctree: generated/
-   :template: class.rst
+    :toctree: generated/
+    :template: class.rst
 
-   EasyClassifier
+    EasyClassifier
 
 Preprocessing
 =============
@@ -21,14 +21,14 @@ Preprocessing
 .. currentmodule:: dabl.preprocessing
 
 .. autosummary::
-   :toctree: generated/
-   :template: class.rst
+    :toctree: generated/
+    :template: class.rst
 
-   EasyPreprocessor
+    EasyPreprocessor
 
 .. autosummary::
-   :toctree: generated/
-   :template: function.rst
+    :toctree: generated/
+    :template: function.rst
 
     detect_types
     clean
@@ -38,8 +38,8 @@ Plotting
 
 .. currentmodule:: dabl.plotting
 .. autosummary::
-   :toctree: generated/
-   :template: function.rst
+    :toctree: generated/
+    :template: function.rst
 
     find_pretty_grid
     plot_supervised
@@ -48,3 +48,15 @@ Plotting
     plot_regression_categorical
     plot_regression_continuous
 
+
+Search
+======
+
+.. currentmodule:: dabl.search
+
+.. autosummary::
+    :toctree: generated/
+    :template: class.rst
+
+    GridSuccessiveHalving
+    RandomSuccessiveHalving

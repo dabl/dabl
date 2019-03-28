@@ -11,7 +11,7 @@ from sklearn.model_selection import GridSearchCV
 import numpy as np
 import pandas as pd
 
-from fml import GridSuccessiveHalving
+from dabl import GridSuccessiveHalving
 
 
 rng = np.random.RandomState(0)

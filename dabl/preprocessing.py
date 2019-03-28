@@ -135,7 +135,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     # FIXME dirty int is detected as dirty float right now
     # TODO discard all constant and binary columns at the beginning?
     # TODO subsample large datsets? one level up?
-
+    if not isinstance(X, pd.DataFrame):
+        raise TypeError("X is not a dataframe. Convert or call `clean`.")
     if not X.index.is_unique:
         raise ValueError("Non-unique index found. Reset index or call clean.")
     duplicated = X.columns.duplicated()
@@ -292,9 +293,10 @@ def clean(X, type_hints=None):
         If dict, provide type information for columns.
         Keys are column names, values are types as provided by detect_types.
     """
-    X = _apply_type_hints(X, type_hints=type_hints)
     if not isinstance(X, pd.DataFrame):
         X = pd.DataFrame(X)
+    X = _apply_type_hints(X, type_hints=type_hints)
+
     if not X.index.is_unique:
         warn("Index not unique, resetting index!", UserWarning)
         X = X.reset_index()

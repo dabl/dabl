@@ -5,10 +5,15 @@ import matplotlib.pyplot as plt
 
 import itertools
 
-from sklearn.datasets import make_regression
+from sklearn.datasets import make_regression, make_blobs
 from sklearn.preprocessing import KBinsDiscretizer
 from dabl.preprocessing import clean, detect_types
-from dabl.plotting import plot_supervised, find_pretty_grid
+from dabl.plotting import (plot_supervised, find_pretty_grid,
+                           plot_classification_categorical,
+                           plot_classification_continuous)
+
+
+# FIXME: check that target is not y but a column name
 
 
 def test_find_pretty_grid():
@@ -67,3 +72,13 @@ def test_plots_smoke(continuous_features, categorical_features, task):
 
     plot_supervised(X_clean, 'target')
     plt.close("all")
+
+
+def test_plot_classification_n_classes():
+    X, y = make_blobs()
+    X = pd.DataFrame(X)
+    X['target'] = 0
+    with pytest.raises(ValueError, match="Less than two classes"):
+        plot_classification_categorical(X, 'target')
+    with pytest.raises(ValueError, match="Less than two classes"):
+        plot_classification_continuous(X, 'target')

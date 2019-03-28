@@ -154,62 +154,6 @@ def _fill_missing_categorical(X):
     return X
 
 
-def plot_unsupervised(X, verbose=10):
-    """Not implemented yet"""
-    types = detect_types(X)
-    # if any dirty floats, tell user to clean them first
-    plot_continuous_unsupervised(X.loc[:, types.continous])
-    plot_categorical_unsupervised(X.loc[:, types.categorical])
-
-
-def plot_regression_continuous(X, target_col, types=None):
-    """Exploration plots for continuous features in regression.
-
-    Creates plots of all the continuous features vs the target.
-    Relevant features are determined using F statistics.
-
-    Parameters
-    ----------
-    X : dataframe
-        Input data including features and target
-    target_col : str or int
-        Identifier of the target column in X
-    types : dataframe of types, optional.
-        Output of detect_types on X. Can be used to avoid recomputing the
-        types.
-    """
-    if types is None:
-        types = detect_types(X)
-    features = X.loc[:, types.continuous]
-    if target_col in features.columns:
-        features = features.drop(target_col, axis=1)
-    if features.shape[1] == 0:
-        return
-    show_top = _get_n_top(features, "continuous")
-
-    target = X[target_col]
-    # HACK we should drop them per column before feeding them into f_regression
-    # FIXME
-    features_imp = SimpleImputer().fit_transform(features)
-    f, p = f_regression(features_imp, target)
-    top_k = np.argsort(f)[-show_top:][::-1]
-    # we could do better lol
-    fig, axes = _make_subplots(n_plots=show_top)
-
-    # FIXME this could be a function or maybe using seaborn
-    plt.suptitle("Continuous Feature vs Target")
-    for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
-        if i % axes.shape[1] == 0:
-            ax.set_ylabel(target_col)
-        ax.plot(features.iloc[:, col], target, 'o', alpha=.6)
-        ax.set_xlabel(_shortname(features.columns[col]))
-        ax.set_title("F={:.2E}".format(f[col]))
-
-    for j in range(i + 1, axes.size):
-        # turn off axis if we didn't fill last row
-        axes.ravel()[j].set_axis_off()
-
-
 def _make_subplots(n_plots, max_cols=5, row_height=3):
     n_rows, n_cols = find_pretty_grid(n_plots, max_cols=max_cols)
     fig, axes = plt.subplots(n_rows, n_cols,
@@ -220,63 +164,19 @@ def _make_subplots(n_plots, max_cols=5, row_height=3):
     return fig, axes
 
 
-def plot_regression_categorical(X, target_col, types=None):
-    """Exploration plots for categorical features in regression.
-
-    Creates box plots of target distribution for important categorical
-    features. Relevant features are identified using mutual information.
-
-    For high cardinality categorical variables (variables with many categories)
-    only the most frequent categories are shown.
-
-    Parameters
-    ----------
-    X : dataframe
-        Input data including features and target
-    target_col : str or int
-        Identifier of the target column in X
-    types : dataframe of types, optional.
-        Output of detect_types on X. Can be used to avoid recomputing the
-        types.
-    """
+def _check_X_target_col(X, target_col, types, classification=False):
     if types is None:
         types = detect_types(X)
-    features = X.loc[:, types.categorical]
-    if target_col in features.columns:
-        features = features.drop(target_col, axis=1)
-    if features.shape[1] == 0:
-        return
-    features = features.astype('category')
-    show_top = _get_n_top(features, "categorical")
-    # for col in X.columns:
-    #    if col != target_col:
-    #        X[col] = X[col].astype("category")
-    # seaborn needs to know these are categories
-    # can't use OrdinalEncoder because we might have mix of int and string
-    ordinal_encoded = features.apply(lambda x: x.cat.codes)
-    target = X[target_col]
-    f = mutual_info_regression(
-        ordinal_encoded, target,
-        discrete_features=np.ones(X.shape[1], dtype=bool))
-    top_k = np.argsort(f)[-show_top:][::-1]
+    if not isinstance(target_col, str) and len(target_col) > 1:
+        raise ValueError("target_col should be a column in X, "
+                         "got {}".format(target_col))
+    if target_col not in X.columns:
+        raise ValueError("{} is not a valid column of X".format(target_col))
 
-    # large number of categories -> taller plot
-    row_height = 3 if X.nunique().max() <= 5 else 5
-    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
-    plt.suptitle("Categorical Feature vs Target")
-    for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
-        col = features.columns[i]
-        X_new = _prune_category_make_X(X, col, target_col)
-        medians = X_new.groupby(col)[target_col].median()
-        order = medians.sort_values().index
-        sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
-        ax.set_title("F={:.2E}".format(f[col_ind]))
-        # shorten long ticks and labels
-        _short_tick_names(ax)
-
-    for j in range(i + 1, axes.size):
-        # turn off axis if we didn't fill last row
-        axes.ravel()[j].set_axis_off()
+    if X[target_col].nunique() < 2:
+        raise ValueError("Less than two classes present, {}, need at least two"
+                         " for classification.".format(X.loc[0, target_col]))
+    return types
 
 
 def _short_tick_names(ax):
@@ -314,6 +214,120 @@ def _discrete_scatter(x, y, c, ax):
     ax.legend()
 
 
+def plot_unsupervised(X, verbose=10):
+    """Not implemented yet"""
+    types = detect_types(X)
+    # if any dirty floats, tell user to clean them first
+    plot_continuous_unsupervised(X.loc[:, types.continous])
+    plot_categorical_unsupervised(X.loc[:, types.categorical])
+
+
+def plot_regression_continuous(X, target_col, types=None):
+    """Exploration plots for continuous features in regression.
+
+    Creates plots of all the continuous features vs the target.
+    Relevant features are determined using F statistics.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
+    types = _check_X_target_col(X, target_col, types)
+
+    features = X.loc[:, types.continuous]
+    if target_col in features.columns:
+        features = features.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
+    show_top = _get_n_top(features, "continuous")
+
+    target = X[target_col]
+    # HACK we should drop them per column before feeding them into f_regression
+    # FIXME
+    features_imp = SimpleImputer().fit_transform(features)
+    f, p = f_regression(features_imp, target)
+    top_k = np.argsort(f)[-show_top:][::-1]
+    # we could do better lol
+    fig, axes = _make_subplots(n_plots=show_top)
+
+    # FIXME this could be a function or maybe using seaborn
+    plt.suptitle("Continuous Feature vs Target")
+    for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
+        if i % axes.shape[1] == 0:
+            ax.set_ylabel(target_col)
+        ax.plot(features.iloc[:, col], target, 'o', alpha=.6)
+        ax.set_xlabel(_shortname(features.columns[col]))
+        ax.set_title("F={:.2E}".format(f[col]))
+
+    for j in range(i + 1, axes.size):
+        # turn off axis if we didn't fill last row
+        axes.ravel()[j].set_axis_off()
+
+
+def plot_regression_categorical(X, target_col, types=None):
+    """Exploration plots for categorical features in regression.
+
+    Creates box plots of target distribution for important categorical
+    features. Relevant features are identified using mutual information.
+
+    For high cardinality categorical variables (variables with many categories)
+    only the most frequent categories are shown.
+
+    Parameters
+    ----------
+    X : dataframe
+        Input data including features and target
+    target_col : str or int
+        Identifier of the target column in X
+    types : dataframe of types, optional.
+        Output of detect_types on X. Can be used to avoid recomputing the
+        types.
+    """
+    types = _check_X_target_col(X, target_col, types)
+
+    if types is None:
+        types = detect_types(X)
+    features = X.loc[:, types.categorical]
+    if target_col in features.columns:
+        features = features.drop(target_col, axis=1)
+    if features.shape[1] == 0:
+        return
+    features = features.astype('category')
+    show_top = _get_n_top(features, "categorical")
+
+    # can't use OrdinalEncoder because we might have mix of int and string
+    ordinal_encoded = features.apply(lambda x: x.cat.codes)
+    target = X[target_col]
+    f = mutual_info_regression(
+        ordinal_encoded, target,
+        discrete_features=np.ones(X.shape[1], dtype=bool))
+    top_k = np.argsort(f)[-show_top:][::-1]
+
+    # large number of categories -> taller plot
+    row_height = 3 if X.nunique().max() <= 5 else 5
+    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
+    plt.suptitle("Categorical Feature vs Target")
+    for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
+        col = features.columns[i]
+        X_new = _prune_category_make_X(X, col, target_col)
+        medians = X_new.groupby(col)[target_col].median()
+        order = medians.sort_values().index
+        sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
+        ax.set_title("F={:.2E}".format(f[col_ind]))
+        # shorten long ticks and labels
+        _short_tick_names(ax)
+
+    for j in range(i + 1, axes.size):
+        # turn off axis if we didn't fill last row
+        axes.ravel()[j].set_axis_off()
+
+
 def plot_classification_continuous(X, target_col, types=None):
     """Exploration plots for continuous features in classification.
 
@@ -337,8 +351,8 @@ def plot_classification_continuous(X, target_col, types=None):
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
     """
-    if types is None:
-        types = detect_types(X)
+    types = _check_X_target_col(X, target_col, types, classification=True)
+
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -458,8 +472,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
     """
-    if types is None:
-        types = detect_types(X)
+    types = _check_X_target_col(X, target_col, types, classification=True)
+
     features = X.loc[:, types.categorical]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -545,8 +559,7 @@ def plot_supervised(X, target_col, types=None, verbose=10):
     plot_classification_continuous
     plot_classification_categorical
     """
-    if types is None:
-        types = detect_types(X)
+    types = _check_X_target_col(X, target_col, types)
     # aggressively low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:

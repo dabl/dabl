@@ -124,13 +124,12 @@ def test_detect_types():
 
 def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(
-        {
-         'binary_int': np.random.randint(0, 2, size=1000),
+        {'binary_int': np.random.randint(0, 2, size=1000),
          'categorical_int': np.random.randint(0, 4, size=1000),
          'low_card_int_uniform': np.random.randint(0, 20, size=1000),
          'low_card_int_binomial': np.random.binomial(20, .3, size=1000),
          'cont_int': np.repeat(np.arange(500), 2),
-        })
+         })
 
     res = detect_types(df_all)
     types = res.T.idxmax()
@@ -202,7 +201,6 @@ def test_type_hints(type_hints):
             assert X_clean[k].dtype == np.float
         elif v == 'categorical':
             assert X_clean[k].dtype == 'category'
-
 
 
 def test_simple_preprocessor():

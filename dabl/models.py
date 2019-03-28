@@ -15,6 +15,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _multimetric_score
 from sklearn.linear_model import LogisticRegression
+from sklearn.utils.validation import check_is_fitted
 
 from .preprocessing import EasyPreprocessor
 from .utils import nice_repr
@@ -84,7 +85,7 @@ class EasyClassifier(BaseEstimator, ClassifierMixin):
                                             class_weight="balanced"),
                      DecisionTreeClassifier(class_weight="balanced",
                                             min_impurity_decrease=.01),
-                     LogisticRegression(C=.1, solver='lbfgs',
+                     LogisticRegression(C=.1, solver='lbfgs', multi_class='auto',
                                         class_weight='balanced')
                      ]
 
@@ -106,7 +107,9 @@ class EasyClassifier(BaseEstimator, ClassifierMixin):
             self.est_.fit(X, y)
 
     def predict(self, X):
-        # FIXME check self.refit
+        if not self.refit:
+            raise ValueError("Must specify refit=True to predict.")
+        check_is_fitted(self, 'est_')
         self.est_.predict(X)
 
     def _evaluate_one(self, estimator, data_preproc, scorers):

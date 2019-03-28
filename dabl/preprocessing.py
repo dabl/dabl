@@ -480,14 +480,14 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         for name, trans, cols in self.ct_.transformers_:
             if name == "continuous":
                 # three should be no all-nan columns in the imputer
-                if np.isnan(trans[0].statistics_).any():
+                if np.isnan(trans.steps[0][1].statistics_).any():
                     raise ValueError("So unexpected! Looks like the imputer"
                                      " dropped some all-NaN columns."
                                      "Try calling 'clean' on your data first.")
                 feature_names.extend(cols.index[cols])
             elif name == 'categorical':
                 # this is the categorical pipe, extract one hot encoder
-                ohe = trans[-1]
+                ohe = trans.steps[-1][1]
                 # FIXME that is really strange?!
                 ohe_cols = self.columns_[self.columns_.map(cols)]
                 feature_names.extend(ohe.get_feature_names(ohe_cols))

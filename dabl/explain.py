@@ -2,6 +2,7 @@ import numpy as np
 
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
 
 from .models import EasyClassifier
 from .plotting import plot_coefficients
@@ -19,6 +20,8 @@ def explain(estimator, feature_names=None):
     if isinstance(estimator, EasyClassifier):
         # get the pipeline
         estimator = estimator.est_
+    if isinstance(estimator, Pipeline):
+        assert len(estimator.steps) == 2
         # pipelines don't have feature names yet in sklearn
         # *cries in scikit-learn roadmap*
         final_est = estimator[-1]
@@ -37,7 +40,7 @@ def explain(estimator, feature_names=None):
         # FIXME !!! bug in plot_tree with integer class names
         class_names = [str(c) for c in estimator.classes_]
         plot_tree(estimator, feature_names=feature_names,
-                  class_names=class_names, filled=True)
+                  class_names=class_names, filled=True, max_depth=5)
         # FIXME This is a bad thing to show!
         plot_coefficients(estimator.feature_importances_, feature_names)
     elif hasattr(estimator, 'coef_'):

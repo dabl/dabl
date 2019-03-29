@@ -172,13 +172,13 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     if suspicious_index.any():
         warn_for = []
         for c in suspicious_index.index[suspicious_index]:
-            if X[c][0] == 0:
+            if X[c].iloc[0] == 0:
                 if (X[c] == np.arange(X.shape[0])).all():
                     # definitely an index
                     useless[c] = True
                 else:
                     warn_for.append(c)
-            elif X[c][0] == 1:
+            elif X[c].iloc[0] == 1:
                 if (X[c] == np.arange(1, X.shape[0] + 1)).all():
                     # definitely an index
                     useless[c] = True

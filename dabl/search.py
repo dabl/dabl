@@ -5,7 +5,7 @@ from copy import deepcopy
 import numpy as np
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection import ParameterGrid, ParameterSampler
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, safe_indexing
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
 
@@ -211,7 +211,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
                 # train_test_split because it complains about testset being too
                 # small in some cases
                 indexes = rng.choice(X.shape[0], r_i)
-                X_iter, y_iter = X[indexes], y[indexes]
+                X_iter, y_iter = safe_indexing(X, indexes), safe_indexing(y, indexes)
             else:
                 # Need copy so that r_i of next iteration do not overwrite
                 candidate_params = [c.copy() for c in candidate_params]

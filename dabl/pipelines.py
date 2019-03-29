@@ -7,6 +7,21 @@ from sklearn.linear_model import LogisticRegression
 
 
 def get_fast_classifiers(n_classes):
+    """Get a list of very fast classifiers.
+
+    Parameters
+    ----------
+    n_classes : int
+        Number of classes in the dataset. Used to decide on the complexity
+        of some of the classifiers.
+
+
+    Returns
+    -------
+    fast_classifiers : list of sklearn estimators
+        List of classification models that can be fitted and evaluated very
+        quickly.
+    """
     return [
         # These are sorted by approximate speed
         DummyClassifier(strategy="prior"),

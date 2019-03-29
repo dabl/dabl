@@ -1,7 +1,7 @@
 import pytest
 from sklearn.datasets import load_iris, make_blobs
 
-from dabl.models import EasyClassifier
+from dabl.models import SimpleClassifier
 
 iris = load_iris()
 X_blobs, y_blobs = make_blobs(centers=2, random_state=0)
@@ -15,7 +15,7 @@ X_blobs, y_blobs = make_blobs(centers=2, random_state=0)
                           ])
 def test_basic(X, y, refit):
     # test on iris
-    ec = EasyClassifier(refit=refit)
+    ec = SimpleClassifier(refit=refit)
     ec.fit(X, y)
     if refit:
         # smoke test

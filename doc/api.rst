@@ -13,7 +13,7 @@ Supervised Models
    :toctree: generated/
    :template: class.rst
 
-   EasyClassifier
+   SimpleClassifier
 
 Preprocessing
 =============

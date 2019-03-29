@@ -74,18 +74,18 @@ leakage through spurious representations of the target in the data.
 
 Initial Model Building
 -----------------------
->>> ec = EasyClassifier().fit(data, target_col="income")
+>>> ec = SimpleClassifier().fit(data, target_col="income")
 
-Fit an initial model. The EasyClassifier first tries several baseline and
+Fit an initial model. The SimpleClassifier first tries several baseline and
 instantaneous models, potentially on subsampled data, to get an idea of what a
 low baseline should be.
 This again is a good place to surface data leakage, as well as find the main
-discriminative features in the dataset.  The ``EasyClassifier`` allows
+discriminative features in the dataset.  The ``SimpleClassifier`` allows
 specifying data in the scikit-learn-style ``fit(X, y)`` with a 1d y and
 features ``X``, or with ``X`` being a dataframe, and by specifying the target
 column insided of X as``target_col``.
 
-The EasyClassifier also performs preprocessing such as missing value imputation
+The SimpleClassifier also performs preprocessing such as missing value imputation
 and one-hot-encoding.  You can inspect the model using:
 
 >>> explain(ec)

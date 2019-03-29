@@ -1,7 +1,7 @@
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
 
-from .models import EasyClassifier
+from .models import SimpleClassifier
 from .plotting import plot_coefficients
 
 
@@ -14,7 +14,7 @@ def explain(estimator, feature_names=None):
                              "please pass them.")
 
     # Start unpacking the estimator to get to the final step
-    if isinstance(estimator, EasyClassifier):
+    if isinstance(estimator, SimpleClassifier):
         # get the pipeline
         estimator = estimator.est_
         # pipelines don't have feature names yet in sklearn

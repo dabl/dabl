@@ -18,7 +18,7 @@ from .pipelines import get_fast_classifiers
 from .utils import nice_repr
 
 
-class EasyClassifier(BaseEstimator, ClassifierMixin):
+class SimpleClassifier(BaseEstimator, ClassifierMixin):
     """Automagic anytime classifier.
 
     Parameters

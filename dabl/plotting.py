@@ -76,7 +76,7 @@ def find_pretty_grid(n_plots, max_cols=5):
     return int(np.ceil(n_plots / best_cols)), best_cols
 
 
-def plot_coefficients(coefficients, feature_names, n_top_features=10):
+def plot_coefficients(coefficients, feature_names, n_top_features=10, classname=None):
     """Visualize coefficients of a linear model.
 
     Parameters
@@ -114,7 +114,7 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10):
     new_inds = np.argsort(coef[interesting_coefficients])
     interesting_coefficients = interesting_coefficients[new_inds]
     # plot them
-    plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(len(interesting_coefficients), 5))
     colors = ['red' if c < 0 else 'blue'
               for c in coef[interesting_coefficients]]
     plt.bar(np.arange(len(interesting_coefficients)),
@@ -127,6 +127,7 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10):
                ha="right")
     plt.ylabel("Coefficient magnitude")
     plt.xlabel("Feature")
+    plt.title(classname)
 
 
 def heatmap(values, xlabel, ylabel, xticklabels, yticklabels, cmap=None,

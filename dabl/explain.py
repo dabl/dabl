@@ -1,3 +1,5 @@
+import numpy as np
+
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
 
@@ -32,7 +34,7 @@ def explain(estimator, feature_names=None):
         print(estimator)
         print("Depth: {}".format(estimator.get_depth()))
         print("Number of leaves: {}".format(estimator.get_n_leaves()))
-        # FIXME !!! ug in plot_tree with integer class names
+        # FIXME !!! bug in plot_tree with integer class names
         class_names = [str(c) for c in estimator.classes_]
         plot_tree(estimator, feature_names=feature_names,
                   class_names=class_names, filled=True)
@@ -40,7 +42,10 @@ def explain(estimator, feature_names=None):
         plot_coefficients(estimator.feature_importances_, feature_names)
     elif hasattr(estimator, 'coef_'):
         # probably a linear model, can definitely show the coefficients
-        plot_coefficients(estimator.coef_, feature_names)
+        # would be nice to have the target name here
+        coef = np.atleast_2d(estimator.coef_)
+        for k, c in zip(estimator.classes_, coef):
+            plot_coefficients(c, feature_names, classname="class: {}".format(k))
     elif isinstance(estimator, RandomForestClassifier):
         # FIXME This is a bad thing to show!
 

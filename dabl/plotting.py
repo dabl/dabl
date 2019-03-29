@@ -585,7 +585,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='count',
         discrete_features=np.ones(X.shape[1], dtype=bool))
     top_k = np.argsort(f)[-show_top:][::-1]
     # large number of categories -> taller plot
-    row_height = 3 if X.nunique().max() <= 5 else 5
+    row_height = 3 if features.nunique().max() <= 5 else 5
     fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
     # FIXME mosaic doesn't like constraint layout?
     plt.suptitle("Categorical Features vs Target", y=1.02)

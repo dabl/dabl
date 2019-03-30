@@ -23,18 +23,42 @@ class EasyClassifier(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    refit : boolean, False
+    refit : boolean, True
         Whether to refit the model on the full dataset (I think).
 
     verbose : integer, default=1
         Verbosity (higher is more output)
     """
-    def __init__(self, refit=False, verbose=1):
+    def __init__(self, refit=True, verbose=1):
         self.verbose = verbose
         self.refit = refit
 
-    def fit(self, X, y):
+    def fit(self, X, y=None, target_col=None):
+        """Fit classifier.
+
+        Requiers to either specify the target as seperate 1d array or Series y
+        (in scikit-learn fashion) or as column of the dataframe X specified by
+        target_col.
+        If y is specified, X is assumed not to contain the target.
+
+        Parameters
+        ----------
+        X : DataFrame
+            Input features. If target_col is specified, X also includes the
+            target.
+        y : Series or numpy array, optional.
+            Target class labels. You need to specify either y or target_col.
+        target_col : string or int, optional
+            Column name of target if included in X.
+        """
+        if ((y is None and target_col is None)
+                or (y is not None) and (target_col is not None)):
+            raise ValueError(
+                "Need to specify exactly one of y and target_col.")
         X = clean(X)
+        if target_col is not None:
+            y = X[target_col]
+            X = X.drop(target_col, axis=1)
         types = detect_types(X)
         self.feature_names_ = X.columns
         self.types_ = types

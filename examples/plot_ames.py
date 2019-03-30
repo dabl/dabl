@@ -3,10 +3,12 @@ Ames Housing Dataset Visualization
 ====================================
 """
 from dabl import plot_supervised
+from dabl.datasets import load_ames
 import matplotlib.pyplot as plt
-import pandas as pd
 
-df = pd.read_pickle("ames_housing.pkl.bz2")
+# load the ames housing dataset
+# returns a plain dataframe
+data = load_ames()
 
-plot_supervised(df, 'SalePrice')
+plot_supervised(data, 'SalePrice')
 plt.show()

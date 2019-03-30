@@ -278,8 +278,8 @@ def _find_scatter_plots_classification(X, target):
     return top_3
 
 
-def _discrete_scatter(x, y, c, ax):
+def _discrete_scatter(x, y, c, ax, alpha=None):
     for i in np.unique(c):
         mask = c == i
-        ax.plot(x[mask], y[mask], 'o', label=i)
+        ax.plot(x[mask], y[mask], 'o', label=i, alpha=alpha)
     ax.legend()

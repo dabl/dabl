@@ -22,7 +22,8 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _discrete_scatter)
 
 
-def plot_regression_continuous(X, target_col, types=None):
+def plot_regression_continuous(X, target_col, types=None,
+                               scatter_alpha=1.):
     """Exploration plots for continuous features in regression.
 
     Creates plots of all the continuous features vs the target.
@@ -37,6 +38,8 @@ def plot_regression_continuous(X, target_col, types=None):
     types : dataframe of types, optional.
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
+    scatter_alpha : float, default=1.
+        Alpha values for scatter plots.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
 
@@ -61,7 +64,8 @@ def plot_regression_continuous(X, target_col, types=None):
     for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
         if i % axes.shape[1] == 0:
             ax.set_ylabel(target_col)
-        ax.plot(features.iloc[:, col], target, 'o', alpha=.6)
+        ax.plot(features.iloc[:, col], target, 'o',
+                alpha=scatter_alpha)
         ax.set_xlabel(_shortname(features.columns[col]))
         ax.set_title("F={:.2E}".format(f[col]))
 
@@ -128,7 +132,8 @@ def plot_regression_categorical(X, target_col, types=None):
         axes.ravel()[j].set_axis_off()
 
 
-def plot_classification_continuous(X, target_col, types=None, hue_order=None):
+def plot_classification_continuous(X, target_col, types=None, hue_order=None,
+                                   scatter_alpha=1.):
     """Exploration plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -150,6 +155,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None):
     types : dataframe of types, optional.
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
+    scatter_alpha : float, default=1.
+        Alpha values for scatter plots.
     """
     types = _check_X_target_col(X, target_col, types, task='classification')
 
@@ -202,7 +209,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None):
             i = top_k[x]
             j = top_k[y]
             _discrete_scatter(features_imp[:, i], features_imp[:, j],
-                              c=target, ax=ax)
+                              c=target, ax=ax, alpha=scatter_alpha)
             ax.set_xlabel(features.columns[i])
             ax.set_ylabel(features.columns[j])
             ax.set_title("{:.3f}".format(score))
@@ -226,7 +233,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None):
                                top_pairs.score, axes.ravel()):
 
         _discrete_scatter(features_pca[:, x], features_pca[:, y],
-                          c=target, ax=ax)
+                          c=target, ax=ax, alpha=scatter_alpha)
         ax.set_xlabel("PCA {}".format(x))
         ax.set_ylabel("PCA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -246,7 +253,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None):
                                top_pairs.score, axes.ravel()):
 
         _discrete_scatter(features_lda[:, x], features_lda[:, y],
-                          c=target, ax=ax)
+                          c=target, ax=ax, alpha=scatter_alpha)
         ax.set_xlabel("LDA {}".format(x))
         ax.set_ylabel("LDA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -337,7 +344,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='count',
         axes.ravel()[j].set_axis_off()
 
 
-def plot_supervised(X, target_col, types=None, verbose=10):
+def plot_supervised(X, target_col, types=None, scatter_alpha=1., verbose=10):
     """Exploration plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -354,6 +361,8 @@ def plot_supervised(X, target_col, types=None, verbose=10):
     types : dataframe of types, optional.
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
+    scatter_alpha : float, default=1.
+        Alpha values for scatter plots.
     verbose : int, default=10
         Controls the verbosity (output).
 
@@ -389,7 +398,8 @@ def plot_supervised(X, target_col, types=None, verbose=10):
         plt.xlabel(target_col)
         plt.ylabel("frequency")
         plt.title("Target distribution")
-        plot_regression_continuous(X, target_col, types=types)
+        plot_regression_continuous(X, target_col, types=types,
+                                   scatter_alpha=scatter_alpha)
         plot_regression_categorical(X, target_col, types=types)
     else:
         print("Target looks like classification")
@@ -403,6 +413,7 @@ def plot_supervised(X, target_col, types=None, verbose=10):
         sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")
         plot_classification_continuous(X, target_col, types=types,
-                                       hue_order=counts.index)
+                                       hue_order=counts.index,
+                                       scatter_alpha=scatter_alpha)
         plot_classification_categorical(X, target_col, types=types,
                                         hue_order=counts.index)

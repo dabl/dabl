@@ -23,4 +23,4 @@ def load_titanic():
         DataFrame containing the ames housing dataset.
     """
     module_path = dirname(__file__)
-    return pd.read_pickle(join(module_path, 'ames.pkl.bz2'))
+    return pd.csv(join(module_path, 'titanic.csv'))

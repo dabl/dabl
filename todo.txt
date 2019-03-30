@@ -8,3 +8,12 @@ add regression
 think about train-test-split
 benchmark plotting and easy classifier
 add anyclassifier
+
+if categorical encoded as float (even int) like chas variable, imputation fails with dabl_missing which is a string.
+
+FIXME integers need to be considered continuous again in preprocessor? duplicate columns? hmmm
+we need to think about this!
+
+types are different for feature engineering and visualization.
+try to convert floats to ints as well?
+

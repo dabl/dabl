@@ -1,9 +1,9 @@
-from sklearn.dummy import DummyClassifier
+from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Ridge, Lasso
 
 
 def get_fast_classifiers(n_classes):
@@ -35,3 +35,20 @@ def get_fast_classifiers(n_classes):
         LogisticRegression(C=.1, solver='lbfgs', multi_class='auto',
                            class_weight='balanced')
     ]
+
+
+def get_fast_regressors():
+    """Get a list of very fast regressors.
+
+    Returns
+    -------
+    fast_regressors : list of sklearn estimators
+        List of regression models that can be fitted and evaluated very
+        quickly.
+    """
+    return [
+        DummyRegressor(),
+        DecisionTreeRegressor(max_depth=1),
+        DecisionTreeRegressor(max_depth=5),
+        Ridge(alpha=10),
+        Lasso(alpha=10)]

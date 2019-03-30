@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from scipy.stats import randint
 import numpy as np
 
-from dabl import RandomSuccessiveHalving
+from dabl.search import RandomSuccessiveHalving
 
 
 rng = np.random.RandomState(0)

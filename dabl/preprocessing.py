@@ -113,6 +113,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         Maximum number of distinct integers for an integer column
         to be considered categorical. 'auto' is ``max(42, n_samples/10)``.
         Integers are also always considered as continuous variables.
+        FIXME not true any more?
 
     dirty_float_threshold : float, default=.9
         The fraction of floats required in a dirty continuous
@@ -172,19 +173,19 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     if suspicious_index.any():
         warn_for = []
         for c in suspicious_index.index[suspicious_index]:
-            if X[c][0] == 0:
+            if X[c].iloc[0] == 0:
                 if (X[c] == np.arange(X.shape[0])).all():
                     # definitely an index
                     useless[c] = True
                 else:
                     warn_for.append(c)
-            elif X[c][0] == 1:
+            elif X[c].iloc[0] == 1:
                 if (X[c] == np.arange(1, X.shape[0] + 1)).all():
                     # definitely an index
                     useless[c] = True
                 else:
                     warn_for.append(c)
-        if len(warn_for):
+        if warn_for:
             warn("Suspiciously looks like an index: {}, but unsure,"
                  " so keeping it for now".format(warn_for), UserWarning)
     categorical = dtypes == 'category'
@@ -220,13 +221,12 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     cat_string = few_entries & non_float_objects & ~useless
     free_strings = ~few_entries & non_float_objects
     continuous = floats | large_cardinality_int | clean_float_string
-
+    categorical = cat_string | binary | categorical | cat_integers
     res = pd.DataFrame(
-        {'continuous': continuous & ~binary & ~useless,
+        {'continuous': continuous & ~binary & ~useless & ~categorical,
          'dirty_float': dirty_float,
          'low_card_int': low_card_integers,
-         'categorical': ((cat_string | binary | categorical | cat_integers)
-                         & ~useless),
+         'categorical': categorical & ~useless,
          'date': dates,
          'free_string': free_strings, 'useless': useless,
          })
@@ -314,7 +314,9 @@ def clean(X, type_hints=None):
     # though if we have actual string columns that are free strings... hum
     types = detect_types(X, type_hints=type_hints)
     for col in types.index[types.categorical]:
-        X[col] = X[col].astype('category', copy=False)
+        # ensure categories are strings, otherwise imputation might fail
+        X[col] = X[col].astype('category', copy=False).cat.rename_categories(
+            lambda x: str(x))
     return X
 
 

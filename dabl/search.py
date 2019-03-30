@@ -1,13 +1,13 @@
 from math import ceil, floor, log
 from abc import abstractmethod
-from copy import deepcopy
 
 import numpy as np
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection import ParameterGrid, ParameterSampler
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, safe_indexing
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
+from sklearn.utils import safe_indexing
 
 from ._search import CustomBaseSearchCV
 
@@ -58,12 +58,12 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
 
     def _check_input_parameters(self, X, y, groups):
 
-        if (self.budget_on != 'n_samples' and
-                self.budget_on not in self.estimator.get_params()):
+        if (self.budget_on != 'n_samples'
+                and self.budget_on not in self.estimator.get_params()):
             raise ValueError(
                 'Cannot budget on parameter {} which is not supported '
                 'by estimator {}'.format(self.budget_on,
-                                        self.estimator.__class__.__name__))
+                                         self.estimator.__class__.__name__))
 
         if isinstance(self.max_budget, str) and self.max_budget != 'auto':
             raise ValueError(
@@ -210,8 +210,9 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
                 # subsampling should be stratified. We can't use
                 # train_test_split because it complains about testset being too
                 # small in some cases
-                indexes = rng.choice(X.shape[0], r_i)
-                X_iter, y_iter = X[indexes], y[indexes]
+                indexes = rng.choice(X.shape[0], r_i, replace=False)
+                X_iter = safe_indexing(X, indexes)
+                y_iter = safe_indexing(y, indexes)
             else:
                 # Need copy so that r_i of next iteration do not overwrite
                 candidate_params = [c.copy() for c in candidate_params]

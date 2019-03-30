@@ -37,17 +37,18 @@ types in a convenient format:
     >>> types = dabl.detect_types_dataframe(titanic_clean)
     >>> print(types)
 
-Having a very rough idea of the shape of our data, we can now start looking at the actual content.
-The easiest way to do that is using visualization of univariate and bivariate patterns. With plot_supervised,
+Having a very rough idea of the shape of our data, we can now start looking
+at the actual content. The easiest way to do that is using visualization of
+univariate and bivariate patterns. With plot_supervised,
 we can create plot of the features deemed most important for our task.
 
     >>> plot_supervised(titanic, 'survived')
 
-Finally, we can find a good model for our data. The EasyClassifier does all
+Finally, we can find a good model for our data. The SimpleClassifier does all
 the work for us. It implements the familiar scikit-learn api of fit and
 predict:
 
-    >>> fc = EasyClassifier()
+    >>> fc = SimpleClassifier()
     >>> X = titanic_clean.drop("survived", axis=1)
     >>> y = titanic_clean.survived
     >>> fc.fit(X, y)

@@ -20,7 +20,7 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME need to test dealing with categorical dtype
 # TODO add test that weird missing values in strings are correctly interpreted
 # FIXME ensure easy preprocessor handles missing values in categorical data
-
+# FIXME add test with index not starting from 0 or 1
 
 def make_dirty_float():
     rng = np.random.RandomState(0)
@@ -230,7 +230,7 @@ def test_simple_preprocessor_dirty_float():
 
 def test_titanic_detection():
     path = os.path.dirname(__file__)
-    titanic = pd.read_csv(os.path.join(path, 'titanic.csv'))
+    titanic = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'))
     types_table = detect_types(titanic)
     types = types_table.T.idxmax()
     true_types = [
@@ -239,7 +239,8 @@ def test_titanic_detection():
         'low_card_int', 'categorical',
         'categorical', 'low_card_int', 'categorical', 'free_string']
     assert (types == true_types).all()
-    titanic_nan = pd.read_csv(os.path.join(path, 'titanic.csv'), na_values='?')
+    titanic_nan = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'),
+                              na_values='?')
     types_table = detect_types(titanic_nan)
     types = types_table.T.idxmax()
     true_types_clean = [t if t != 'dirty_float' else 'continuous'
@@ -249,7 +250,7 @@ def test_titanic_detection():
 
 def test_titanic_feature_names():
     path = os.path.dirname(__file__)
-    titanic = pd.read_csv(os.path.join(path, 'titanic.csv'))
+    titanic = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'))
     ep = EasyPreprocessor()
     ep.fit(clean(titanic.drop('survived', axis=1)))
     expected_names = [

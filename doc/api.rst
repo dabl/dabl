@@ -6,6 +6,24 @@ This is a list of all functions and classes provided by dabl.
 
 .. currentmodule:: dabl
 
+High-level API
+==============
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   clean
+   detect_types
+   plot_supervised
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   SimpleClassifier
+   EasyPreprocessor
+
+
 Supervised Models
 =================
 
@@ -13,7 +31,7 @@ Supervised Models
     :toctree: generated/
     :template: class.rst
 
-    EasyClassifier
+   SimpleClassifier
 
 Preprocessing
 =============
@@ -36,7 +54,7 @@ Preprocessing
 Plotting
 =========
 
-.. currentmodule:: dabl.plotting
+.. currentmodule:: dabl.plot
 .. autosummary::
     :toctree: generated/
     :template: function.rst
@@ -48,15 +66,36 @@ Plotting
     plot_regression_categorical
     plot_regression_continuous
 
-
-Search
-======
+Model Search
+=============
 
 .. currentmodule:: dabl.search
-
 .. autosummary::
-    :toctree: generated/
-    :template: class.rst
+   :toctree: generated/
+   :template: function.rst
 
-    GridSuccessiveHalving
-    RandomSuccessiveHalving
+   GridSuccessiveHalving
+   RandomSuccessiveHalving
+
+
+Portfolios
+==========
+
+.. currentmodule:: dabl.pipelines
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   get_fast_classifiers
+
+
+Datasets
+==========
+
+.. currentmodule:: dabl.datasets
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   load_ames
+   load_titanic

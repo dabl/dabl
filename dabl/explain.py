@@ -1,8 +1,11 @@
+import numpy as np
+
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
 
-from .models import EasyClassifier
-from .plotting import plot_coefficients
+from .models import SimpleClassifier, SimpleRegressor
+from .plot.utils import plot_coefficients
 
 
 def explain(estimator, feature_names=None):
@@ -14,9 +17,12 @@ def explain(estimator, feature_names=None):
                              "please pass them.")
 
     # Start unpacking the estimator to get to the final step
-    if isinstance(estimator, EasyClassifier):
+    if (isinstance(estimator, SimpleClassifier)
+            or isinstance(estimator, SimpleRegressor)):
         # get the pipeline
         estimator = estimator.est_
+    if isinstance(estimator, Pipeline):
+        assert len(estimator.steps) == 2
         # pipelines don't have feature names yet in sklearn
         # *cries in scikit-learn roadmap*
         final_est = estimator[-1]
@@ -32,15 +38,26 @@ def explain(estimator, feature_names=None):
         print(estimator)
         print("Depth: {}".format(estimator.get_depth()))
         print("Number of leaves: {}".format(estimator.get_n_leaves()))
-        # FIXME !!! ug in plot_tree with integer class names
+        # FIXME !!! bug in plot_tree with integer class names
         class_names = [str(c) for c in estimator.classes_]
         plot_tree(estimator, feature_names=feature_names,
-                  class_names=class_names, filled=True)
+                  class_names=class_names, filled=True, max_depth=5)
         # FIXME This is a bad thing to show!
         plot_coefficients(estimator.feature_importances_, feature_names)
     elif hasattr(estimator, 'coef_'):
         # probably a linear model, can definitely show the coefficients
-        plot_coefficients(estimator.coef_, feature_names)
+        # would be nice to have the target name here
+        if hasattr(estimator, "classes_"):
+            coef = np.atleast_2d(estimator.coef_)
+            for k, c in zip(estimator.classes_, coef):
+                plot_coefficients(c, feature_names,
+                                  classname="class: {}".format(k))
+        else:
+            coef = np.squeeze(estimator.coef_)
+            if coef.ndim > 1:
+                raise ValueError("Don't know how to handle "
+                                 "multi-target regressor")
+            plot_coefficients(coef, feature_names)
     elif isinstance(estimator, RandomForestClassifier):
         # FIXME This is a bad thing to show!
 

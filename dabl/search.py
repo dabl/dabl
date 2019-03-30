@@ -1,11 +1,10 @@
 from math import ceil, floor, log
 from abc import abstractmethod
-from copy import deepcopy
 
 import numpy as np
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection import ParameterGrid, ParameterSampler
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, safe_indexing
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
 from sklearn.utils import safe_indexing
@@ -59,12 +58,12 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
 
     def _check_input_parameters(self, X, y, groups):
 
-        if (self.budget_on != 'n_samples' and
-                self.budget_on not in self.estimator.get_params()):
+        if (self.budget_on != 'n_samples'
+                and self.budget_on not in self.estimator.get_params()):
             raise ValueError(
                 'Cannot budget on parameter {} which is not supported '
                 'by estimator {}'.format(self.budget_on,
-                                        self.estimator.__class__.__name__))
+                                         self.estimator.__class__.__name__))
 
         if isinstance(self.max_budget, str) and self.max_budget != 'auto':
             raise ValueError(

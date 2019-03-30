@@ -113,6 +113,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         Maximum number of distinct integers for an integer column
         to be considered categorical. 'auto' is ``max(42, n_samples/10)``.
         Integers are also always considered as continuous variables.
+        FIXME not true any more?
 
     dirty_float_threshold : float, default=.9
         The fraction of floats required in a dirty continuous
@@ -313,7 +314,9 @@ def clean(X, type_hints=None):
     # though if we have actual string columns that are free strings... hum
     types = detect_types(X, type_hints=type_hints)
     for col in types.index[types.categorical]:
-        X[col] = X[col].astype('category', copy=False)
+        # ensure categories are strings, otherwise imputation might fail
+        X[col] = X[col].astype('category', copy=False).cat.rename_categories(
+            lambda x: str(x))
     return X
 
 

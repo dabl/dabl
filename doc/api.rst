@@ -54,7 +54,7 @@ Preprocessing
 Plotting
 =========
 
-.. currentmodule:: dabl.plotting
+.. currentmodule:: dabl.plot
 .. autosummary::
    :toctree: generated/
    :template: function.rst
@@ -69,7 +69,7 @@ Plotting
 Model Search
 =============
 
-.. currentmodule:: dabl.plotting
+.. currentmodule:: dabl.search
 .. autosummary::
    :toctree: generated/
    :template: function.rst

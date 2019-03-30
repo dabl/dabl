@@ -8,26 +8,13 @@ import itertools
 from sklearn.datasets import make_regression, make_blobs
 from sklearn.preprocessing import KBinsDiscretizer
 from dabl.preprocessing import clean, detect_types
-from dabl.plotting import (plot_supervised, find_pretty_grid,
-                           plot_classification_categorical,
-                           plot_classification_continuous,
-                           plot_regression_categorical,
-                           plot_regression_continuous,
-                           plot_coefficients)
+from dabl.plot.supervised import (
+    plot_supervised, plot_classification_categorical,
+    plot_classification_continuous, plot_regression_categorical,
+    plot_regression_continuous)
 
 
 # FIXME: check that target is not y but a column name
-
-
-def test_find_pretty_grid():
-    # test that the grid is big enough:
-    rng = np.random.RandomState(0)
-    for i in range(100):
-        n_plots = rng.randint(1, 34)
-        max_cols = rng.randint(1, 12)
-        rows, cols = find_pretty_grid(n_plots=n_plots, max_cols=max_cols)
-        assert rows * cols >= n_plots
-        assert cols <= max_cols
 
 
 @pytest.mark.parametrize("continuous_features, categorical_features, task",
@@ -102,18 +89,3 @@ def test_plot_wrong_target_type():
         plot_classification_categorical(X, 'target')
     with pytest.raises(ValueError, match="need categorical"):
         plot_classification_continuous(X, 'target')
-
-
-@pytest.mark.parametrize("n_features, n_top_features",
-                         [(5, 10), (10, 5), (10, 40), (40, 10)])
-def test_plot_coefficients(n_features, n_top_features):
-    coef = np.arange(n_features) + .4
-    names = ["feature_{}".format(i) for i in range(n_features)]
-    plot_coefficients(coef, names, n_top_features=n_top_features)
-    ax = plt.gca()
-    assert len(ax.get_xticks()) == min(n_top_features, n_features)
-    coef[:-5] = 0
-    plot_coefficients(coef, names, n_top_features=n_top_features)
-    ax = plt.gca()
-    assert len(ax.get_xticks()) == 5
-

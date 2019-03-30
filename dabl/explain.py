@@ -2,7 +2,7 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
 
 from .models import SimpleClassifier
-from .plotting import plot_coefficients
+from .plot.utils import plot_coefficients
 
 
 def explain(estimator, feature_names=None):

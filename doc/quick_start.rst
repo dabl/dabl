@@ -37,8 +37,9 @@ types in a convenient format:
     >>> types = dabl.detect_types_dataframe(titanic_clean)
     >>> print(types)
 
-Having a very rough idea of the shape of our data, we can now start looking at the actual content.
-The easiest way to do that is using visualization of univariate and bivariate patterns. With plot_supervised,
+Having a very rough idea of the shape of our data, we can now start looking
+at the actual content. The easiest way to do that is using visualization of
+univariate and bivariate patterns. With plot_supervised,
 we can create plot of the features deemed most important for our task.
 
     >>> plot_supervised(titanic, 'survived')

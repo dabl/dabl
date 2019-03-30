@@ -85,12 +85,13 @@ specifying data in the scikit-learn-style ``fit(X, y)`` with a 1d y and
 features ``X``, or with ``X`` being a dataframe, and by specifying the target
 column insided of X as``target_col``.
 
-The SimpleClassifier also performs preprocessing such as missing value imputation
-and one-hot-encoding.  You can inspect the model using:
+The SimpleClassifier also performs preprocessing such as missing value
+imputation and one-hot-encoding.  You can inspect the model using:
 
 >>> explain(ec)
 
-This can lead to additional insights and guide costom processing and cleaning of the data.
+This can lead to additional insights and guide costom processing and
+cleaning of the data.
 
 Enhanced Model Building
 ------------------------

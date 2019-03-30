@@ -245,7 +245,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None):
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
 
-        _discrete_scatter(features_pca[:, x], features_pca[:, y],
+        _discrete_scatter(features_lda[:, x], features_lda[:, y],
                           c=target, ax=ax)
         ax.set_xlabel("LDA {}".format(x))
         ax.set_ylabel("LDA {}".format(y))

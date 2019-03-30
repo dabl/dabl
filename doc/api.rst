@@ -87,3 +87,15 @@ Portfolios
    :template: function.rst
 
    get_fast_classifiers
+
+
+Datasets
+==========
+
+.. currentmodule:: dabl.datasets
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   load_ames
+   load_titanic

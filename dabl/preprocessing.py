@@ -185,7 +185,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
                     useless[c] = True
                 else:
                     warn_for.append(c)
-        if len(warn_for):
+        if warn_for:
             warn("Suspiciously looks like an index: {}, but unsure,"
                  " so keeping it for now".format(warn_for), UserWarning)
     categorical = dtypes == 'category'

@@ -58,7 +58,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
     def _check_input_parameters(self, X, y, groups):
 
         if (self.budget_on != 'n_samples'
-                and     self.budget_on not in self.estimator.get_params()):
+                and self.budget_on not in self.estimator.get_params()):
             raise ValueError(
                 'Cannot budget on parameter {} which is not supported '
                 'by estimator {}'.format(self.budget_on,

@@ -66,7 +66,8 @@ def find_pretty_grid(n_plots, max_cols=5):
     return int(np.ceil(n_plots / best_cols)), best_cols
 
 
-def plot_coefficients(coefficients, feature_names, n_top_features=10, classname=None):
+def plot_coefficients(coefficients, feature_names, n_top_features=10,
+                      classname=None):
     """Visualize coefficients of a linear model.
 
     Parameters

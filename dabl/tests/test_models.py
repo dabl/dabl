@@ -29,6 +29,6 @@ def test_basic(X, y, refit):
 
 def test_dataframe():
     path = os.path.dirname(__file__)
-    titanic = pd.read_csv(os.path.join(path, 'titanic.csv'))[::10]
-    ec = EasyClassifier()
+    titanic = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'))[::10]
+    ec = SimpleClassifier()
     ec.fit(titanic, target_col='survived')

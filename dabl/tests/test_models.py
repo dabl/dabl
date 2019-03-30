@@ -1,9 +1,10 @@
 import pytest
 import os
 import pandas as pd
-from sklearn.datasets import load_iris, make_blobs
+from sklearn.datasets import load_iris, make_blobs, load_boston
 
-from dabl.models import SimpleClassifier
+from dabl.models import SimpleClassifier, SimpleRegressor
+from dabl.utils import data_df_from_bunch
 
 iris = load_iris()
 X_blobs, y_blobs = make_blobs(centers=2, random_state=0)
@@ -32,3 +33,10 @@ def test_dataframe():
     titanic = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'))[::10]
     ec = SimpleClassifier()
     ec.fit(titanic, target_col='survived')
+
+
+def test_regression_boston():
+    boston = load_boston()
+    data = data_df_from_bunch(boston)
+    er = SimpleRegressor()
+    er.fit(data, target_col='target')

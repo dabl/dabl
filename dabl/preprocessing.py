@@ -112,7 +112,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     max_int_cardinality: int or 'auto', default='auto'
         Maximum number of distinct integers for an integer column
         to be considered categorical. 'auto' is ``max(42, n_samples/10)``.
-        Integers are also always considered as continuous variables. FIXME not true any more?
+        Integers are also always considered as continuous variables.
+        FIXME not true any more?
 
     dirty_float_threshold : float, default=.9
         The fraction of floats required in a dirty continuous

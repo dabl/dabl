@@ -18,107 +18,7 @@ from .pipelines import get_fast_classifiers
 from .utils import nice_repr
 
 
-class SimpleClassifier(BaseEstimator, ClassifierMixin):
-    """Automagic anytime classifier.
-
-    Parameters
-    ----------
-    refit : boolean, True
-        Whether to refit the model on the full dataset (I think).
-
-    verbose : integer, default=1
-        Verbosity (higher is more output)
-    """
-    def __init__(self, refit=True, verbose=1):
-        self.verbose = verbose
-        self.refit = refit
-
-    def fit(self, X, y=None, target_col=None):
-        """Fit classifier.
-
-        Requiers to either specify the target as seperate 1d array or Series y
-        (in scikit-learn fashion) or as column of the dataframe X specified by
-        target_col.
-        If y is specified, X is assumed not to contain the target.
-
-        Parameters
-        ----------
-        X : DataFrame
-            Input features. If target_col is specified, X also includes the
-            target.
-        y : Series or numpy array, optional.
-            Target class labels. You need to specify either y or target_col.
-        target_col : string or int, optional
-            Column name of target if included in X.
-        """
-        if ((y is None and target_col is None)
-                or (y is not None) and (target_col is not None)):
-            raise ValueError(
-                "Need to specify exactly one of y and target_col.")
-        X = clean(X)
-        if target_col is not None:
-            y = X[target_col]
-            X = X.drop(target_col, axis=1)
-        types = detect_types(X)
-        self.feature_names_ = X.columns
-        self.types_ = types
-        # fixme store types!? call clean with type hints?
-        target_type = type_of_target(y)
-        y = pd.Series(LabelEncoder().fit_transform(y))
-
-        if target_type == "binary":
-            minority_class = y.value_counts().index[1]
-            my_average_precision_scorer = make_scorer(
-                average_precision_score, pos_label=minority_class,
-                needs_threshold=True)
-            self.scoring_ = {'accuracy': 'accuracy',
-                             'average_precision': my_average_precision_scorer,
-                             'roc_auc': 'roc_auc',
-                             'recall_macro': 'recall_macro'
-                             }
-        elif target_type == "multiclass":
-            self.scoring_ = ['accuracy', 'recall_macro', 'precision_macro']
-        else:
-            raise ValueError("Unknown target type: {}".format(target_type))
-        # speed up label encoding by not redoing it
-        self.log_ = []
-
-        # reimplement cross-validation so we only do preprocessing once
-        # This could/should be solved with dask?
-        cv = StratifiedKFold(n_splits=5)
-        data_preproc = []
-        for i, (train, test) in enumerate(cv.split(X, y)):
-            # maybe do two levels of preprocessing
-            # to search over treatment of categorical variables etc
-            # Also filter?
-            verbose = self.verbose if i == 0 else 0
-            sp = EasyPreprocessor(verbose=verbose, types=types)
-            X_train = sp.fit_transform(X.iloc[train], y.iloc[train])
-            X_test = sp.transform(X.iloc[test])
-            data_preproc.append((X_train, X_test, y.iloc[train], y.iloc[test]))
-
-        # Heuristic: start with fast / instantaneous models
-        fast_classifiers = get_fast_classifiers(n_classes=y.nunique())
-        scorers, _ = _check_multimetric_scoring(fast_classifiers[1],
-                                                scoring=self.scoring_)
-
-        self.current_best_ = {'recall_macro': -np.inf}
-        for est in fast_classifiers:
-            scores = self._evaluate_one(est, data_preproc, scorers)
-            # make scoring configurable
-            if scores['recall_macro'] > self.current_best_['recall_macro']:
-                if self.verbose:
-                    print("new best (using recall macro):\n{}".format(
-                        scores))
-                self.current_best_ = scores
-                best_est = est
-        if self.verbose:
-            print("Best model:\n{}\nBest Scores:\n{}".format(
-                nice_repr(best_est), self.current_best_))
-        if self.refit:
-            self.est_ = make_pipeline(EasyPreprocessor(), best_est)
-            self.est_.fit(X, y)
-        return self
+class _BaseSimpleEstimator(BaseEstimator):
 
     def predict(self, X):
         if not self.refit:
@@ -157,3 +57,133 @@ class SimpleClassifier(BaseEstimator, ClassifierMixin):
         res_mean.name = name
         self.log_.append(res_mean)
         return res_mean
+
+    def _fit(self, X, y=None, target_col=None):
+        """Fit estimator.
+
+        Requiers to either specify the target as seperate 1d array or Series y
+        (in scikit-learn fashion) or as column of the dataframe X specified by
+        target_col.
+        If y is specified, X is assumed not to contain the target.
+
+        Parameters
+        ----------
+        X : DataFrame
+            Input features. If target_col is specified, X also includes the
+            target.
+        y : Series or numpy array, optional.
+            Target. You need to specify either y or target_col.
+        target_col : string or int, optional
+            Column name of target if included in X.
+        """
+        if ((y is None and target_col is None)
+                or (y is not None) and (target_col is not None)):
+            raise ValueError(
+                "Need to specify exactly one of y and target_col.")
+        X = clean(X)
+        if target_col is not None:
+            y = X[target_col]
+            X = X.drop(target_col, axis=1)
+        types = detect_types(X)
+        self.feature_names_ = X.columns
+        self.types_ = types
+
+        y, self.scoring_ = self._preprocess_target(y)
+        self.log_ = []
+
+        # reimplement cross-validation so we only do preprocessing once
+        # This could/should be solved with dask?
+        cv = StratifiedKFold(n_splits=5)
+        data_preproc = []
+        for i, (train, test) in enumerate(cv.split(X, y)):
+            # maybe do two levels of preprocessing
+            # to search over treatment of categorical variables etc
+            # Also filter?
+            verbose = self.verbose if i == 0 else 0
+            sp = EasyPreprocessor(verbose=verbose, types=types)
+            X_train = sp.fit_transform(X.iloc[train], y.iloc[train])
+            X_test = sp.transform(X.iloc[test])
+            data_preproc.append((X_train, X_test, y.iloc[train], y.iloc[test]))
+
+        estimators = self._get_estimators()
+        scorers, _ = _check_multimetric_scoring(estimators[1],
+                                                scoring=self.scoring_)
+
+        self.current_best_ = {'recall_macro': -np.inf}
+        for est in estimators:
+            scores = self._evaluate_one(est, data_preproc, scorers)
+            # make scoring configurable
+            if scores['recall_macro'] > self.current_best_['recall_macro']:
+                if self.verbose:
+                    print("new best (using recall macro):\n{}".format(
+                        scores))
+                self.current_best_ = scores
+                best_est = est
+        if self.verbose:
+            print("Best model:\n{}\nBest Scores:\n{}".format(
+                nice_repr(best_est), self.current_best_))
+        if self.refit:
+            self.est_ = make_pipeline(EasyPreprocessor(), best_est)
+            self.est_.fit(X, y)
+        return self
+
+
+class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
+    """Automagic anytime classifier.
+
+    Parameters
+    ----------
+    refit : boolean, True
+        Whether to refit the model on the full dataset (I think).
+
+    verbose : integer, default=1
+        Verbosity (higher is more output)
+    """
+    def __init__(self, refit=True, verbose=1):
+        self.verbose = verbose
+        self.refit = refit
+
+    def _get_estimators(self):
+        return get_fast_classifiers(n_classes=len(self.classes_))
+
+    def _preprocess_target(self, y):
+        target_type = type_of_target(y)
+        le = LabelEncoder()
+        y = pd.Series(le.fit_transform(y))
+        self.classes_ = le.classes_
+
+        if target_type == "binary":
+            minority_class = y.value_counts().index[1]
+            my_average_precision_scorer = make_scorer(
+                average_precision_score, pos_label=minority_class,
+                needs_threshold=True)
+            scoring = {'accuracy': 'accuracy',
+                       'average_precision': my_average_precision_scorer,
+                       'roc_auc': 'roc_auc',
+                       'recall_macro': 'recall_macro'
+                       }
+        elif target_type == "multiclass":
+            scoring = ['accuracy', 'recall_macro', 'precision_macro']
+        else:
+            raise ValueError("Unknown target type: {}".format(target_type))
+        return y, scoring
+
+    def fit(self, X, y=None, target_col=None):
+        """Fit classifier.
+
+        Requiers to either specify the target as seperate 1d array or Series y
+        (in scikit-learn fashion) or as column of the dataframe X specified by
+        target_col.
+        If y is specified, X is assumed not to contain the target.
+
+        Parameters
+        ----------
+        X : DataFrame
+            Input features. If target_col is specified, X also includes the
+            target.
+        y : Series or numpy array, optional.
+            Target class labels. You need to specify either y or target_col.
+        target_col : string or int, optional
+            Column name of target if included in X.
+        """
+        return self._fit(X=X, y=y, target_col=target_col)

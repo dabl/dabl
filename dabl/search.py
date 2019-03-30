@@ -8,6 +8,7 @@ from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.utils import check_random_state
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
+from sklearn.utils import safe_indexing
 
 from ._search import CustomBaseSearchCV
 
@@ -210,8 +211,9 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
                 # subsampling should be stratified. We can't use
                 # train_test_split because it complains about testset being too
                 # small in some cases
-                indexes = rng.choice(X.shape[0], r_i)
-                X_iter, y_iter = X[indexes], y[indexes]
+                indexes = rng.choice(X.shape[0], r_i, replace=False)
+                X_iter = safe_indexing(X, indexes)
+                y_iter = safe_indexing(y, indexes)
             else:
                 # Need copy so that r_i of next iteration do not overwrite
                 candidate_params = [c.copy() for c in candidate_params]

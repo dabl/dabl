@@ -127,7 +127,7 @@ def plot_regression_categorical(X, target_col, types=None):
         axes.ravel()[j].set_axis_off()
 
 
-def plot_classification_continuous(X, target_col, types=None):
+def plot_classification_continuous(X, target_col, types=None, hue_order=None):
     """Exploration plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -184,8 +184,9 @@ def plot_classification_continuous(X, target_col, types=None):
         df = best_features.melt(target_col)
         rows, cols = find_pretty_grid(show_top)
         g = sns.FacetGrid(df, col='variable', hue=target_col, col_wrap=cols,
-                          sharey=False, sharex=False)
+                          sharey=False, sharex=False, hue_order=hue_order)
         g = g.map(sns.kdeplot, "value", shade=True)
+        g.axes[0].legend()
         # FIXME remove "variable = " from title, add f score
         plt.suptitle("Univariate Distributions", y=1.02)
 
@@ -252,7 +253,8 @@ def plot_classification_continuous(X, target_col, types=None):
     # TODO fancy manifolds?
 
 
-def plot_classification_categorical(X, target_col, types=None, kind='count'):
+def plot_classification_categorical(X, target_col, types=None, kind='count',
+                                    hue_order=None):
     """Exploration plots for categorical features in classification.
 
     Creates plots of categorical variable distributions for each target class.
@@ -292,7 +294,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
         discrete_features=np.ones(X.shape[1], dtype=bool))
     top_k = np.argsort(f)[-show_top:][::-1]
     # large number of categories -> taller plot
-    row_height = 3 if X.nunique().max() <= 5 else 5
+    row_height = 3 if features.nunique().max() <= 5 else 5
     fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
     # FIXME mosaic doesn't like constraint layout?
     plt.suptitle("Categorical Features vs Target", y=1.02)
@@ -321,7 +323,10 @@ def plot_classification_categorical(X, target_col, types=None, kind='count'):
             # absolute counts
             # FIXME show f value
             # FIXME shorten titles?
-            sns.countplot(y=col, data=X_new, ax=ax, hue=target_col)
+            sns.countplot(y=col, data=X_new, ax=ax, hue=target_col,
+                          hue_order=hue_order)
+            if i > 0:
+                ax.legend(())
         else:
             raise ValueError("Unknown plot kind {}".format(kind))
         _short_tick_names(ax)
@@ -391,9 +396,12 @@ def plot_supervised(X, target_col, types=None, verbose=10):
         # make sure we include the target column in X
         # even though it's not categorical
         plt.figure()
-        X[target_col].value_counts().plot(kind='barh', ax=plt.gca())
+        counts = pd.DataFrame(X[target_col].value_counts())
+        melted = counts.T.melt().rename(
+            columns={'variable': 'class', 'value': 'count'})
+        sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")
-        plt.ylabel("Label")
-        plt.xlabel("Count")
-        plot_classification_continuous(X, target_col, types=types)
-        plot_classification_categorical(X, target_col, types=types)
+        plot_classification_continuous(X, target_col, types=types,
+                                       hue_order=counts.index)
+        plot_classification_categorical(X, target_col, types=types,
+                                        hue_order=counts.index)

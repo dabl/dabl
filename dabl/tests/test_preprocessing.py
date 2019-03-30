@@ -20,7 +20,7 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME need to test dealing with categorical dtype
 # TODO add test that weird missing values in strings are correctly interpreted
 # FIXME ensure easy preprocessor handles missing values in categorical data
-
+# FIXME add test with index not starting from 0 or 1
 
 def make_dirty_float():
     rng = np.random.RandomState(0)

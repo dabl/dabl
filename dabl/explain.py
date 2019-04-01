@@ -1,4 +1,5 @@
 import numpy as np
+from warnings import warn
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -37,8 +38,12 @@ def explain(estimator, feature_names=None):
 
     if isinstance(estimator, DecisionTreeClassifier):
         print(estimator)
-        # print("Depth: {}".format(estimator.get_depth()))
-        # print("Number of leaves: {}".format(estimator.get_n_leaves()))
+        try:
+            print("Depth: {}".format(estimator.get_depth()))
+            print("Number of leaves: {}".format(estimator.get_n_leaves()))
+        except AttributeError:
+            warn("Can't show tree depth, install scikit-learn 0.21-dev"
+                 " to show the full information.")
         # FIXME !!! bug in plot_tree with integer class names
         class_names = [str(c) for c in estimator.classes_]
         plot_tree(estimator, feature_names=feature_names,

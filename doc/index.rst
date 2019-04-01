@@ -7,6 +7,8 @@ beginners, and reduce boiler plate for common tasks.
 WARNING: This is a prototype and in a pre-alpha state.
 Don't rely on dabl for critical applications for now.
 
+Development at `github.com/amueller/dabl <https://github.com/amueller/dabl>`_.
+
 .. toctree::
    :maxdepth: 2
    :hidden:

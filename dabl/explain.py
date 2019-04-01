@@ -1,11 +1,12 @@
 import numpy as np
 
-from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
 from .models import SimpleClassifier, SimpleRegressor
 from .plot.utils import plot_coefficients
+from ._plot_tree import plot_tree
 
 
 def explain(estimator, feature_names=None):
@@ -36,8 +37,8 @@ def explain(estimator, feature_names=None):
 
     if isinstance(estimator, DecisionTreeClassifier):
         print(estimator)
-        print("Depth: {}".format(estimator.get_depth()))
-        print("Number of leaves: {}".format(estimator.get_n_leaves()))
+        # print("Depth: {}".format(estimator.get_depth()))
+        # print("Number of leaves: {}".format(estimator.get_n_leaves()))
         # FIXME !!! bug in plot_tree with integer class names
         class_names = [str(c) for c in estimator.classes_]
         plot_tree(estimator, feature_names=feature_names,

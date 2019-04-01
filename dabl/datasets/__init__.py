@@ -15,12 +15,12 @@ def load_ames():
 
 
 def load_titanic():
-    """Load ames housing dataset.
+    """Load titanic dataset.
 
     Returns
     -------
     data : DataFrame
-        DataFrame containing the ames housing dataset.
+        DataFrame containing the titanic dataset.
     """
     module_path = dirname(__file__)
     return pd.csv(join(module_path, 'titanic.csv'))

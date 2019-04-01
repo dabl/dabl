@@ -7,6 +7,8 @@ The data analysis baseline library.
 ## Warning
 This is pre-alpha software and is still very-much in flux.
 
+*Dependency*: `dabl` uses some features from the development version of `sklearn`, which will eventually be a part of the 0.21 release.
+
 ## Current scope and upcoming features
 This library is very much still under development. Current code focusses mostly on exploratory visualiation and preprocessing.
 There are also drop-in replacements for GridSearchCV and RandomizedSearchCV using successive halfing.

@@ -225,7 +225,7 @@ def _make_subplots(n_plots, max_cols=5, row_height=3):
     return fig, axes
 
 
-def _check_X_target_col(X, target_col, types, task=None):
+def _check_X_target_col(X, target_col, types=None, task=None):
     if types is None:
         types = detect_types(X)
     if not isinstance(target_col, str) and len(target_col) > 1:

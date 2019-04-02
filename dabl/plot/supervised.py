@@ -15,7 +15,7 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from statsmodels.graphics.mosaicplot import mosaic
 
-from ..preprocessing import detect_types
+from ..preprocessing import detect_types, clean
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
@@ -344,7 +344,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='count',
         axes.ravel()[j].set_axis_off()
 
 
-def plot_supervised(X, target_col, types=None, scatter_alpha=1., verbose=10):
+def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1., verbose=10):
     """Exploration plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -358,9 +358,9 @@ def plot_supervised(X, target_col, types=None, scatter_alpha=1., verbose=10):
         Input data including features and target
     target_col : str or int
         Identifier of the target column in X
-    types : dataframe of types, optional.
-        Output of detect_types on X. Can be used to avoid recomputing the
-        types.
+    type_hints : dict or None
+        If dict, provide type information for columns.
+        Keys are column names, values are types as provided by detect_types.
     scatter_alpha : float, default=1.
         Alpha values for scatter plots.
     verbose : int, default=10
@@ -373,20 +373,15 @@ def plot_supervised(X, target_col, types=None, scatter_alpha=1., verbose=10):
     plot_classification_continuous
     plot_classification_categorical
     """
-    types = _check_X_target_col(X, target_col, types)
-    # aggressively low_cardinality integers plot better as categorical
+    X = clean(X, type_hints=type_hints)
+    # recompute types after cleaning:
+    types = _check_X_target_col(X, target_col)
+    # low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:
-            # yes we con't need a loop
+            # yes we don't need a loop
             types.loc[col, 'low_card_int'] = False
             types.loc[col, 'categorical'] = True
-
-    # if any dirty floats, tell user to clean them first
-    if types.dirty_float.any():
-        warn("Found some dirty floats! "
-             "Clean em up first:\n{}".format(
-                 types.index[types.dirty_float]),
-             UserWarning)
 
     if types.continuous[target_col]:
         print("Target looks like regression")
@@ -410,6 +405,11 @@ def plot_supervised(X, target_col, types=None, scatter_alpha=1., verbose=10):
         counts = pd.DataFrame(X[target_col].value_counts())
         melted = counts.T.melt().rename(
             columns={'variable': 'class', 'value': 'count'})
+        # class could be a string that's a float
+        # seaborn is trying to be smart unless we declare it categorical
+        # we actually fixed counts to have categorical index
+        # but melt destroys it: https://github.com/pandas-dev/pandas/issues/15853
+        melted['class'] = melted['class'].astype('category')
         sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")
         plot_classification_continuous(X, target_col, types=types,

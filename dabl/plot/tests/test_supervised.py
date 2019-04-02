@@ -64,6 +64,20 @@ def test_plots_smoke(continuous_features, categorical_features, task):
     plt.close("all")
 
 
+def test_float_classification_target():
+    # check we can plot even if we do classification with a float target
+    X, y = make_blobs()
+    data = pd.DataFrame(X)
+    data['target'] = y.astype(np.float)
+    types = detect_types(data)
+    assert types.categorical['target']
+    plot_supervised(data, 'target')
+    # same with "actual float" - we need to specify classification for that :-/
+    data['target'] = y.astype(np.float) + .2
+    plot_supervised(data, 'target', type_hints={'target': 'categorical'})
+    plt.close("all")
+
+
 @pytest.mark.filterwarnings('ignore:Discarding near-constant')
 def test_plot_classification_n_classes():
     X, y = make_blobs()

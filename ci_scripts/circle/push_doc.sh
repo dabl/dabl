@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script is meant to be called in the "deploy" step defined in 
+# This script is meant to be called in the "deploy" step defined in
 # circle.yml. See https://circleci.com/docs/ for more details.
 # The behavior of the script is controlled by environment variable defined
 # in the circle.yml in the top level folder of the project.
@@ -7,11 +7,11 @@
 set -ex
 
 if [ -z $CIRCLE_PROJECT_USERNAME ];
-then USERNAME="sklearn-ci";
+then USERNAME="dabl-ci";
 else USERNAME=$CIRCLE_PROJECT_USERNAME;
 fi
 
-DOC_REPO="scikit-learn.github.io"
+DOC_REPO="dabl"
 GENERATED_DOC_DIR=$1
 
 if [[ -z "$GENERATED_DOC_DIR" ]]; then
@@ -35,7 +35,7 @@ MSG="Pushing the docs to $dir/ for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"
 
 cd $HOME
 if [ ! -d $DOC_REPO ];
-then git clone --depth 1 --no-checkout "git@github.com:scikit-learn/"$DOC_REPO".git";
+then git clone --depth 1  --branch gh-pages --no-checkout "git@github.com:amueller/"$DOC_REPO".git";
 fi
 cd $DOC_REPO
 
@@ -49,17 +49,17 @@ then
 	touch $dir/index.html
 	git add $dir
 fi
-git checkout master
-git reset --hard origin/master
+git checkout gh-pages
+git reset --hard origin/gh-pages
 if [ -d $dir ]
 then
 	git rm -rf $dir/ && rm -rf $dir/
 fi
 cp -R $GENERATED_DOC_DIR $dir
-git config user.email "olivier.grisel+sklearn-ci@gmail.com"
+git config user.email "t3kcit+githubspam@gmail.com"
 git config user.name $USERNAME
 git config push.default matching
 git add -f $dir/
 git commit -m "$MSG" $dir
 git push
-echo $MSG 
+echo $MSG

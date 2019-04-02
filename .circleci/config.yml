@@ -11,15 +11,9 @@ jobs:
     steps:
       - checkout
       - run: ./ci_scripts/circle/checkout_merge_commit.sh
-      - restore_cache:
-          key: v1-datasets-{{ .Branch }}
       - run: ./ci_scripts/circle/build_doc.sh
-      - save_cache:
-          key: v1-datasets-{{ .Branch }}
-          paths:
-            - ~/scikit_learn_data
       - store_artifacts:
-          path: doc/_build/html/stable
+          path: doc/_build/html/
           destination: doc
       - store_artifacts:
           path: ~/log.txt
@@ -53,11 +47,11 @@ jobs:
       # deployed.
       - attach_workspace:
           at: doc/_build/html
-      - run: ls -ltrh doc/_build/html/stable
+      - run: ls -ltrh doc/_build/html/
       - deploy:
           command: |
             if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
-              bash ci_scripts/circle/push_doc.sh doc/_build/html/stable
+              bash ci_scripts/circle/push_doc.sh doc/_build/html/
             fi
 
 workflows:

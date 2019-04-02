@@ -2,16 +2,16 @@ machine:
   environment:
     # The github organization or username of the repository which hosts the
     # project and documentation.
-    USERNAME: "scikit-learn-contrib"
+    USERNAME: "amueller"
 
     # The repository where the documentation will be hosted
-    DOC_REPO: "project-template"
+    DOC_REPO: "dabl"
 
     # The base URL for the Github page where the documentation will be hosted
     DOC_URL: ""
 
     # The email is to be used for commits in the Github Page
-    EMAIL: "vnb222+ci@nyu.edu"
+    EMAIL: "t3kcit@gmail.com"
 
 dependencies:
 
@@ -19,11 +19,10 @@ dependencies:
   pre:
     - sudo -E apt-get -yq remove texlive-binaries --purge
     - sudo apt-get update
-    - sudo apt-get install libatlas-dev libatlas3gf-base
-    - sudo apt-get install build-essential python-dev python-setuptools
+    - sudo apt-get install python-setuptools
     # install numpy first as it is a compile time dependency for other packages
     - pip install --upgrade numpy
-    - pip install --upgrade scipy matplotlib setuptools nose coverage sphinx pillow sphinx-gallery sphinx_rtd_theme
+    - pip install --upgrade scipy smatplotlib setuptools nose coverage sphinx pillow sphinx-gallery sphinx_rtd_theme
     # Installing required packages for `make -C doc check command` to work.
     - sudo -E apt-get -yq update
     - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install dvipng texlive-latex-base texlive-latex-extra

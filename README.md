@@ -8,7 +8,7 @@ The data analysis baseline library.
 This is pre-alpha software and is still very-much in flux.
 
 ## Current scope and upcoming features
-This library is very much still under development. Current code focusses mostly on exploratory visualiation and preprocessing.
+This library is very much still under development. Current code focuses mostly on exploratory visualiation and preprocessing.
 There are also drop-in replacements for GridSearchCV and RandomizedSearchCV using successive halfing.
 The next step in the development will be adding portfolios in the style of
 [POSH

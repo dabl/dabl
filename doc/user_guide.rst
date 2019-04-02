@@ -137,7 +137,7 @@ This again is a good place to surface data leakage, as well as find the main
 discriminative features in the dataset.  The ``SimpleClassifier`` allows
 specifying data in the scikit-learn-style ``fit(X, y)`` with a 1d y and
 features ``X``, or with ``X`` being a dataframe, and by specifying the target
-column insided of X as``target_col``.
+column inside of X as``target_col``.
 
 The SimpleClassifier also performs preprocessing such as missing value
 imputation and one-hot-encoding.  You can inspect the model using:

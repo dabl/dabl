@@ -437,7 +437,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
     max_budget_ : int
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used at
-        each iteration must be a mulitple of ``r_min_``, the actual number of
+        each iteration must be a multiple of ``r_min_``, the actual number of
         resources used at the last iteartion may be smaller than
         ``max_budget_``.
 
@@ -794,7 +794,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
     max_budget_ : int
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used at
-        each iteration must be a mulitple of ``r_min_``, the actual number of
+        each iteration must be a multiple of ``r_min_``, the actual number of
         resources used at the last iteartion may be smaller than
         ``max_budget_``.
 

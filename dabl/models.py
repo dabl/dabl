@@ -62,7 +62,7 @@ class _BaseSimpleEstimator(BaseEstimator):
     def _fit(self, X, y=None, target_col=None):
         """Fit estimator.
 
-        Requiers to either specify the target as seperate 1d array or Series y
+        Requiers to either specify the target as separate 1d array or Series y
         (in scikit-learn fashion) or as column of the dataframe X specified by
         target_col.
         If y is specified, X is assumed not to contain the target.
@@ -181,7 +181,7 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
     def fit(self, X, y=None, target_col=None):
         """Fit classifier.
 
-        Requires to either specify the target as seperate 1d array or Series y
+        Requires to either specify the target as separate 1d array or Series y
         (in scikit-learn fashion) or as column of the dataframe X specified by
         target_col.
         If y is specified, X is assumed not to contain the target.
@@ -235,7 +235,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
     def fit(self, X, y=None, target_col=None):
         """Fit regressor.
 
-        Requires to either specify the target as seperate 1d array or Series y
+        Requires to either specify the target as separate 1d array or Series y
         (in scikit-learn fashion) or as column of the dataframe X specified by
         target_col.
         If y is specified, X is assumed not to contain the target.

@@ -10,10 +10,10 @@ jobs:
       - PYTHON_VERSION: 3
     steps:
       - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - run: ./ci_scripts/circle/checkout_merge_commit.sh
       - restore_cache:
           key: v1-datasets-{{ .Branch }}
-      - run: ./build_tools/circle/build_doc.sh
+      - run: ./ci_scripts/circle/build_doc.sh
       - save_cache:
           key: v1-datasets-{{ .Branch }}
           paths:
@@ -35,20 +35,20 @@ jobs:
       - image: circleci/python:3.6
     steps:
       - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - run: ./ci_scripts/circle/checkout_merge_commit.sh
       - run:
           name: dependencies
           command: sudo pip install flake8
       - run:
           name: flake8
-          command: ./build_tools/circle/flake8_diff.sh
+          command: ./ci_scripts/circle/flake8_diff.sh
 
   deploy:
     docker:
       - image: circleci/python:3.6
     steps:
       - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - run: ./ci_scripts/circle/checkout_merge_commit.sh
       # Attach documentation generated in the 'doc' step so that it can be
       # deployed.
       - attach_workspace:
@@ -57,7 +57,7 @@ jobs:
       - deploy:
           command: |
             if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
-              bash build_tools/circle/push_doc.sh doc/_build/html/stable
+              bash ci_scripts/circle/push_doc.sh doc/_build/html/stable
             fi
 
 workflows:

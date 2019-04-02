@@ -23,4 +23,21 @@ def load_titanic():
         DataFrame containing the titanic dataset.
     """
     module_path = dirname(__file__)
-    return pd.csv(join(module_path, 'titanic.csv'))
+    return pd.read_csv(join(module_path, 'titanic.csv'))
+
+
+def load_adult():
+    """Load adult census dataset.
+
+    Returns
+    -------
+    data : DataFrame
+        DataFrame containing the adult dataset.
+    """
+    module_path = dirname(__file__)
+    return pd.read_csv(join(module_path, 'adult.csv'))
+
+
+def data_path(filename):
+    module_path = dirname(__file__)
+    return join(module_path, filename)

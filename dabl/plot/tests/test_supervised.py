@@ -64,6 +64,18 @@ def test_plots_smoke(continuous_features, categorical_features, task):
     plt.close("all")
 
 
+@pytest.mark.parametrize("add, feature_type",
+                         itertools.product([0, .1],
+                                           ['continuous', 'categorical']))
+def test_type_hints(add, feature_type):
+    X = pd.DataFrame(np.random.randint(4, size=100)) + add
+    X['target'] = np.random.uniform(size=100)
+    plot_supervised(X, type_hints={0: feature_type}, target_col='target')
+    # get title of figure
+    text = plt.gcf().get_children()[2].get_text()
+    assert feature_type.capitalize() in text
+
+
 def test_float_classification_target():
     # check we can plot even if we do classification with a float target
     X, y = make_blobs()

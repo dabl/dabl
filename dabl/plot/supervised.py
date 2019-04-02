@@ -375,7 +375,7 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1., verbose=10
     """
     X = clean(X, type_hints=type_hints)
     # recompute types after cleaning:
-    types = _check_X_target_col(X, target_col)
+    types = _check_X_target_col(X, target_col, type_hints=type_hints)
     # low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:

@@ -7,7 +7,6 @@ from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sklearn.utils import check_random_state, safe_indexing
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
-from sklearn.utils import safe_indexing
 
 from ._search import CustomBaseSearchCV
 

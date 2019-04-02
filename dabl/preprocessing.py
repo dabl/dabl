@@ -84,6 +84,20 @@ def _find_string_floats(X, dirty_float_threshold):
     return clean_float_string, dirty_float
 
 
+def _float_col_is_int(series):
+    # test on a small subset for speed
+    # yes, a recursive call would be one line shorter.
+    if series[:10].isna().any():
+        return False
+    if (series[:10] != series[:10].astype(int)).any():
+        return False
+    if series.isna().any():
+        return False
+    if (series != series.astype(int)).any():
+        return False
+    return True
+
+
 def detect_types(X, type_hints=None, max_int_cardinality='auto',
                  dirty_float_threshold=.9,
                  near_constant_threshold=.95, verbose=0):
@@ -166,6 +180,16 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     # FIXME use pd.api.type.is_string_dtype etc maybe
     floats = kinds == "f"
     integers = (kinds == "i") | (kinds == "u")
+    # check if float column is actually all integers
+    # we'll treat them as int for now.
+    for col, isfloat in floats.items():
+        if isfloat and (type_hints is None or col not in type_hints
+                        or type_hints[col] != "continuous"):
+            if _float_col_is_int(X[col]):
+                # it's int!
+                integers[col] = True
+                floats[col] = False
+
     useless = pd.Series(0, index=X.columns, dtype=bool)
 
     # check if we have something that trivially is an index

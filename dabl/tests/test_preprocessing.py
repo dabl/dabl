@@ -22,6 +22,7 @@ X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
 # FIXME ensure easy preprocessor handles missing values in categorical data
 # FIXME add test with index not starting from 0 or 1
 
+
 def make_dirty_float():
     rng = np.random.RandomState(0)
     cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
@@ -73,7 +74,10 @@ def test_detect_types():
         {'categorical_string': ['a', 'b'] * 50,
          'binary_int': np.random.randint(0, 2, size=100),
          'categorical_int': np.random.randint(0, 4, size=100),
-         'low_card_float': np.random.randint(0, 4, size=100).astype(np.float),
+         'low_card_float_int': np.random.randint(
+             0, 4, size=100).astype(np.float),
+         'low_card_float': np.random.randint(
+             0, 4, size=100).astype(np.float) + 0.1,
          'binary_float': np.random.randint(0, 2, size=100).astype(np.float),
          'cont_int': np.repeat(np.arange(50), 2),
          'unique_string': [random_str() for i in range(100)],
@@ -93,8 +97,8 @@ def test_detect_types():
     assert types['binary_int'] == 'categorical'
     assert types['categorical_int'] == 'categorical'
     # assert types['low_card_int_binomial'] == 'continuous'
-    # a bit inconsistent: we're treating cardinality 2
-    # floats as categorical but cardinality 3 or 4 not
+    assert types['low_card_float_int'] == 'categorical'
+    # low card floats if they are not ints are continuous ?
     assert types['low_card_float'] == 'continuous'
     assert types['binary_float'] == 'categorical'
     assert types['cont_int'] == 'continuous'

@@ -82,7 +82,8 @@ then
     make_args="dist LATEXMKOPTS=-halt-on-error"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
-    make_args=html-noplot
+    # FIXME do noplot here
+    make_args=html
 elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
 then
     # pattern for examples to run is the last line of output
@@ -121,19 +122,19 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
   pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib
+  joblib sphinx_rtd_theme scikit-learn=0.20.3 seaborn
 
 source activate testenv
 pip install sphinx-gallery
 pip install numpydoc==0.8
 
-# Build and install scikit-learn in dev mode
+# Build and install in dev mode
 python setup.py develop
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
 then
     # List available documentation versions if on master
-    python build_tools/circle/list_versions.py > doc/versions.rst
+    python ci_scripts/circle/list_versions.py > doc/versions.rst
 fi
 
 # The pipefail is requested to propagate exit code
@@ -146,10 +147,10 @@ affected_doc_paths() {
     files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
     echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
-    sklearn_files=$(echo "$files" | grep '^sklearn/')
-    if [ -n "$sklearn_files" ]
+    dabl_files=$(echo "$files" | grep '^dabl/')
+    if [ -n "$dabl_files" ]
     then
-        grep -hlR -f<(echo "$sklearn_files" | sed 's/^/scikit-learn\/blob\/[a-z0-9]*\//') doc/_build/html/stable/modules/generated | cut -d/ -f5-
+        grep -hlR -f<(echo "$dabl_files" | sed 's/^/scikit-learn\/blob\/[a-z0-9]*\//') doc/_build/html/modules/generated | cut -d/ -f5-
     fi
 }
 
@@ -162,5 +163,5 @@ then
     echo '<html><body><ul>'
     echo "$affected" | sed 's|.*|<li><a href="&">&</a></li>|'
     echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p></body></html>'
-    ) > 'doc/_build/html/stable/_changed.html'
+    ) > 'doc/_build/html/_changed.html'
 fi

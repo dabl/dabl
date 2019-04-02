@@ -46,15 +46,15 @@ iterations of a random forest::
     >>> import pandas as pd
     >>> from dabl.search import GridSuccessiveHalving
     >>>
-    >>>
     >>> parameters = {'max_depth': [3, 5, 10],
-    >>>               'min_samples_split': [2, 5, 10]}
-    >>> base_estimator = RandomForestClassifier()
+    ...               'min_samples_split': [2, 5, 10]}
+    >>> base_estimator = RandomForestClassifier(random_state=0)
     >>> X, y = make_classification(n_samples=1000)
     >>> sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
     ...                            ratio=2,
     ...                            budget_on='n_estimators',
     ...                            max_budget=30,
+    ...                            random_state=0,
     ...                            ).fit(X, y)
     >>> sh.best_estimator_
     RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',

@@ -120,6 +120,9 @@ performance.
 >>> xc = ExplainableClassifier().fit(data, target_col="income")
 
 
+.. include:: ./successive_halving.rst
+
+
 Limitations
 -----------
 Right now dabl does not deal with text data and time series data.  It also does

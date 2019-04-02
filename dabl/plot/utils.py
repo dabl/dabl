@@ -87,7 +87,7 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10,
     feature_names = np.asarray(feature_names)
     if coefficients.ndim > 1:
         # this is not a row or column vector
-        raise ValueError("coeffients must be 1d array or column vector, got"
+        raise ValueError("coefficients must be 1d array or column vector, got"
                          " shape {}".format(coefficients.shape))
     coefficients = coefficients.ravel()
 

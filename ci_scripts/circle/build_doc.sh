@@ -82,7 +82,8 @@ then
     make_args="dist LATEXMKOPTS=-halt-on-error"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
-    make_args=html-noplot
+    # FIXME do noplot here
+    make_args=html
 elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
 then
     # pattern for examples to run is the last line of output

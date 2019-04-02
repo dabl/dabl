@@ -307,7 +307,7 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def clean(X, type_hints=None):
+def clean(X, type_hints=None, verbose=0):
     """Public clean interface
 
     Parameters
@@ -315,6 +315,8 @@ def clean(X, type_hints=None):
     type_hints : dict or None
         If dict, provide type information for columns.
         Keys are column names, values are types as provided by detect_types.
+    verbose : int, default=0
+        Verbosity control.
     """
     if not isinstance(X, pd.DataFrame):
         X = pd.DataFrame(X)
@@ -323,7 +325,7 @@ def clean(X, type_hints=None):
     if not X.index.is_unique:
         warn("Index not unique, resetting index!", UserWarning)
         X = X.reset_index()
-    types = detect_types(X, type_hints=type_hints)
+    types = detect_types(X, type_hints=type_hints, verbose=verbose)
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
     # get rid of dirty floats, add indicators

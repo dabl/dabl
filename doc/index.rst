@@ -1,5 +1,5 @@
-Welcome to dabl, the Data Analysis Baseline Linbrary
-====================================================
+Welcome to dabl, the Data Analysis Baseline Library
+===================================================
 
 This project tries to help make supervised machine learning more accessible for
 beginners, and reduce boiler plate for common tasks.

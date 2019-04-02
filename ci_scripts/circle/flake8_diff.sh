@@ -17,7 +17,7 @@ set -e
 # pipefail is necessary to propagate exit codes
 set -o pipefail
 
-PROJECT=scikit-learn/scikit-learn
+PROJECT=amueller/dabl
 PROJECT_URL=https://github.com/$PROJECT.git
 
 # Find the remote with the project name (upstream in most cases)

@@ -8,3 +8,5 @@ cd $TEST_DIR
 
 pytest --pyargs dabl
 
+cd -
+pytest doc

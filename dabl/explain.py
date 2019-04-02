@@ -27,11 +27,12 @@ def explain(estimator, feature_names=None):
         assert len(estimator.steps) == 2
         # pipelines don't have feature names yet in sklearn
         # *cries in scikit-learn roadmap*
-        final_est = estimator[-1]
+        final_est = estimator._final_estimator
         try:
-            feature_names = estimator[0].get_feature_names(feature_names)
+            feature_names = estimator.steps[0][1].get_feature_names(
+                feature_names)
         except TypeError:
-            feature_names = estimator[0].get_feature_names()
+            feature_names = estimator.steps[0][1].get_feature_names()
 
         # now we have input feature names for the final step
         estimator = final_est

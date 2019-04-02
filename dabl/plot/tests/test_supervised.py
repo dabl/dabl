@@ -16,7 +16,7 @@ from dabl.plot.supervised import (
 
 # FIXME: check that target is not y but a column name
 
-
+@pytest.mark.filterwarnings('ignore:the matrix subclass')
 @pytest.mark.parametrize("continuous_features, categorical_features, task",
                          itertools.product([0, 1, 3, 100], [0, 1, 3, 100],
                                            ['classification', 'regression']))

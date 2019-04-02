@@ -84,18 +84,18 @@ Finally, we can find a good model for our data. The SimpleClassifier does all
 the work for us. It implements the familiar scikit-learn api of fit and
 predict:
 
-    >>> fc = dabl.SimpleClassifier()
+    >>> fc = dabl.SimpleClassifier(random_state=0)
     >>> X = titanic_clean.drop("survived", axis=1)
     >>> y = titanic_clean.survived
     >>> fc.fit(X, y)
-    DummyClassifier(strategy='prior')
+    DummyClassifier(random_state=0, strategy='prior')
     accuracy: 0.6180    average_precision: 0.3820    recall_macro: 0.5000    roc_auc: 0.5000
     new best (using recall_macro):
     accuracy             0.618028
     average_precision    0.381972
     recall_macro         0.500000
     roc_auc              0.500000
-    Name: DummyClassifier(strategy='prior'), dtype: float64
+    Name: DummyClassifier(random_state=0, strategy='prior'), dtype: float64
     GaussianNB()
     accuracy: 0.9007    average_precision: 0.8750    recall_macro: 0.9064    roc_auc: 0.9189
     new best (using recall_macro):
@@ -106,26 +106,29 @@ predict:
     Name: GaussianNB(), dtype: float64
     MultinomialNB()
     accuracy: 0.8946    average_precision: 0.9841    recall_macro: 0.8976    roc_auc: 0.9873
-    DecisionTreeClassifier(class_weight='balanced', max_depth=1)
+    DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
     accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714
     new best (using recall_macro):
     accuracy             0.975540
     average_precision    0.953971
     recall_macro         0.971441
     roc_auc              0.971441
-    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
-    DecisionTreeClassifier(class_weight='balanced', max_depth=5)
-    accuracy: 0.9587    average_precision: 0.9476    recall_macro: 0.9556    roc_auc: 0.9661
-    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
+    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0), dtype: float64
+    DecisionTreeClassifier(class_weight='balanced', max_depth=5, random_state=0)
+    accuracy: 0.9587    average_precision: 0.9487    recall_macro: 0.9556    roc_auc: 0.9673
+    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01,
+                random_state=0)
     accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714
     LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
-              solver='lbfgs')
+              random_state=0, solver='lbfgs')
     accuracy: 0.9679    average_precision: 0.9855    recall_macro: 0.9653    roc_auc: 0.9881
     Best model:
-    DecisionTreeClassifier(class_weight='balanced', max_depth=1)
+    DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
     Best Scores:
     accuracy             0.975540
     average_precision    0.953971
     recall_macro         0.971441
     roc_auc              0.971441
-    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
+    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0), dtype: float64
+    SimpleClassifier(random_state=0, refit=True, verbose=1)
+

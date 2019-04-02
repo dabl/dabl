@@ -12,6 +12,7 @@ from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _multimetric_score
 from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.testing import set_random_state
 
 from .preprocessing import EasyPreprocessor, clean, detect_types
 from .pipelines import get_fast_classifiers, get_fast_regressors
@@ -115,6 +116,7 @@ class _BaseSimpleEstimator(BaseEstimator):
         rank_scoring = self._rank_scoring
         self.current_best_ = {rank_scoring: -np.inf}
         for est in estimators:
+            set_random_state(est, self.random_state)
             scores = self._evaluate_one(est, data_preproc, scorers)
             # make scoring configurable
             if scores[rank_scoring] > self.current_best_[rank_scoring]:
@@ -138,13 +140,17 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
     Parameters
     ----------
     refit : boolean, True
-        Whether to refit the model on the full dataset (I think).
+        Whether to refit the model on the full dataset.
+
+    random_state : random state, int or None (default=None)
+        Random state or seed.
 
     verbose : integer, default=1
         Verbosity (higher is more output)
     """
-    def __init__(self, refit=True, verbose=1):
+    def __init__(self, refit=True, random_state=None, verbose=1):
         self.verbose = verbose
+        self.random_state = random_state
         self.refit = refit
 
     def _get_estimators(self):
@@ -202,12 +208,16 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
     refit : boolean, True
         Whether to refit the model on the full dataset (I think).
 
+    random_state : random state, int or None (default=None)
+        Random state or seed.
+
     verbose : integer, default=1
         Verbosity (higher is more output)
     """
-    def __init__(self, refit=True, verbose=1):
+    def __init__(self, refit=True, random_state=None, verbose=1):
         self.verbose = verbose
         self.refit = refit
+        self.random_state = random_state
 
     def _get_estimators(self):
         return get_fast_regressors()

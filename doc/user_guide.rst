@@ -79,54 +79,56 @@ leakage through spurious representations of the target in the data.
 Initial Model Building
 -----------------------
 >>> ec = dabl.SimpleClassifier(random_state=0).fit(data, target_col="income")
-DummyClassifier(strategy='prior')
-accuracy: 0.7592    average_precision: 0.2408    recall_macro: 0.5000    roc_auc: 0.5000
-new best (using recall_macro):
-accuracy             0.75919
-average_precision    0.24081
-recall_macro         0.50000
-roc_auc              0.50000
-Name: DummyClassifier(strategy='prior'), dtype: float64
-GaussianNB()
-accuracy: 0.5084    average_precision: 0.3728    recall_macro: 0.6591    roc_auc: 0.7219
-new best (using recall_macro):
-accuracy             0.508432
-average_precision    0.372784
-recall_macro         0.659142
-roc_auc              0.721880
-Name: GaussianNB(), dtype: float64
-MultinomialNB()
-accuracy: 0.7944    average_precision: 0.6606    recall_macro: 0.7732    roc_auc: 0.8682
-new best (using recall_macro):
-accuracy             0.794355
-average_precision    0.660584
-recall_macro         0.773171
-roc_auc              0.868248
-Name: MultinomialNB(), dtype: float64
-DecisionTreeClassifier(class_weight='balanced', max_depth=1)
-accuracy: 0.7103    average_precision: 0.4167    recall_macro: 0.7592    roc_auc: 0.7592
-DecisionTreeClassifier(class_weight='balanced', max_depth=5)
-accuracy: 0.7221    average_precision: 0.5788    recall_macro: 0.7713    roc_auc: 0.8412
-DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
-accuracy: 0.7103    average_precision: 0.4167    recall_macro: 0.7592    roc_auc: 0.7592
-LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
-            solver='lbfgs')
-accuracy: 0.7764    average_precision: 0.6859    recall_macro: 0.7969    roc_auc: 0.8784
-new best (using recall_macro):
-accuracy             0.776389
-average_precision    0.685911
-recall_macro         0.796911
-roc_auc              0.878391
-Name: LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',\n          solver='lbfgs'), dtype: float64
-Best model:
-LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
-            solver='lbfgs')
-Best Scores:
-accuracy             0.776389
-average_precision    0.685911
-recall_macro         0.796911
-roc_auc              0.878391
-Name: LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',\n          solver='lbfgs'), dtype: float64
+    DummyClassifier(random_state=0, strategy='prior')
+    accuracy: 0.7592    average_precision: 0.2408    recall_macro: 0.5000    roc_auc: 0.5000
+    new best (using recall_macro):
+    accuracy             0.75919
+    average_precision    0.24081
+    recall_macro         0.50000
+    roc_auc              0.50000
+    Name: DummyClassifier(random_state=0, strategy='prior'), dtype: float64
+    GaussianNB()
+    accuracy: 0.5084    average_precision: 0.3728    recall_macro: 0.6591    roc_auc: 0.7219
+    new best (using recall_macro):
+    accuracy             0.508432
+    average_precision    0.372784
+    recall_macro         0.659142
+    roc_auc              0.721880
+    Name: GaussianNB(), dtype: float64
+    MultinomialNB()
+    accuracy: 0.7944    average_precision: 0.6606    recall_macro: 0.7732    roc_auc: 0.8682
+    new best (using recall_macro):
+    accuracy             0.794355
+    average_precision    0.660584
+    recall_macro         0.773171
+    roc_auc              0.868248
+    Name: MultinomialNB(), dtype: float64
+    DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
+    accuracy: 0.7103    average_precision: 0.4167    recall_macro: 0.7592    roc_auc: 0.7592
+    DecisionTreeClassifier(class_weight='balanced', max_depth=5, random_state=0)
+    accuracy: 0.7220    average_precision: 0.5786    recall_macro: 0.7711    roc_auc: 0.8410
+    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01,
+                random_state=0)
+    accuracy: 0.7103    average_precision: 0.4167    recall_macro: 0.7592    roc_auc: 0.7592
+    LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
+              random_state=0, solver='lbfgs')
+    accuracy: 0.7764    average_precision: 0.6859    recall_macro: 0.7969    roc_auc: 0.8784
+    new best (using recall_macro):
+    accuracy             0.776389
+    average_precision    0.685911
+    recall_macro         0.796911
+    roc_auc              0.878391
+    Name: LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',\n          random_state=0, solver='lbfgs'), dtype: float64
+    Best model:
+    LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
+              random_state=0, solver='lbfgs')
+    Best Scores:
+    accuracy             0.776389
+    average_precision    0.685911
+    recall_macro         0.796911
+    roc_auc              0.878391
+    Name: LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',\n          random_state=0, solver='lbfgs'), dtype: float64
+
 
 Fit an initial model. The SimpleClassifier first tries several baseline and
 instantaneous models, potentially on subsampled data, to get an idea of what a
@@ -140,7 +142,7 @@ column insided of X as``target_col``.
 The SimpleClassifier also performs preprocessing such as missing value
 imputation and one-hot-encoding.  You can inspect the model using:
 
->>> explain(ec)
+>>> dabl.explain(ec)
 
 This can lead to additional insights and guide costom processing and
 cleaning of the data.
@@ -156,7 +158,7 @@ your goal is prediction, ``AnyClassifier`` can provide a strong baseline for
 further investigation.  Again, we can inspect our model to understand it
 better:
 
->>> explain(ac)
+>>> # explain(ac)
 
 
 Explainable Model Building
@@ -169,7 +171,7 @@ dataset. After this benchmark is established, it is interesting to see if we
 can build a model that is interpretable while still providing competitive
 performance.
 
->>> xc = ExplainableClassifier().fit(data, target_col="income")
+>>> # xc = ExplainableClassifier().fit(data, target_col="income")
 
 
 .. include:: ./successive_halving.rst

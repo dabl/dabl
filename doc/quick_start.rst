@@ -11,6 +11,7 @@ We know, for tabular data like this, pandas is our friend.
 Clearly we need to start with loading our data:
 
     >>> import pandas as pd
+    >>> import dabl
     >>> titanic = pd.read_csv("titanic.csv")
 
 Let's familiarize ourself with the data a bit; what's the shape, what are the
@@ -34,7 +35,7 @@ parsing of the CSV, but let's try an continue with what dabl is doing
 automatically for now.  In dabl, we can also get a best guess of the column
 types in a convenient format:
 
-    >>> types = dabl.detect_types_dataframe(titanic_clean)
+    >>> types = dabl.detect_types(titanic_clean)
     >>> print(types)
 
 Having a very rough idea of the shape of our data, we can now start looking
@@ -42,13 +43,13 @@ at the actual content. The easiest way to do that is using visualization of
 univariate and bivariate patterns. With plot_supervised,
 we can create plot of the features deemed most important for our task.
 
-    >>> plot_supervised(titanic, 'survived')
+    >>> dabl.plot_supervised(titanic, 'Survived')
 
 Finally, we can find a good model for our data. The SimpleClassifier does all
 the work for us. It implements the familiar scikit-learn api of fit and
 predict:
 
-    >>> fc = SimpleClassifier()
-    >>> X = titanic_clean.drop("survived", axis=1)
-    >>> y = titanic_clean.survived
+    >>> fc = dabl.SimpleClassifier()
+    >>> X = titanic_clean.drop("Survived", axis=1)
+    >>> y = titanic_clean.Survived
     >>> fc.fit(X, y)

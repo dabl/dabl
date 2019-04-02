@@ -52,7 +52,6 @@ iterations of a random forest::
     >>> X, y = make_classification(n_samples=1000, random_state=0)
     >>> sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
     ...                            ratio=2,
-    ...                            random_state=0,
     ...                            budget_on='n_estimators',
     ...                            max_budget=30,
     ...                            random_state=0,

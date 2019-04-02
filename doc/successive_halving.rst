@@ -49,9 +49,10 @@ iterations of a random forest::
     >>> parameters = {'max_depth': [3, 5, 10],
     ...               'min_samples_split': [2, 5, 10]}
     >>> base_estimator = RandomForestClassifier(random_state=0)
-    >>> X, y = make_classification(n_samples=1000)
+    >>> X, y = make_classification(n_samples=1000, random_state=0)
     >>> sh = GridSuccessiveHalving(base_estimator, parameters, cv=5,
     ...                            ratio=2,
+    ...                            random_state=0,
     ...                            budget_on='n_estimators',
     ...                            max_budget=30,
     ...                            random_state=0,
@@ -60,10 +61,10 @@ iterations of a random forest::
     RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
                            max_depth=5, max_features='auto', max_leaf_nodes=None,
                            min_impurity_decrease=0.0, min_impurity_split=None,
-                           min_samples_leaf=1, min_samples_split=10,
+                           min_samples_leaf=1, min_samples_split=2,
                            min_weight_fraction_leaf=0.0, n_estimators=8,
-                           n_jobs=None, oob_score=False, random_state=None,
-                           verbose=0, warm_start=False)
+                           n_jobs=None, oob_score=False, random_state=0, verbose=0,
+                           warm_start=False)
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter space.
@@ -86,11 +87,11 @@ a big budget, this may be a waste of resource::
     ...                            ratio=2).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter').r_i.unique()
-        iter
-        0    [20]
-        1    [40]
-        2    [80]
-        Name: r_i, dtype: object
+    iter
+    0    [20]
+    1    [40]
+    2    [80]
+    Name: r_i, dtype: object
 
 The search process will only use 80 resources at most, while our maximum budget
 is ``n_samples=1000``. Note in this case that ``r_min = r_0 = 20``. In order
@@ -102,11 +103,11 @@ for the last iteration to use as many resources as possible, you can use the
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter').r_i.unique()
-        iter
-        0    [250]
-        1    [500]
-        2    [1000]
-        Name: r_i, dtype: object
+    iter
+    0     [250]
+    1     [500]
+    2    [1000]
+    Name: r_i, dtype: object
 
 
 Since ``force_exhaust_budget`` chooses an appropriate ``r_min`` to start
@@ -136,15 +137,15 @@ the number of candidates, the last iteration may have to evaluate more than
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter').r_i.unique()
-        iter
-        0    [20]
-        1    [40]
-        Name: r_i, dtype: object
+    iter
+    0    [20]
+    1    [40]
+    Name: r_i, dtype: object
     >>> results.groupby('iter').r_i.count()  # number of candidates used at each iteration
-        iter
-        0    6
-        1    3
-        Name: r_i, dtype: int64
+    iter
+    0    6
+    1    3
+    Name: r_i, dtype: int64
 
 Since we cannot use more than ``max_budget=40`` resources, the process has to
 stop at the second iteration which evaluates more than ``ratio=2`` candidates.
@@ -161,17 +162,17 @@ necessary using ``r_min`` resources::
     ...                            ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter').r_i.unique()
-        iter
-        0    [20]
-        1    [20]
-        2    [40]
-        Name: r_i, dtype: object
+    iter
+    0    [20]
+    1    [20]
+    2    [40]
+    Name: r_i, dtype: object
     >>> results.groupby('iter').r_i.count()  # number of candidates used at each iteration
-        iter
-        0    6
-        1    3
-        2    2
-        Name: r_i, dtype: int64
+    iter
+    0    6
+    1    3
+    2    2
+    Name: r_i, dtype: int64
 
 Notice that we end with 2 candidates at the last iteration since we have
 eliminated enough candidates during the first iterations, using ``r_i = r_min =

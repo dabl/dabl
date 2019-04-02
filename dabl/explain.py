@@ -29,7 +29,8 @@ def explain(estimator, feature_names=None):
         # *cries in scikit-learn roadmap*
         final_est = estimator._final_estimator
         try:
-            feature_names = estimator.steps[0][1].get_feature_names(feature_names)
+            feature_names = estimator.steps[0][1].get_feature_names(
+                feature_names)
         except TypeError:
             feature_names = estimator.steps[0][1].get_feature_names()
 

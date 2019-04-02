@@ -28,8 +28,8 @@ Supervised Models
 =================
 
 .. autosummary::
-   :toctree: generated/
-   :template: class.rst
+    :toctree: generated/
+    :template: class.rst
 
    SimpleClassifier
 
@@ -39,14 +39,14 @@ Preprocessing
 .. currentmodule:: dabl.preprocessing
 
 .. autosummary::
-   :toctree: generated/
-   :template: class.rst
+    :toctree: generated/
+    :template: class.rst
 
-   EasyPreprocessor
+    EasyPreprocessor
 
 .. autosummary::
-   :toctree: generated/
-   :template: function.rst
+    :toctree: generated/
+    :template: function.rst
 
     detect_types
     clean
@@ -56,8 +56,8 @@ Plotting
 
 .. currentmodule:: dabl.plot
 .. autosummary::
-   :toctree: generated/
-   :template: function.rst
+    :toctree: generated/
+    :template: function.rst
 
     find_pretty_grid
     plot_supervised

@@ -14,8 +14,9 @@ _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
     # should this error if the inputs are not string?
     def fit(self, X, y=None):
-        # FIXME ensure X is dataframe?
-        # FIXME clean float columns will make this fail
+         # FIXME clean float columns will make this fail
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError("X is not a dataframe. Convert or call `clean`.")
         encoders = {}
         for col in X.columns:
             floats = X[col].str.match(_FLOAT_REGEX)
@@ -28,7 +29,8 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        # FIXME check that columns are the same?
+        if self.values == X.values:
+            raise ValueError("Given the same columns")
         result = []
         for col in self.columns_:
             nofloats = ~X[col].str.match(_FLOAT_REGEX)

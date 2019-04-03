@@ -179,6 +179,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         X_imp = X.fillna(features.median(axis=0))
         sns.pairplot(X_imp, vars=features.columns,
                      hue=target_col)
+        plt.suptitle("Continuous features pairplot", y=1.02)
     else:
         # univariate plots
         show_top = _get_n_top(features, "continuous")
@@ -195,8 +196,9 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                           sharey=False, sharex=False, hue_order=hue_order)
         g = g.map(sns.kdeplot, "value", shade=True)
         g.axes[0].legend()
+        plt.suptitle("Continuous features by target", y=1.02)
+
         # FIXME remove "variable = " from title, add f score
-        plt.suptitle("Univariate Distributions", y=1.02)
 
         # pairwise plots
         top_k = np.argsort(f)[-top_for_interactions:][::-1]
@@ -219,7 +221,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     # should we use only those?
     n_components = min(top_for_interactions, features.shape[0],
                        features.shape[1])
-
+    if n_components < 2:
+        return
     pca = PCA(n_components=n_components)
     features_pca = pca.fit_transform(scale(features_imp))
     top_pairs = _find_scatter_plots_classification(features_pca, target)
@@ -375,7 +378,7 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1., verbose=10
     """
     X = clean(X, type_hints=type_hints)
     # recompute types after cleaning:
-    types = _check_X_target_col(X, target_col)
+    types = _check_X_target_col(X, target_col, type_hints=type_hints)
     # low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:

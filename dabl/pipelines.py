@@ -4,6 +4,7 @@ from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso
+from sklearn.ensemble import RandomForestClassifier
 
 
 def get_fast_classifiers(n_classes):
@@ -52,3 +53,13 @@ def get_fast_regressors():
         DecisionTreeRegressor(max_depth=5),
         Ridge(alpha=10),
         Lasso(alpha=10)]
+
+
+def get_any_classifiers():
+    return [
+        LogisticRegression(C=1, solver='lbfgs', multi_class='multinomial'),
+        LogisticRegression(C=10, solver='lbfgs', multi_class='multinomial'),
+        LogisticRegression(C=.1, solver='lbfgs', multi_class='multinomial'),
+        RandomForestClassifier(max_features=None, n_estimators=100),
+        RandomForestClassifier(max_features='sqrt', n_estimators=100),
+        RandomForestClassifier(max_features='log2', n_estimators=100)]

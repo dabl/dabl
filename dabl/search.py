@@ -22,6 +22,7 @@ def _refit_callable(results):
     sorted_indices = np.argsort(results['mean_test_score'])[::-1]
     best_index = next(i for i in sorted_indices
                       if results['iter'][i] == last_iter)
+    raise ValueError("QIPEGNQPEIGNQIPEGN")
     return best_index
 
 
@@ -32,7 +33,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
     Almost optimal exploration in multi-armed bandits, ICML 13
     Zohar Karnin, Tomer Koren, Oren Somekh
     """
-    def __init__(self, estimator, scoring=None,
+    def __init__(self, estimator,
                  n_jobs=None, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
@@ -41,7 +42,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
                  force_exhaust_budget=False):
 
         refit = _refit_callable if refit else False
-        super().__init__(estimator, scoring=scoring,
+        super().__init__(estimator,
                          n_jobs=n_jobs, refit=refit, cv=cv,
                          verbose=verbose, pre_dispatch=pre_dispatch,
                          error_score=error_score,
@@ -273,22 +274,6 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    # FIXME (is this even supported??)
-    scoring : string, callable, list/tuple, dict or None, default: None
-        A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
-
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
-
-        See :ref:`multimetric_grid_search` for an example.
-
-        If None, the estimator's score method is used.
-
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -333,30 +318,13 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    # FIXME
     refit : boolean, default=True
         If True, refit an estimator using the best found parameters on the
         whole dataset.
 
-        For multiple metric evaluation, this needs to be a string denoting the
-        scorer is used to find the best parameters for refitting the estimator
-        at the end.
-
-        Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given ``cv_results_``.
-
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``GridSearchCV`` instance.
-
-        Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_params_`` will only be available if
-        ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. ``best_score_`` is not returned if refit is callable.
-
-        See ``scoring`` parameter to know more about multiple metric
-        evaluation.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -507,32 +475,16 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
 
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
-
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if ``refit=False``.
 
-        For multi-metric evaluation, this attribute is present only if
-        ``refit`` is specified.
-
-        See ``refit`` parameter for more information on allowed values.
-
     best_score_ : float
         Mean cross-validated score of the best_estimator.
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
-
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
-
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -542,15 +494,9 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
-
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
-
-        For multi-metric evaluation, this attribute holds the validated
-        ``scoring`` dict which maps the scorer key to the scorer callable.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
@@ -579,15 +525,15 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         Random search over a set of parameters using successive halving.
     """
 
-    def __init__(self, estimator, param_grid, scoring=None,
+    def __init__(self, estimator, param_grid,
                  n_jobs=None, refit=True, verbose=0, cv=None,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,
                  r_min='auto', aggressive_elimination=False,
                  force_exhaust_budget=False):
-        super().__init__(estimator, scoring=scoring,
-                         n_jobs=n_jobs, verbose=verbose, cv=cv,
+        super().__init__(estimator,
+                         n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          pre_dispatch=pre_dispatch,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
@@ -630,22 +576,6 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         resources as possible. Note that ``force_exhaust_budget`` has no
         effect in this case.
 
-    # FIXME (is this even supported??)
-    scoring : string, callable, list/tuple, dict or None, default: None
-        A single string (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
-
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
-
-        See :ref:`multimetric_grid_search` for an example.
-
-        If None, the estimator's score method is used.
-
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -690,30 +620,13 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
             ``cv`` default value if None will change from 3-fold to 5-fold
             in v0.22.
 
-    # FIXME
     refit : boolean, default=True
         If True, refit an estimator using the best found parameters on the
         whole dataset.
 
-        For multiple metric evaluation, this needs to be a string denoting the
-        scorer is used to find the best parameters for refitting the estimator
-        at the end.
-
-        Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given ``cv_results_``.
-
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``GridSearchCV`` instance.
-
-        Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_params_`` will only be available if
-        ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. ``best_score_`` is not returned if refit is callable.
-
-        See ``scoring`` parameter to know more about multiple metric
-        evaluation.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -864,32 +777,16 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
 
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
-
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if ``refit=False``.
 
-        For multi-metric evaluation, this attribute is present only if
-        ``refit`` is specified.
-
-        See ``refit`` parameter for more information on allowed values.
-
     best_score_ : float
         Mean cross-validated score of the best_estimator.
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
-
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
-
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -899,15 +796,10 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
-
+    # FIXME really supported?
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
-
-        For multi-metric evaluation, this attribute holds the validated
-        ``scoring`` dict which maps the scorer key to the scorer callable.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
@@ -937,14 +829,14 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
     """
 
     def __init__(self, estimator, param_distributions, n_candidates='auto',
-                 scoring=None, n_jobs=None, refit=True, verbose=0, cv=None,
+                 n_jobs=None, refit=True, verbose=0, cv=None,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,
                  r_min='auto', aggressive_elimination=False,
                  force_exhaust_budget=False):
-        super().__init__(estimator, scoring=scoring,
-                         n_jobs=n_jobs, verbose=verbose, cv=cv,
+        super().__init__(estimator,
+                         n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
                          max_budget=max_budget, budget_on=budget_on,

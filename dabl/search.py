@@ -32,7 +32,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
     Almost optimal exploration in multi-armed bandits, ICML 13
     Zohar Karnin, Tomer Koren, Oren Somekh
     """
-    def __init__(self, estimator,
+    def __init__(self, estimator, scoring=None,
                  n_jobs=None, refit=True, cv=5, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
@@ -41,7 +41,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
                  force_exhaust_budget=False):
 
         refit = _refit_callable if refit else False
-        super().__init__(estimator,
+        super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, cv=cv,
                          verbose=verbose, pre_dispatch=pre_dispatch,
                          error_score=error_score,
@@ -56,6 +56,11 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
         self.force_exhaust_budget = force_exhaust_budget
 
     def _check_input_parameters(self, X, y, groups):
+
+        if self.scoring is not None and not (isinstance(self.scoring, str)
+                                             or callable(self.scoring)):
+            raise ValueError('scoring parameter must be a string, '
+                             'a callable or None.')
 
         if (self.budget_on != 'n_samples'
                 and self.budget_on not in self.estimator.get_params()):
@@ -167,6 +172,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
             n_iterations = min(n_possible_iterations, n_required_iterations)
 
         if self.verbose:
+            # FIXME: python 35
             print(f'n_iterations: {n_iterations}')
             print(f'n_required_iterations: {n_required_iterations}')
             print(f'n_possible_iterations: {n_possible_iterations}')
@@ -272,6 +278,11 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored. This enables searching over any sequence
         of parameter settings.
+
+    scoring : string, callable, or None, default: None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
@@ -518,14 +529,14 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         Random search over a set of parameters using successive halving.
     """
 
-    def __init__(self, estimator, param_grid,
+    def __init__(self, estimator, param_grid, scoring=None,
                  n_jobs=None, refit=True, verbose=0, cv=5,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,
                  r_min='auto', aggressive_elimination=False,
                  force_exhaust_budget=False):
-        super().__init__(estimator,
+        super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          pre_dispatch=pre_dispatch,
                          random_state=random_state, error_score=error_score,
@@ -568,6 +579,11 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         sample enough candidates so that the last iteration uses as many
         resources as possible. Note that ``force_exhaust_budget`` has no
         effect in this case.
+
+    scoring : string, callable, or None, default: None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+        If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
@@ -815,14 +831,14 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         Search over a grid of parameters using successive halving.
     """
 
-    def __init__(self, estimator, param_distributions, n_candidates='auto',
-                 n_jobs=None, refit=True, verbose=0, cv=5,
-                 pre_dispatch='2*n_jobs', random_state=None,
-                 error_score=np.nan, return_train_score=True,
-                 max_budget='auto', budget_on='n_samples', ratio=3,
-                 r_min='auto', aggressive_elimination=False,
-                 force_exhaust_budget=False):
-        super().__init__(estimator,
+    def __init__(self, estimator, param_distributions,
+                 n_candidates='auto', scoring=None, n_jobs=None, refit=True,
+                 verbose=0, cv=5, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score=np.nan,
+                 return_train_score=True, max_budget='auto',
+                 budget_on='n_samples', ratio=3, r_min='auto',
+                 aggressive_elimination=False, force_exhaust_budget=False):
+        super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,

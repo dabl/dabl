@@ -34,7 +34,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
     Zohar Karnin, Tomer Koren, Oren Somekh
     """
     def __init__(self, estimator,
-                 n_jobs=None, refit=True, cv=None, verbose=0,
+                 n_jobs=None, refit=True, cv=5, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,
@@ -297,11 +297,10 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, optional (default=5)
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -312,11 +311,6 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        # FIXME
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
 
     refit : boolean, default=True
         If True, refit an estimator using the best found parameters on the
@@ -526,7 +520,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
     """
 
     def __init__(self, estimator, param_grid,
-                 n_jobs=None, refit=True, verbose=0, cv=None,
+                 n_jobs=None, refit=True, verbose=0, cv=5,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,
@@ -599,7 +593,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, optional (default=5)
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -614,11 +608,6 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        # FIXME
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
 
     refit : boolean, default=True
         If True, refit an estimator using the best found parameters on the
@@ -829,7 +818,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
     """
 
     def __init__(self, estimator, param_distributions, n_candidates='auto',
-                 n_jobs=None, refit=True, verbose=0, cv=None,
+                 n_jobs=None, refit=True, verbose=0, cv=5,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,

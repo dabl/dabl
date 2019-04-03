@@ -35,7 +35,7 @@ def load_adult():
         DataFrame containing the adult dataset.
     """
     module_path = dirname(__file__)
-    return pd.read_csv(join(module_path, 'adult.csv'))
+    return pd.read_csv(join(module_path, 'adult.csv.gz'))
 
 
 def data_path(filename):

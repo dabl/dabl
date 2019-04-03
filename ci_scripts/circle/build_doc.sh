@@ -76,15 +76,7 @@ then
     exit 0
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
-then
-    # PDF linked into HTML
-    make_args="dist LATEXMKOPTS=-halt-on-error"
-elif [[ "$build_type" =~ ^QUICK ]]
-then
-    # FIXME do noplot here
-    make_args=html
-elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
+if [[ "$build_type" =~ ^'BUILD: detected examples' ]]
 then
     # pattern for examples to run is the last line of output
     pattern=$(echo "$build_type" | tail -n 1)

@@ -76,15 +76,7 @@ then
     exit 0
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
-then
-    # PDF linked into HTML
-    make_args="dist LATEXMKOPTS=-halt-on-error"
-elif [[ "$build_type" =~ ^QUICK ]]
-then
-    # FIXME do noplot here
-    make_args=html
-elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
+if [[ "$build_type" =~ ^'BUILD: detected examples' ]]
 then
     # pattern for examples to run is the last line of output
     pattern=$(echo "$build_type" | tail -n 1)
@@ -97,12 +89,12 @@ make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation
-sudo -E apt-get -yq update
-sudo -E apt-get -yq remove texlive-binaries --purge
-sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
-    install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
-    latexmk gsfonts
+# sudo -E apt-get -yq update
+# sudo -E apt-get -yq remove texlive-binaries --purge
+# sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
+#    install dvipng texlive-latex-base texlive-latex-extra \
+#    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
+#    latexmk gsfonts
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then

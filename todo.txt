@@ -1,10 +1,7 @@
 add permutation importance, partial dependence curves
-add regression
 add feature engineering for explainable models
-rename SimpleClassifier to SimpleClassifier
 refactor pca and lda plots together
 make univariate pca nad lda plots maybe
-add regression
 think about train-test-split
 benchmark plotting and easy classifier
 add anyclassifier

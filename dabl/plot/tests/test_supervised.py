@@ -77,6 +77,10 @@ def test_type_hints(add, feature_type, target_type):
     # get title of figure
     text = plt.gcf()._suptitle.get_text()
     assert feature_type.capitalize() in text
+    ax = plt.gca()
+    # one of the labels is 'target' iif regression
+    labels = ax.get_ylabel() + ax.get_xlabel()
+    assert ('target' in labels) == (target_type == 'continuous')
 
 
 def test_float_classification_target():

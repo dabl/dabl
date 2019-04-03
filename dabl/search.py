@@ -112,10 +112,10 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
 
         self.max_budget_ = self.max_budget
         if self.max_budget_ == 'auto':
-            if self.budget_on == 'n_samples':
-                self.max_budget_ = X.shape[0]
-            else:
-                self.max_budget_ = 20  # FIXME  # n_candidates * r_min??
+            if not self.budget_on == 'n_samples':
+                raise ValueError(
+                    "max_budget can only be 'auto' if budget_on='n_samples'")
+            self.max_budget_ = X.shape[0]
 
         if self.r_min_ > self.max_budget_:
             raise ValueError(
@@ -348,7 +348,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    max_budget : int
+    max_budget : int, optional(default='auto')
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. By default, this is set ``n_samples`` when
         ``budget_on='n_samples'`` (default), else an error is raised.
@@ -649,7 +649,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    max_budget : int
+    max_budget : int, optional(default='auto')
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. By default, this is set ``n_samples`` when
         ``budget_on='n_samples'`` (default), else an error is raised.
@@ -799,7 +799,6 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-    # FIXME really supported?
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.

@@ -223,7 +223,7 @@ def test_budget_on():
     parameters = {'a': [1, 2], 'b': list(range(10))}
     base_estimator = FastClassifier()
     sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
-                               budget_on='c', ratio=3)
+                               budget_on='c', max_budget=10, ratio=3)
     sh.fit(X, y)
     assert set(sh._r_i_list) == set([1, 3, 9])
     for r_i, params, param_c in zip(sh.cv_results_['r_i'],
@@ -235,7 +235,7 @@ def test_budget_on():
             ValueError,
             match='Cannot budget on parameter 1234 which is not supported '):
         sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
-                                   budget_on='1234')
+                                   budget_on='1234', max_budget=10)
         sh.fit(X, y)
 
     with pytest.raises(
@@ -244,7 +244,7 @@ def test_budget_on():
                   'searched parameters.'):
         parameters = {'a': [1, 2], 'b': [1, 2], 'c': [1, 3]}
         sh = GridSuccessiveHalving(base_estimator, parameters, cv=2,
-                                   budget_on='c')
+                                   budget_on='c', max_budget=10)
         sh.fit(X, y)
 
 

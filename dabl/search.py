@@ -9,6 +9,7 @@ from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
 
 from ._search import CustomBaseSearchCV
+from ._resample import resample
 
 __all__ = ['GridSuccessiveHalving', 'RandomSuccessiveHalving']
 
@@ -211,13 +212,9 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
                 print(f'r_i (in r_min units): {r_i // self.r_min_}')
 
             if self.budget_on == 'n_samples':
-                # XXX FIXME TODO
-                # subsampling should be stratified. We can't use
-                # train_test_split because it complains about testset being too
-                # small in some cases
-                indexes = rng.choice(X.shape[0], r_i, replace=False)
-                X_iter = safe_indexing(X, indexes)
-                y_iter = safe_indexing(y, indexes)
+                stratify = y if is_classifier(self.estimator) else None
+                X_iter, y_iter = resample(X, y, replace=False,
+                                          random_state=rng, stratify=stratify)
             else:
                 # Need copy so that r_i of next iteration do not overwrite
                 candidate_params = [c.copy() for c in candidate_params]

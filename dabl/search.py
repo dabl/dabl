@@ -428,7 +428,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         resources. This will be smaller than ``n_possible_iterations_`` when
         there isn't enough budget.
 
-    cv_results_ : dict of numpy (masked) ndarrays  # FIXME Update this
+    cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
 
@@ -729,7 +729,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         resources. This will be smaller than ``n_possible_iterations_`` when
         there isn't enough budget.
 
-    cv_results_ : dict of numpy (masked) ndarrays  # FIXME Update this
+    cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
 

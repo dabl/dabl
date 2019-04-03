@@ -274,7 +274,6 @@ class CustomBaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 refit_metric = self.refit
         else:
             refit_metric = 'score'
-        print(refit_metric)
         self.refit_metric = refit_metric
 
         X, y, groups = indexable(X, y, groups)

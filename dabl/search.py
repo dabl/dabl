@@ -9,6 +9,7 @@ from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
 
 from ._search import CustomBaseSearchCV
+from ._resample import resample
 
 __all__ = ['GridSuccessiveHalving', 'RandomSuccessiveHalving']
 
@@ -33,7 +34,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
     Zohar Karnin, Tomer Koren, Oren Somekh
     """
     def __init__(self, estimator, scoring=None,
-                 n_jobs=None, refit=True, cv=None, verbose=0,
+                 n_jobs=None, refit=True, cv=5, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,
@@ -56,6 +57,11 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
         self.force_exhaust_budget = force_exhaust_budget
 
     def _check_input_parameters(self, X, y, groups):
+
+        if self.scoring is not None and not (isinstance(self.scoring, str)
+                                             or callable(self.scoring)):
+            raise ValueError('scoring parameter must be a string, '
+                             'a callable or None.')
 
         if (self.budget_on != 'n_samples'
                 and self.budget_on not in self.estimator.get_params()):
@@ -107,10 +113,10 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
 
         self.max_budget_ = self.max_budget
         if self.max_budget_ == 'auto':
-            if self.budget_on == 'n_samples':
-                self.max_budget_ = X.shape[0]
-            else:
-                self.max_budget_ = 20  # FIXME  # n_candidates * r_min??
+            if not self.budget_on == 'n_samples':
+                raise ValueError(
+                    "max_budget can only be 'auto' if budget_on='n_samples'")
+            self.max_budget_ = X.shape[0]
 
         if self.r_min_ > self.max_budget_:
             raise ValueError(
@@ -167,14 +173,14 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
             n_iterations = min(n_possible_iterations, n_required_iterations)
 
         if self.verbose:
-            print(f'n_iterations: {n_iterations}')
-            print(f'n_required_iterations: {n_required_iterations}')
-            print(f'n_possible_iterations: {n_possible_iterations}')
-            print(f'r_min_: {self.r_min_}')
-            print(f'max_budget_: {self.max_budget_}')
-            print(f'aggressive_elimination: {self.aggressive_elimination}')
-            print(f'force_exhaust_budget: {self.force_exhaust_budget}')
-            print(f'ratio: {self.ratio}')
+            print('n_iterations: {}'.format(n_iterations))
+            print('n_required_iterations: {}'.format(n_required_iterations))
+            print('n_possible_iterations: {}'.format(n_possible_iterations))
+            print('r_min_: {}'.format(self.r_min_))
+            print('max_budget_: {}'.format(self.max_budget_))
+            print('aggressive_elimination: {}'.format(self.aggressive_elimination))
+            print('force_exhaust_budget: {}'.format(self.force_exhaust_budget))
+            print('ratio: {}'.format(self.ratio))
 
         self._r_i_list = []  # list of r_i for each iteration, used in tests
 
@@ -199,19 +205,14 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
 
             if self.verbose:
                 print('-' * 10)
-                print(f'iter_i: {iter_i}')
-                print(f'n_candidates: {n_candidates}')
-                print(f'r_i: {r_i}')
-                print(f'r_i (in r_min units): {r_i // self.r_min_}')
+                print('iter_i: {}'.format(iter_i))
+                print('n_candidates: {}'.format(n_candidates))
+                print('r_i: {}'.format(r_i))
 
             if self.budget_on == 'n_samples':
-                # XXX FIXME TODO
-                # subsampling should be stratified. We can't use
-                # train_test_split because it complains about testset being too
-                # small in some cases
-                indexes = rng.choice(X.shape[0], r_i, replace=False)
-                X_iter = safe_indexing(X, indexes)
-                y_iter = safe_indexing(y, indexes)
+                stratify = y if is_classifier(self.estimator) else None
+                X_iter, y_iter = resample(X, y, replace=False,
+                                          random_state=rng, stratify=stratify)
             else:
                 # Need copy so that r_i of next iteration do not overwrite
                 candidate_params = [c.copy() for c in candidate_params]
@@ -273,20 +274,9 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    # FIXME (is this even supported??)
-    scoring : string, callable, list/tuple, dict or None, default: None
+    scoring : string, callable, or None, default: None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
-
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
-
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
-
-        See :ref:`multimetric_grid_search` for an example.
-
         If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
@@ -312,11 +302,10 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, optional (default=5)
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -328,35 +317,13 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        # FIXME
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
-
-    # FIXME
     refit : boolean, default=True
         If True, refit an estimator using the best found parameters on the
         whole dataset.
 
-        For multiple metric evaluation, this needs to be a string denoting the
-        scorer is used to find the best parameters for refitting the estimator
-        at the end.
-
-        Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given ``cv_results_``.
-
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``GridSearchCV`` instance.
-
-        Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_params_`` will only be available if
-        ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. ``best_score_`` is not returned if refit is callable.
-
-        See ``scoring`` parameter to know more about multiple metric
-        evaluation.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -376,7 +343,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    max_budget : int
+    max_budget : int, optional(default='auto')
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. By default, this is set ``n_samples`` when
         ``budget_on='n_samples'`` (default), else an error is raised.
@@ -461,7 +428,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         resources. This will be smaller than ``n_possible_iterations_`` when
         there isn't enough budget.
 
-    cv_results_ : dict of numpy (masked) ndarrays  # FIXME Update this
+    cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
 
@@ -507,32 +474,16 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
 
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
-
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if ``refit=False``.
 
-        For multi-metric evaluation, this attribute is present only if
-        ``refit`` is specified.
-
-        See ``refit`` parameter for more information on allowed values.
-
     best_score_ : float
         Mean cross-validated score of the best_estimator.
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
-
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
-
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -542,15 +493,9 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
-
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
-
-        For multi-metric evaluation, this attribute holds the validated
-        ``scoring`` dict which maps the scorer key to the scorer callable.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
@@ -580,14 +525,14 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
     """
 
     def __init__(self, estimator, param_grid, scoring=None,
-                 n_jobs=None, refit=True, verbose=0, cv=None,
+                 n_jobs=None, refit=True, verbose=0, cv=5,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
                  max_budget='auto', budget_on='n_samples', ratio=3,
                  r_min='auto', aggressive_elimination=False,
                  force_exhaust_budget=False):
         super().__init__(estimator, scoring=scoring,
-                         n_jobs=n_jobs, verbose=verbose, cv=cv,
+                         n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          pre_dispatch=pre_dispatch,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
@@ -630,20 +575,9 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         resources as possible. Note that ``force_exhaust_budget`` has no
         effect in this case.
 
-    # FIXME (is this even supported??)
-    scoring : string, callable, list/tuple, dict or None, default: None
+    scoring : string, callable, or None, default: None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
-
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
-
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
-
-        See :ref:`multimetric_grid_search` for an example.
-
         If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
@@ -669,11 +603,10 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, optional (default=5)
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -685,35 +618,13 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        # FIXME
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
-
-    # FIXME
     refit : boolean, default=True
         If True, refit an estimator using the best found parameters on the
         whole dataset.
 
-        For multiple metric evaluation, this needs to be a string denoting the
-        scorer is used to find the best parameters for refitting the estimator
-        at the end.
-
-        Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given ``cv_results_``.
-
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``GridSearchCV`` instance.
-
-        Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_params_`` will only be available if
-        ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer. ``best_score_`` is not returned if refit is callable.
-
-        See ``scoring`` parameter to know more about multiple metric
-        evaluation.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -733,7 +644,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    max_budget : int
+    max_budget : int, optional(default='auto')
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. By default, this is set ``n_samples`` when
         ``budget_on='n_samples'`` (default), else an error is raised.
@@ -818,7 +729,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         resources. This will be smaller than ``n_possible_iterations_`` when
         there isn't enough budget.
 
-    cv_results_ : dict of numpy (masked) ndarrays  # FIXME Update this
+    cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
 
@@ -864,32 +775,16 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
 
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
-
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if ``refit=False``.
 
-        For multi-metric evaluation, this attribute is present only if
-        ``refit`` is specified.
-
-        See ``refit`` parameter for more information on allowed values.
-
     best_score_ : float
         Mean cross-validated score of the best_estimator.
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
-
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
-
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -899,15 +794,9 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multi-metric evaluation, this is not available if ``refit`` is
-        ``False``. See ``refit`` parameter for more information.
-
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
-
-        For multi-metric evaluation, this attribute holds the validated
-        ``scoring`` dict which maps the scorer key to the scorer callable.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
@@ -936,15 +825,15 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         Search over a grid of parameters using successive halving.
     """
 
-    def __init__(self, estimator, param_distributions, n_candidates='auto',
-                 scoring=None, n_jobs=None, refit=True, verbose=0, cv=None,
-                 pre_dispatch='2*n_jobs', random_state=None,
-                 error_score=np.nan, return_train_score=True,
-                 max_budget='auto', budget_on='n_samples', ratio=3,
-                 r_min='auto', aggressive_elimination=False,
-                 force_exhaust_budget=False):
+    def __init__(self, estimator, param_distributions,
+                 n_candidates='auto', scoring=None, n_jobs=None, refit=True,
+                 verbose=0, cv=5, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score=np.nan,
+                 return_train_score=True, max_budget='auto',
+                 budget_on='n_samples', ratio=3, r_min='auto',
+                 aggressive_elimination=False, force_exhaust_budget=False):
         super().__init__(estimator, scoring=scoring,
-                         n_jobs=n_jobs, verbose=verbose, cv=cv,
+                         n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
                          max_budget=max_budget, budget_on=budget_on,

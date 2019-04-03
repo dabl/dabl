@@ -22,7 +22,6 @@ def _refit_callable(results):
     sorted_indices = np.argsort(results['mean_test_score'])[::-1]
     best_index = next(i for i in sorted_indices
                       if results['iter'][i] == last_iter)
-    raise ValueError("QIPEGNQPEIGNQIPEGN")
     return best_index
 
 
@@ -597,7 +596,6 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.

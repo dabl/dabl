@@ -173,15 +173,14 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
             n_iterations = min(n_possible_iterations, n_required_iterations)
 
         if self.verbose:
-            # FIXME: python 35
-            print(f'n_iterations: {n_iterations}')
-            print(f'n_required_iterations: {n_required_iterations}')
-            print(f'n_possible_iterations: {n_possible_iterations}')
-            print(f'r_min_: {self.r_min_}')
-            print(f'max_budget_: {self.max_budget_}')
-            print(f'aggressive_elimination: {self.aggressive_elimination}')
-            print(f'force_exhaust_budget: {self.force_exhaust_budget}')
-            print(f'ratio: {self.ratio}')
+            print('n_iterations: {}'.format(n_iterations))
+            print('n_required_iterations: {}'.format(n_required_iterations))
+            print('n_possible_iterations: {}'.format(n_possible_iterations))
+            print('r_min_: {}'.format(self.r_min_))
+            print('max_budget_: {}'.format(self.max_budget_))
+            print('aggressive_elimination: {}'.format(self.aggressive_elimination))
+            print('force_exhaust_budget: {}'.format(self.force_exhaust_budget))
+            print('ratio: {}'.format(self.ratio))
 
         self._r_i_list = []  # list of r_i for each iteration, used in tests
 
@@ -206,10 +205,9 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
 
             if self.verbose:
                 print('-' * 10)
-                print(f'iter_i: {iter_i}')
-                print(f'n_candidates: {n_candidates}')
-                print(f'r_i: {r_i}')
-                print(f'r_i (in r_min units): {r_i // self.r_min_}')
+                print('iter_i: {}'.format(iter_i))
+                print('n_candidates: {}'.format(n_candidates))
+                print('r_i: {}'.format(r_i))
 
             if self.budget_on == 'n_samples':
                 stratify = y if is_classifier(self.estimator) else None

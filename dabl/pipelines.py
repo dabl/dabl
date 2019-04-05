@@ -1,3 +1,5 @@
+from warnings import warn
+
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
@@ -56,10 +58,28 @@ def get_fast_regressors():
 
 
 def get_any_classifiers():
-    return [
+    sklearn_ests = [
         LogisticRegression(C=1, solver='lbfgs', multi_class='multinomial'),
         LogisticRegression(C=10, solver='lbfgs', multi_class='multinomial'),
         LogisticRegression(C=.1, solver='lbfgs', multi_class='multinomial'),
         RandomForestClassifier(max_features=None, n_estimators=100),
         RandomForestClassifier(max_features='sqrt', n_estimators=100),
         RandomForestClassifier(max_features='log2', n_estimators=100)]
+    try:
+        from lightgbm import LGBMClassifier
+    except ImportError:
+        warn("lightgbm not installed, skipping gradient boosting models",
+             UserWarning)
+        return sklearn_ests
+
+    gb_ests = [
+        LGBMClassifier(learning_rate=0.2),
+        LGBMClassifier(learning_rate=0.1),
+        LGBMClassifier(learning_rate=0.01),
+        LGBMClassifier(learning_rate=0.001),
+        LGBMClassifier(learning_rate=0.2, colsample_bytree=.5),
+        LGBMClassifier(learning_rate=0.1, colsample_bytree=.5),
+        LGBMClassifier(learning_rate=0.01, colsample_bytree=.5),
+        LGBMClassifier(learning_rate=0.001, colsample_bytree=.5),
+        ]
+    return sklearn_ests + gb_ests

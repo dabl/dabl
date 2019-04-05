@@ -260,9 +260,10 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
 
 
 class AnyClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, n_jobs=None, verbose=0):
+    def __init__(self, n_jobs=None, force_exhaust_budget=False, verbose=0):
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.force_exhaust_budget = force_exhaust_budget
 
     def _get_estimators(self):
         return get_any_classifiers()
@@ -333,8 +334,11 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
         param_grid = [{'classifier': [est]} for est in estimators]
         gs = GridSuccessiveHalving(
             estimator=pipe, param_grid=param_grid,
-            verbose=self.verbose, refit=False, cv=5)
+            force_exhaust_budget=self.force_exhaust_budget,
+            verbose=self.verbose, refit=False, cv=5, error_score='raise',
+            scoring='recall_macro')
         self.search_ = gs
         gs.fit(X, y)
-
+        print("best classifier: ", gs.best_params_['classifier'])
+        print("best score: {:.3f}".format(gs.best_score_))
         return self

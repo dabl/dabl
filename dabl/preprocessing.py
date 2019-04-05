@@ -458,15 +458,26 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         else:
             types = self.types
 
+        types = types.copy()
+        # low card int encoded as categorical and continuous for now:
+        types.loc[types.low_card_int, 'continuous'] = True
+        types.loc[types.low_card_int, 'categorical'] = True
+
         # go over variable blocks
         # check for missing values
         # scale etc
-        pipe_categorical = make_pipeline(
-            SimpleImputer(strategy='constant', fill_value='dabl_missing'),
+        steps_categorical = []
+        if X.loc[:, types.categorical].isna().any(axis=None):
+            steps_categorical.append(
+                SimpleImputer(strategy='constant', fill_value='dabl_missing'))
+        steps_categorical.append(
             OneHotEncoder(categories='auto', handle_unknown='ignore',
                           sparse=False))
+        pipe_categorical = make_pipeline(*steps_categorical)
 
-        steps_continuous = [SimpleImputer(strategy='median')]
+        steps_continuous = []
+        if X.loc[:, types.continuous].isna().any(axis=None):
+            steps_continuous.append(SimpleImputer(strategy='median'))
         if self.scale:
             steps_continuous.append(StandardScaler())
         # if X.loc[:, types['continuous']].isnull().values.any():
@@ -474,6 +485,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         pipe_continuous = make_pipeline(*steps_continuous)
         # FIXME only have one imputer/standard scaler in all
         # (right now copied in dirty floats and floats)
+
         pipe_dirty_float = make_pipeline(
             DirtyFloatCleaner(),
             make_column_transformer(

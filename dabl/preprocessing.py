@@ -45,6 +45,14 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             result.append(cats)
         return pd.concat(result, axis=1)
 
+    def get_feature_names(self, input_features=None):
+        feature_names = []
+        for col in self.columns_:
+            enc = self.encoders_[col]
+            feature_names.extend(enc.get_feature_names([str(col)]))
+            feature_names.append("{}_dabl_continuous".format(col))
+        return feature_names
+
 
 def guess_ordinal(values):
     # compare against http://proceedings.mlr.press/v70/valera17a/valera17a.pdf
@@ -499,7 +507,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             transformer_cols.append(('categorical',
                                      pipe_categorical, types['categorical']))
         if types['dirty_float'].any():
-            # FIXME we're not really handling this here any more?
+            # FIXME we're not really handling this here any more? (yes we are)
             transformer_cols.append(('dirty_float',
                                      pipe_dirty_float, types['dirty_float']))
 
@@ -520,7 +528,8 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         for name, trans, cols in self.ct_.transformers_:
             if name == "continuous":
                 # three should be no all-nan columns in the imputer
-                if np.isnan(trans.steps[0][1].statistics_).any():
+                if (trans.steps[0][0] == "simpleimputer"
+                        and np.isnan(trans.steps[0][1].statistics_).any()):
                     raise ValueError("So unexpected! Looks like the imputer"
                                      " dropped some all-NaN columns."
                                      "Try calling 'clean' on your data first.")
@@ -533,6 +542,10 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
                 feature_names.extend(ohe.get_feature_names(ohe_cols))
             elif name == "remainder":
                 assert trans == "drop"
+            elif name == "dirty_float":
+                raise ValueError(
+                    "Can't compute feature names when handling dirty floats. "
+                    "Call 'clean' as a workaround")
             else:
                 raise ValueError(
                     "Can't compute feature names for {}".format(name))

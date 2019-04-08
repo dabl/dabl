@@ -178,6 +178,7 @@ def test_transform_dirty_float():
     assert (res.dtypes == float).all()
     assert res.a_column_missing.sum() == 9
     assert res.a_column_garbage.sum() == 1
+    assert (dfc.get_feature_names() == res.columns).all()
 
 
 @pytest.mark.parametrize(
@@ -273,3 +274,10 @@ def test_titanic_feature_names():
         'boat_8', 'boat_8 10', 'boat_9', 'boat_?', 'boat_A', 'boat_B',
         'boat_C', 'boat_C D', 'boat_D']
     assert ep.get_feature_names() == expected_names
+
+    # without clean
+    X = ep.fit_transform(titanic.drop('survived', axis=1))
+    # FIXME can't do that yet
+    # assert ep.get_feature_names() == expected_names_no_clean
+
+    assert not np.isnan(X).any()

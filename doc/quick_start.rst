@@ -1,5 +1,5 @@
 ###############################################
-Getting started with Machine Learning with dabl
+Quickstart to ML with dabl
 ###############################################
 
 Let's dive right in!
@@ -78,9 +78,19 @@ we can create plot of the features deemed most important for our task.
     >>> dabl.plot_supervised(titanic, 'survived')
     Target looks like classification
     baseline score: 0.500
-    baseline score: 0.500
 
-Finally, we can find a good model for our data. The SimpleClassifier does all
+.. plot::
+
+    >>> import pandas as pd
+    >>> import dabl
+    >>> titanic = pd.read_csv(dabl.datasets.data_path("titanic.csv"))
+    >>> dabl.plot_supervised(titanic, 'survived')
+    Target looks like classification
+    baseline score: 0.500
+    >>> import matplotlib.pyplot as plt; plt.show()
+
+
+Finally, we can find an initial model for our data. The SimpleClassifier does all
 the work for us. It implements the familiar scikit-learn api of fit and
 predict:
 
@@ -89,7 +99,7 @@ predict:
     >>> y = titanic_clean.survived
     >>> fc.fit(X, y)
     DummyClassifier(random_state=0, strategy='prior')
-    accuracy: 0.6180    average_precision: 0.3820    recall_macro: 0.5000    roc_auc: 0.5000
+    accuracy: 0.6180    average_precision: 0.3820    recall_macro: 0.5000    roc_auc: 0.5000    
     new best (using recall_macro):
     accuracy             0.618028
     average_precision    0.381972
@@ -97,17 +107,17 @@ predict:
     roc_auc              0.500000
     Name: DummyClassifier(random_state=0, strategy='prior'), dtype: float64
     GaussianNB()
-    accuracy: 0.9007    average_precision: 0.8750    recall_macro: 0.9064    roc_auc: 0.9189
+    accuracy: 0.8969    average_precision: 0.8705    recall_macro: 0.9021    roc_auc: 0.9190    
     new best (using recall_macro):
-    accuracy             0.900719
-    average_precision    0.875011
-    recall_macro         0.906354
-    roc_auc              0.918921
+    accuracy             0.896903
+    average_precision    0.870464
+    recall_macro         0.902120
+    roc_auc              0.919032
     Name: GaussianNB(), dtype: float64
     MultinomialNB()
-    accuracy: 0.8946    average_precision: 0.9841    recall_macro: 0.8976    roc_auc: 0.9873
+    accuracy: 0.8885    average_precision: 0.9810    recall_macro: 0.8911    roc_auc: 0.9849    
     DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
-    accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714
+    accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714    
     new best (using recall_macro):
     accuracy             0.975540
     average_precision    0.953971
@@ -115,13 +125,13 @@ predict:
     roc_auc              0.971441
     Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0), dtype: float64
     DecisionTreeClassifier(class_weight='balanced', max_depth=5, random_state=0)
-    accuracy: 0.9587    average_precision: 0.9487    recall_macro: 0.9556    roc_auc: 0.9673
+    accuracy: 0.9572    average_precision: 0.9422    recall_macro: 0.9536    roc_auc: 0.9704    
     DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01,
                 random_state=0)
-    accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714
+    accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714    
     LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
               random_state=0, solver='lbfgs')
-    accuracy: 0.9679    average_precision: 0.9855    recall_macro: 0.9653    roc_auc: 0.9881
+    accuracy: 0.9626    average_precision: 0.9861    recall_macro: 0.9609    roc_auc: 0.9888    
     Best model:
     DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
     Best Scores:
@@ -131,4 +141,5 @@ predict:
     roc_auc              0.971441
     Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0), dtype: float64
     SimpleClassifier(random_state=0, refit=True, verbose=1)
+
 

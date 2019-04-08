@@ -39,6 +39,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'numpydoc',
     'sphinx_gallery.gen_gallery',
+    'matplotlib.sphinxext.plot_directive'
 ]
 
 # this is needed for some reason...

@@ -242,6 +242,9 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         ax.set_title("{:.3f}".format(score))
     fig.suptitle("Discriminating PCA directions")
     # LDA
+    if target.nunique() < 3:
+        # lda currently only 2d scatter plot.
+        return
     lda = LinearDiscriminantAnalysis(
         n_components=min(n_components, target.nunique() - 1))
     features_lda = lda.fit_transform(scale(features_imp), target)

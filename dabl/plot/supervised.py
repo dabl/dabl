@@ -347,7 +347,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='count',
         axes.ravel()[j].set_axis_off()
 
 
-def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1., verbose=10):
+def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
+                    verbose=10):
     """Exploration plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -411,7 +412,8 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1., verbose=10
         # class could be a string that's a float
         # seaborn is trying to be smart unless we declare it categorical
         # we actually fixed counts to have categorical index
-        # but melt destroys it: https://github.com/pandas-dev/pandas/issues/15853
+        # but melt destroys it:
+        # https://github.com/pandas-dev/pandas/issues/15853
         melted['class'] = melted['class'].astype('category')
         sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")

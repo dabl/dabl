@@ -91,8 +91,9 @@ we can create plot of the features deemed most important for our task.
 
 
 Finally, we can find an initial model for our data. The SimpleClassifier does all
-the work for us. It implements the familiar scikit-learn api of fit and
-predict:
+the work for us. It implements the familiar scikit-learn API of fit and
+predict. Alternatively we could also use the same interface as before and pass
+the whole data frame and specify the target column.
 
     >>> fc = dabl.SimpleClassifier(random_state=0)
     >>> X = titanic_clean.drop("survived", axis=1)

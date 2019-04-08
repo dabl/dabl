@@ -484,7 +484,10 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         pipe_categorical = make_pipeline(*steps_categorical)
 
         steps_continuous = []
-        if X.loc[:, types.continuous].isna().any(axis=None):
+        if (X.loc[:, types.continuous].isna().any(axis=None)
+                or types['dirty_float'].any()):
+            # we could skip the imputer here, but if there's dirty
+            # floats, they'll have NaN, and we reuse the cont pipeline
             steps_continuous.append(SimpleImputer(strategy='median'))
         if self.scale:
             steps_continuous.append(StandardScaler())

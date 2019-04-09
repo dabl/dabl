@@ -245,6 +245,9 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         warn("Discarding near-constant features: {}".format(
              near_constant.index[near_constant].tolist()))
     useless = useless | near_constant
+    for k, v in type_hints.items():
+        if useless[k] and v != "useless":
+            useless[k] = False
     large_cardinality_int = integers & ~few_entries
     # hard coded very low cardinality integers are categorical
     cat_integers = integers & (n_values <= 5) & ~useless

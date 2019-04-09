@@ -320,7 +320,6 @@ def _find_scatter_plots_classification(X, target):
         #                                  average='macro')))
     scores = pd.DataFrame(scores, columns=['feature0', 'feature1', 'score'])
     top_3 = scores.sort_values(by='score').iloc[-3:][::-1]
-    print("baseline score: {:.3f}".format(baseline_score))
     return top_3
 
 

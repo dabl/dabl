@@ -400,9 +400,13 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
     # low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:
-            # yes we don't need a loop
-            types.loc[col, 'low_card_int'] = False
-            types.loc[col, 'categorical'] = True
+            # kinda hacky for now
+            if X[col].nunique() < 20:
+                types.loc[col, 'low_card_int'] = False
+                types.loc[col, 'categorical'] = True
+            else:
+                types.loc[col, 'low_card_int'] = False
+                types.loc[col, 'continuous'] = True
 
     if types.continuous[target_col]:
         print("Target looks like regression")

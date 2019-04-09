@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
+from matplotlib.patches import Rectangle
+
 
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import recall_score
@@ -170,6 +172,49 @@ def _shortname(some_string, maxlen=20):
         return some_string
 
 
+def mosaic_plot(data, rows, cols, ax=None):
+    """Create a mosaic plot from a dataframe.
+
+    Right now only horizontal mosaic plots are supported,
+    i.e. rows are prioritized over columns.
+
+    Parameters
+    ----------
+    data : pandas data frame
+        Data to tabulate.
+    rows : column specifier
+        Column in data to tabulate across rows.
+    cols : column specifier
+        Column in data to use to subpartition rows.
+    ax : matplotlib axes or None
+        Axes to plot into.
+    """
+
+    cont = pd.crosstab(data[cols], data[rows])
+    sort = np.argsort((cont / cont.sum()).iloc[0])
+    cont = cont.iloc[:, sort]
+    if ax is None:
+        ax = plt.gca()
+    pos_y = 0
+    positions_y = []
+    for i, col in enumerate(cont.columns):
+        height = cont[col].sum()
+        positions_y.append(pos_y + height / 2)
+
+        pos_x = 0
+        for row in cont[col]:
+            width = row / height
+            rect = Rectangle((pos_x, pos_y), width, height, edgecolor='k',
+                             facecolor=plt.cm.tab10(i), alpha=pos_x + width)
+            pos_x += width
+            ax.add_patch(rect)
+        pos_y += height
+
+    ax.set_ylim(0, pos_y)
+    ax.set_yticks(positions_y)
+    ax.set_yticklabels(cont.columns)
+
+
 def _get_n_top(features, name):
     if features.shape[1] > 20:
         print("Showing only top 10 of {} {} features".format(
@@ -189,11 +234,12 @@ def _prune_categories(series, max_categories=10):
     return res
 
 
-def _prune_category_make_X(X, col, target_col):
+def _prune_category_make_X(X, col, target_col, max_categories=20):
     col_values = X[col]
-    if col_values.nunique() > 20:
+    if col_values.nunique() > max_categories:
         # keep only top 10 categories if there are more than 20
-        col_values = _prune_categories(col_values)
+        col_values = _prune_categories(col_values,
+                                       max_categories=min(10, max_categories))
         X_new = X[[target_col]].copy()
         X_new[col] = col_values
     else:
@@ -278,10 +324,31 @@ def _find_scatter_plots_classification(X, target):
     return top_3
 
 
-def _discrete_scatter(x, y, c, ax, alpha=None):
+def discrete_scatter(x, y, c, ax, **kwargs):
+    """Scatter plot for categories.
+
+    Creates a scatter plot for x and y grouped by c.
+    Contrary to plt.scatter this allows creating legends and using
+    discrete colormaps.
+
+    Parameters
+    ----------
+    x : array-like
+        x coordinates to scatter
+    y : array-like
+        y coordinates to scatter
+    c : array-like
+        Grouping of samples (similar to hue in seaborn)
+    ax : matplotlib axes, default=None
+        Axes to plot into
+    kwargs :
+        Passed through to plt.plot
+    """
+    if ax is None:
+        ax = plt.gca()
     for i in np.unique(c):
         mask = c == i
-        ax.plot(x[mask], y[mask], 'o', label=i, alpha=alpha)
+        ax.plot(x[mask], y[mask], 'o', label=i, **kwargs)
     ax.legend()
 
 

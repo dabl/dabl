@@ -17,7 +17,7 @@ from ..preprocessing import detect_types, clean
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
-                    discrete_scatter, mosaic_plot)
+                    class_hists, discrete_scatter, mosaic_plot)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -131,7 +131,8 @@ def plot_regression_categorical(X, target_col, types=None):
 
 
 def plot_classification_continuous(X, target_col, types=None, hue_order=None,
-                                   scatter_alpha=1.):
+                                   scatter_alpha=1.,
+                                   univariate_plot='histogram'):
     """Exploration plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -155,6 +156,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         types.
     scatter_alpha : float, default=1.
         Alpha values for scatter plots.
+    univariate_plot : string, default="histogram"
+        Supported: 'histogram' and 'kde'.
     """
     types = _check_X_target_col(X, target_col, types, task='classification')
 
@@ -175,6 +178,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         # we really shouldn't be doing this
         # https://github.com/mwaskom/seaborn/issues/1699
         X_imp = X.fillna(features.median(axis=0))
+        # FIXME we should use "univariate_plot" here
         sns.pairplot(X_imp, vars=features.columns,
                      hue=target_col)
         plt.suptitle("Continuous features pairplot", y=1.02)
@@ -188,13 +192,28 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         best_features = features.iloc[:, top_k].copy()
 
         best_features[target_col] = target
-        df = best_features.melt(target_col)
-        rows, cols = find_pretty_grid(show_top)
-        g = sns.FacetGrid(df, col='variable', hue=target_col, col_wrap=cols,
-                          sharey=False, sharex=False, hue_order=hue_order)
-        g = g.map(sns.kdeplot, "value", shade=True)
-        g.axes[0].legend()
-        plt.suptitle("Continuous features by target", y=1.02)
+        if univariate_plot == 'kde':
+            df = best_features.melt(target_col)
+            rows, cols = find_pretty_grid(show_top)
+
+            g = sns.FacetGrid(df, col='variable', hue=target_col,
+                              col_wrap=cols,
+                              sharey=False, sharex=False, hue_order=hue_order)
+            g = g.map(sns.kdeplot, "value", shade=True)
+            g.axes[0].legend()
+            plt.suptitle("Continuous features by target", y=1.02)
+        elif univariate_plot == 'histogram':
+            fig, axes = _make_subplots(n_plots=show_top)
+            for i, (ind, ax) in enumerate(zip(top_k, axes.ravel())):
+                class_hists(best_features, best_features.columns[i],
+                            target_col, ax=ax, legend=i == 0)
+                ax.set_title("F={}".format(f[ind]))
+            for j in range(i + 1, axes.size):
+                # turn off axis if we didn't fill last row
+                axes.ravel()[j].set_axis_off()
+        else:
+            raise ValueError("Unknown value for univariate_plot: ",
+                             univariate_plot)
 
         # FIXME remove "variable = " from title, add f score
 

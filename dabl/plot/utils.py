@@ -4,9 +4,8 @@ import matplotlib.pyplot as plt
 import itertools
 from matplotlib.patches import Rectangle
 
-
-from sklearn.dummy import DummyClassifier
-from sklearn.metrics import recall_score
+# from sklearn.dummy import DummyClassifier
+# from sklearn.metrics import recall_score
 from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.model_selection import cross_val_score
@@ -306,8 +305,8 @@ def _short_tick_names(ax):
 def _find_scatter_plots_classification(X, target):
     # input is continuous
     # look at all pairs of features, find most promising ones
-    dummy = DummyClassifier(strategy='prior').fit(X, target)
-    baseline_score = recall_score(target, dummy.predict(X), average='macro')
+    # dummy = DummyClassifier(strategy='prior').fit(X, target)
+    # baseline_score = recall_score(target, dummy.predict(X), average='macro')
     scores = []
     for i, j in itertools.combinations(np.arange(X.shape[1]), 2):
         this_X = X[:, [i, j]]
@@ -364,15 +363,15 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
         Target column in data, must be categorical.
     bins : string, int or array-like
         Number of bins, 'auto' or bin edges. Passed to np.histogram_bin_edges.
-        We always show at least 10 bins for now.
+        We always show at least 5 bins for now.
     ax : matplotlib axes
         Axes to plot into
     legend : boolean
         Whether to create a legend.
     """
     bin_edges = np.histogram_bin_edges(data[column], bins=bins)
-    if len(bin_edges < 10):
-        bin_edges = np.histogram_bin_edges(data[column], bins=10)
+    if len(bin_edges) < 5:
+        bin_edges = np.histogram_bin_edges(data[column], bins=5)
 
     if ax is None:
         ax = plt.gca()

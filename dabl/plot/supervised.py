@@ -208,7 +208,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             for i, (ind, ax) in enumerate(zip(top_k, axes.ravel())):
                 class_hists(best_features, best_features.columns[i],
                             target_col, ax=ax, legend=i == 0)
-                ax.set_title("F={}".format(f[ind]))
+                ax.set_title("F={:.2E}".format(f[ind]))
             for j in range(i + 1, axes.size):
                 # turn off axis if we didn't fill last row
                 axes.ravel()[j].set_axis_off()

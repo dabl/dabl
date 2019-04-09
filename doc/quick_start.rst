@@ -20,13 +20,13 @@ columns, what do they look like?
     >>> titanic.shape
     (1309, 14)
 
-    >>> titanic.head()
-       pclass  survived                                             name     sex     age  sibsp  parch  ticket      fare    cabin embarked boat body                        home.dest
-    0       1         1                    Allen, Miss. Elisabeth Walton  female      29      0      0   24160  211.3375       B5        S    2    ?                     St Louis, MO
-    1       1         1                   Allison, Master. Hudson Trevor    male  0.9167      1      2  113781    151.55  C22 C26        S   11    ?  Montreal, PQ / Chesterville, ON
-    2       1         0                     Allison, Miss. Helen Loraine  female       2      1      2  113781    151.55  C22 C26        S    ?    ?  Montreal, PQ / Chesterville, ON
-    3       1         0             Allison, Mr. Hudson Joshua Creighton    male      30      1      2  113781    151.55  C22 C26        S    ?  135  Montreal, PQ / Chesterville, ON
-    4       1         0  Allison, Mrs. Hudson J C (Bessie Waldo Daniels)  female      25      1      2  113781    151.55  C22 C26        S    ?    ?  Montreal, PQ / Chesterville, ON
+    >>> titanic.head() # doctest: +ELLIPSIS
+       pclass  survived  ... body                        home.dest
+    0       1         1  ...    ?                     St Louis, MO
+    1       1         1  ...    ?  Montreal, PQ / Chesterville, ON
+    2       1         0  ...    ?  Montreal, PQ / Chesterville, ON
+    3       1         0  ...  135  Montreal, PQ / Chesterville, ON
+    4       1         0  ...    ?  Montreal, PQ / Chesterville, ON
 
 
 

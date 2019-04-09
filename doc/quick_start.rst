@@ -27,7 +27,8 @@ columns, what do they look like?
     2       1         0  ...    ?  Montreal, PQ / Chesterville, ON
     3       1         0  ...  135  Montreal, PQ / Chesterville, ON
     4       1         0  ...    ?  Montreal, PQ / Chesterville, ON
-
+    <BLANKLINE>
+    [5 rows x 14 columns]
 
 
 So far so good! There's already a bunch of things going on in the data that we

@@ -173,6 +173,23 @@ def _shortname(some_string, maxlen=20):
 
 
 def mosaic_plot(data, rows, cols, ax=None):
+    """Create a mosaic plot from a dataframe.
+
+    Right now only horizontal mosaic plots are supported,
+    i.e. rows are prioritized over columns.
+
+    Parameters
+    ----------
+    data : pandas data frame
+        Data to tabulate.
+    rows : column specifier
+        Column in data to tabulate across rows.
+    cols : column specifier
+        Column in data to use to subpartition rows.
+    ax : matplotlib axes or None
+        Axes to plot into.
+    """
+
     cont = pd.crosstab(data[cols], data[rows])
     sort = np.argsort((cont / cont.sum()).iloc[0])
     cont = cont.iloc[:, sort]
@@ -333,3 +350,46 @@ def discrete_scatter(x, y, c, ax, **kwargs):
         mask = c == i
         ax.plot(x[mask], y[mask], 'o', label=i, **kwargs)
     ax.legend()
+
+
+def class_hists(data, column, target, bins="auto", ax=None, legend=False):
+    """Grouped univariate histograms.
+
+    Parameters
+    ----------
+    data : pandas DataFrame
+        Input data to plot
+    column : column specifier
+        Column in the data to compute histograms over (must be continuous).
+    target : column specifier
+        Target column in data, must be categorical.
+    bins : string, int or array-like
+        Number of bins, 'auto' or bin edges. Passed to np.histogram_bin_edges.
+        We always show at least 10 bins for now.
+    ax : matplotlib axes
+        Axes to plot into
+    legend : boolean
+        Whether to create a legend.
+    """
+    bin_edges = np.histogram_bin_edges(data[column], bins=bins)
+    if len(bin_edges < 10):
+        bin_edges = np.histogram_bin_edges(data[column], bins=10)
+
+    if ax is None:
+        ax = plt.gca()
+    counts = {}
+    for name, group in data.groupby(target)[column]:
+        this_counts, _ = np.histogram(group, bins=bin_edges)
+        counts[name] = this_counts
+    counts = pd.DataFrame(counts)
+    bottom = counts.values.max() * 1.1
+    for i, name in enumerate(counts.columns):
+        ax.bar(bin_edges[:-1], counts[name], bottom=bottom * i, label=name,
+               align='edge', width=(bin_edges[1] - bin_edges[0]) * .9)
+        ax.hlines(bottom * i, xmin=bin_edges[0], xmax=bin_edges[-1],
+                  linewidth=1)
+    if legend:
+        ax.legend()
+    ax.set_yticks(())
+    ax.set_xlabel(column)
+    return ax

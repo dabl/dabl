@@ -5,11 +5,11 @@ import pytest
 
 import pandas as pd
 import numpy as np
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, load_digits
 
 from dabl.preprocessing import (detect_types, EasyPreprocessor,
                                 DirtyFloatCleaner, clean)
-
+from dabl.utils import data_df_from_bunch
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
                       'second': ['word', 'no', ''],
@@ -281,3 +281,11 @@ def test_titanic_feature_names():
     # assert ep.get_feature_names() == expected_names_no_clean
 
     assert not np.isnan(X).any()
+
+
+def test_digits_type_hints():
+    data = data_df_from_bunch(load_digits())
+    data_clean = clean(data,
+                       type_hints={"x{}".format(i): 'continuous'
+                                   for i in range(64)})
+    assert data_clean.shape[1] == 65

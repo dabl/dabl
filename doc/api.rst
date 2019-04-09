@@ -59,6 +59,7 @@ Plotting
     :toctree: generated/
     :template: function.rst
 
+    class_hists
     discrete_scatter
     find_pretty_grid
     mosaic_plot

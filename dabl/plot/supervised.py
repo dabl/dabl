@@ -17,7 +17,7 @@ from ..preprocessing import detect_types, clean
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
-                    _discrete_scatter, mosaic_plot)
+                    discrete_scatter, mosaic_plot)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -208,8 +208,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    top_pairs.score, axes.ravel()):
             i = top_k[x]
             j = top_k[y]
-            _discrete_scatter(features_imp[:, i], features_imp[:, j],
-                              c=target, ax=ax, alpha=scatter_alpha)
+            discrete_scatter(features_imp[:, i], features_imp[:, j],
+                             c=target, ax=ax, alpha=scatter_alpha)
             ax.set_xlabel(features.columns[i])
             ax.set_ylabel(features.columns[j])
             ax.set_title("{:.3f}".format(score))
@@ -233,8 +233,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
 
-        _discrete_scatter(features_pca[:, x], features_pca[:, y],
-                          c=target, ax=ax, alpha=scatter_alpha)
+        discrete_scatter(features_pca[:, x], features_pca[:, y],
+                         c=target, ax=ax, alpha=scatter_alpha)
         ax.set_xlabel("PCA {}".format(x))
         ax.set_ylabel("PCA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -256,8 +256,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
 
-        _discrete_scatter(features_lda[:, x], features_lda[:, y],
-                          c=target, ax=ax, alpha=scatter_alpha)
+        discrete_scatter(features_lda[:, x], features_lda[:, y],
+                         c=target, ax=ax, alpha=scatter_alpha)
         ax.set_xlabel("LDA {}".format(x))
         ax.set_ylabel("LDA {}".format(y))
         ax.set_title("{:.3f}".format(score))

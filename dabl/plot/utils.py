@@ -307,8 +307,29 @@ def _find_scatter_plots_classification(X, target):
     return top_3
 
 
-def _discrete_scatter(x, y, c, ax, alpha=None):
+def discrete_scatter(x, y, c, ax, **kwargs):
+    """Scatter plot for categories.
+
+    Creates a scatter plot for x and y grouped by c.
+    Contrary to plt.scatter this allows creating legends and using
+    discrete colormaps.
+
+    Parameters
+    ----------
+    x : array-like
+        x coordinates to scatter
+    y : array-like
+        y coordinates to scatter
+    c : array-like
+        Grouping of samples (similar to hue in seaborn)
+    ax : matplotlib axes, default=None
+        Axes to plot into
+    kwargs :
+        Passed through to plt.plot
+    """
+    if ax is None:
+        ax = plt.gca()
     for i in np.unique(c):
         mask = c == i
-        ax.plot(x[mask], y[mask], 'o', label=i, alpha=alpha)
+        ax.plot(x[mask], y[mask], 'o', label=i, **kwargs)
     ax.legend()

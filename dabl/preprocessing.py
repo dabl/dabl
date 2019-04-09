@@ -165,6 +165,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     if duplicated.any():
         raise ValueError("Duplicate Columns: {}".format(
             X.columns[duplicated]))
+    if type_hints is None:
+        type_hints = dict()
     X = _apply_type_hints(X, type_hints=type_hints)
 
     n_samples, n_features = X.shape
@@ -176,12 +178,11 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         print(n_values)
 
     binary = n_values == 2
-    if type_hints is not None:
-        # force binary variables to be continuous
-        # if type hints say so
-        for k, v in type_hints.items():
-            if v == 'continuous':
-                binary[k] = False
+    # force binary variables to be continuous
+    # if type hints say so
+    for k, v in type_hints.items():
+        if v == 'continuous':
+            binary[k] = False
 
     dtypes = X.dtypes
     kinds = dtypes.apply(lambda x: x.kind)
@@ -195,7 +196,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
                      'useless', 'low_card_int']:
             raise ValueError("Unknown type hint {} for {}".format(v, k))
     for col, isfloat in floats.items():
-        if isfloat and (type_hints is None or col not in type_hints
+        if isfloat and (col not in type_hints
                         or type_hints[col] != "continuous"):
             if _float_col_is_int(X[col]):
                 # it's int!
@@ -248,9 +249,6 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         warn("Discarding near-constant features: {}".format(
              near_constant.index[near_constant].tolist()))
     useless = useless | near_constant
-    for k, v in type_hints.items():
-        if useless[k] and v != "useless":
-            useless[k] = False
     large_cardinality_int = integers & ~few_entries
     # hard coded very low cardinality integers are categorical
     cat_integers = integers & (n_values <= 5) & ~useless
@@ -270,9 +268,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
          'free_string': free_strings, 'useless': useless,
          })
     # ensure we respected type hints
-    if type_hints is not None:
-        for k, v in type_hints.items():
-            res.loc[k, v] = True
+    for k, v in type_hints.items():
+        res.loc[k, v] = True
     res = res.fillna(False)
     res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
 

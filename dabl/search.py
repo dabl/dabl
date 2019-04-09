@@ -124,13 +124,18 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
                 .format(self.r_min_, self.max_budget_)
             )
 
-    def _run_search(self, evaluate_candidates, X, y, groups):
-
+    def fit(self, X, y=None, groups=None, **fit_params):
         self._check_input_parameters(
             X=X,
             y=y,
             groups=groups,
         )
+        super().fit(X, y=y, groups=groups, **fit_params)
+        # Set best_score_: BaseSearchCV does not set it, as refit is a callable
+        self.best_score_ = (
+            self.cv_results_['mean_test_score'][self.best_index_])
+
+    def _run_search(self, evaluate_candidates, X, y, groups):
         rng = check_random_state(self.random_state)
 
         candidate_params = self._generate_candidate_params()

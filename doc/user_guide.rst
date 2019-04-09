@@ -79,55 +79,55 @@ leakage through spurious representations of the target in the data.
 Initial Model Building
 -----------------------
 >>> ec = dabl.SimpleClassifier(random_state=0).fit(data, target_col="income")
-    DummyClassifier(random_state=0, strategy='prior')
-    accuracy: 0.7592    average_precision: 0.2408    recall_macro: 0.5000    roc_auc: 0.5000    
-    new best (using recall_macro):
-    accuracy             0.75919
-    average_precision    0.24081
-    recall_macro         0.50000
-    roc_auc              0.50000
-    Name: DummyClassifier(random_state=0, strategy='prior'), dtype: float64
-    GaussianNB()
-    accuracy: 0.4073    average_precision: 0.2880    recall_macro: 0.6050    roc_auc: 0.6074    
-    new best (using recall_macro):
-    accuracy             0.407297
-    average_precision    0.287953
-    recall_macro         0.604989
-    roc_auc              0.607410
-    Name: GaussianNB(), dtype: float64
-    MultinomialNB()
-    accuracy: 0.8305    average_precision: 0.7727    recall_macro: 0.8150    roc_auc: 0.9076    
-    new best (using recall_macro):
-    accuracy             0.830534
-    average_precision    0.772655
-    recall_macro         0.815025
-    roc_auc              0.907552
-    Name: MultinomialNB(), dtype: float64
-    DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
-    accuracy: 0.7103    average_precision: 0.4167    recall_macro: 0.7592    roc_auc: 0.7592    
-    DecisionTreeClassifier(class_weight='balanced', max_depth=5, random_state=0)
-    accuracy: 0.7841    average_precision: 0.7106    recall_macro: 0.8112    roc_auc: 0.8939    
-    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01,
-                random_state=0)
-    accuracy: 0.7179    average_precision: 0.5614    recall_macro: 0.7787    roc_auc: 0.8476    
-    LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
-              random_state=0, solver='lbfgs')
-    accuracy: 0.8191    average_precision: 0.7886    recall_macro: 0.8321    roc_auc: 0.9152    
-    new best (using recall_macro):
-    accuracy             0.819109
-    average_precision    0.788647
-    recall_macro         0.832057
-    roc_auc              0.915227
-    Name: LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',\n          random_state=0, solver='lbfgs'), dtype: float64
-    Best model:
-    LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
-              random_state=0, solver='lbfgs')
-    Best Scores:
-    accuracy             0.819109
-    average_precision    0.788647
-    recall_macro         0.832057
-    roc_auc              0.915227
-    Name: LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',\n          random_state=0, solver='lbfgs'), dtype: float64
+DummyClassifier(random_state=0, strategy='prior')
+accuracy: 0.7592    average_precision: 0.2408    recall_macro: 0.5000    roc_auc: 0.5000    
+new best (using recall_macro):
+accuracy             0.75919
+average_precision    0.24081
+recall_macro         0.50000
+roc_auc              0.50000
+Name: DummyClassifier(random_state=0, strategy='prior'), dtype: float64
+GaussianNB()
+accuracy: 0.4073    average_precision: 0.2880    recall_macro: 0.6050    roc_auc: 0.6074    
+new best (using recall_macro):
+accuracy             0.407297
+average_precision    0.287953
+recall_macro         0.604989
+roc_auc              0.607410
+Name: GaussianNB(), dtype: float64
+MultinomialNB()
+accuracy: 0.8305    average_precision: 0.7727    recall_macro: 0.8150    roc_auc: 0.9076    
+new best (using recall_macro):
+accuracy             0.830534
+average_precision    0.772655
+recall_macro         0.815025
+roc_auc              0.907552
+Name: MultinomialNB(), dtype: float64
+DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
+accuracy: 0.7103    average_precision: 0.4167    recall_macro: 0.7592    roc_auc: 0.7592    
+DecisionTreeClassifier(class_weight='balanced', max_depth=5, random_state=0)
+accuracy: 0.7841    average_precision: 0.7106    recall_macro: 0.8112    roc_auc: 0.8939    
+DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01,
+            random_state=0)
+accuracy: 0.7179    average_precision: 0.5614    recall_macro: 0.7787    roc_auc: 0.8476    
+LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
+          random_state=0, solver='lbfgs')
+accuracy: 0.8191    average_precision: 0.7886    recall_macro: 0.8321    roc_auc: 0.9152    
+new best (using recall_macro):
+accuracy             0.819109
+average_precision    0.788647
+recall_macro         0.832057
+roc_auc              0.915227
+Name: LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',\n          random_state=0, solver='lbfgs'), dtype: float64
+Best model:
+LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
+          random_state=0, solver='lbfgs')
+Best Scores:
+accuracy             0.819109
+average_precision    0.788647
+recall_macro         0.832057
+roc_auc              0.915227
+Name: LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',\n          random_state=0, solver='lbfgs'), dtype: float64
 
 
 Fit an initial model. The SimpleClassifier first tries several baseline and

@@ -169,14 +169,15 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     # FIXME if one class only has NaN for a value we crash! :-/
     # TODO univariate plot?
     # already on diagonal for pairplot but not for many features
-    if features.shape[1] <= 5:
+    if features.shape[1] <= 5 and features.shape[1] > 1:
         # for n_dim <= 5 we do full pairplot plot
         # FIXME filling in missing values here b/c of a bug in seaborn
         # we really shouldn't be doing this
         # https://github.com/mwaskom/seaborn/issues/1699
         X_imp = X.fillna(features.median(axis=0))
         sns.pairplot(X_imp, vars=features.columns,
-                     hue=target_col)
+                     hue=target_col, diag_kind='hist',
+                     plot_kws={'alpha': scatter_alpha})
         plt.suptitle("Continuous features pairplot", y=1.02)
     else:
         # univariate plots

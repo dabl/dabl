@@ -37,5 +37,5 @@ def nice_repr(est):
     changed_params = _changed_params(est)
     name = ('%s(%s)' % (class_name, _pprint(changed_params,
                                             offset=len(class_name))))
-    name, _ = re.subn("\s+", " ", name)
+    name, _ = re.subn(r"\s+", " ", name)
     return name

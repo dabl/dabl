@@ -134,6 +134,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
         # Set best_score_: BaseSearchCV does not set it, as refit is a callable
         self.best_score_ = (
             self.cv_results_['mean_test_score'][self.best_index_])
+        return self
 
     def _run_search(self, evaluate_candidates, X, y, groups):
         rng = check_random_state(self.random_state)

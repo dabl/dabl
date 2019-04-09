@@ -173,6 +173,23 @@ def _shortname(some_string, maxlen=20):
 
 
 def mosaic_plot(data, rows, cols, ax=None):
+    """Create a mosaic plot from a dataframe.
+
+    Right now only horizontal mosaic plots are supported,
+    i.e. rows are prioritized over columns.
+
+    Parameters
+    ----------
+    data : pandas data frame
+        Data to tabulate.
+    rows : column specifier
+        Column in data to tabulate across rows.
+    cols : column specifier
+        Column in data to use to subpartition rows.
+    ax : matplotlib axes or None
+        Axes to plot into.
+    """
+
     cont = pd.crosstab(data[cols], data[rows])
     sort = np.argsort((cont / cont.sum()).iloc[0])
     cont = cont.iloc[:, sort]

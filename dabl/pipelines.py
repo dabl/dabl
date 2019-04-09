@@ -1,9 +1,12 @@
+from warnings import warn
+
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso
+from sklearn.ensemble import RandomForestClassifier
 
 
 def get_fast_classifiers(n_classes):
@@ -52,3 +55,31 @@ def get_fast_regressors():
         DecisionTreeRegressor(max_depth=5),
         Ridge(alpha=10),
         Lasso(alpha=10)]
+
+
+def get_any_classifiers():
+    sklearn_ests = [
+        LogisticRegression(C=1, solver='lbfgs', multi_class='multinomial'),
+        LogisticRegression(C=10, solver='lbfgs', multi_class='multinomial'),
+        LogisticRegression(C=.1, solver='lbfgs', multi_class='multinomial'),
+        RandomForestClassifier(max_features=None, n_estimators=100),
+        RandomForestClassifier(max_features='sqrt', n_estimators=100),
+        RandomForestClassifier(max_features='log2', n_estimators=100)]
+    try:
+        from lightgbm import LGBMClassifier
+    except ImportError:
+        warn("lightgbm not installed, skipping gradient boosting models",
+             UserWarning)
+        return sklearn_ests
+
+    gb_ests = [
+        LGBMClassifier(learning_rate=0.2),
+        LGBMClassifier(learning_rate=0.1),
+        LGBMClassifier(learning_rate=0.01),
+        LGBMClassifier(learning_rate=0.001),
+        LGBMClassifier(learning_rate=0.2, colsample_bytree=.5),
+        LGBMClassifier(learning_rate=0.1, colsample_bytree=.5),
+        LGBMClassifier(learning_rate=0.01, colsample_bytree=.5),
+        LGBMClassifier(learning_rate=0.001, colsample_bytree=.5),
+        ]
+    return sklearn_ests + gb_ests

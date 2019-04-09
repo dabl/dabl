@@ -1,5 +1,5 @@
 ###############################################
-Getting started with Machine Learning with dabl
+Quickstart to ML with dabl
 ###############################################
 
 Let's dive right in!
@@ -20,7 +20,7 @@ columns, what do they look like?
     >>> titanic.shape
     (1309, 14)
 
-    >>> titanic.head()
+    >>> titanic.head() # doctest: +ELLIPSIS
        pclass  survived  ... body                        home.dest
     0       1         1  ...    ?                     St Louis, MO
     1       1         1  ...    ?  Montreal, PQ / Chesterville, ON
@@ -47,7 +47,7 @@ automatically for now.  In dabl, we can also get a best guess of the column
 types in a convenient format:
 
     >>> types = dabl.detect_types(titanic_clean)
-    >>> print(types)
+    >>> print(types) # doctest: +ELLIPSIS
                           continuous  dirty_float  ...  free_string  useless
     age_?                      False        False  ...        False    False
     age_dabl_continuous         True        False  ...        False    False
@@ -78,57 +78,65 @@ we can create plot of the features deemed most important for our task.
     >>> dabl.plot_supervised(titanic, 'survived')
     Target looks like classification
     baseline score: 0.500
-    baseline score: 0.500
 
-Finally, we can find a good model for our data. The SimpleClassifier does all
-the work for us. It implements the familiar scikit-learn api of fit and
-predict:
+.. plot::
+
+    >>> import pandas as pd
+    >>> import dabl
+    >>> titanic = pd.read_csv(dabl.datasets.data_path("titanic.csv"))
+    >>> dabl.plot_supervised(titanic, 'survived')
+    Target looks like classification
+    baseline score: 0.500
+    >>> import matplotlib.pyplot as plt; plt.show()
+
+
+Finally, we can find an initial model for our data. The SimpleClassifier does all
+the work for us. It implements the familiar scikit-learn API of fit and
+predict. Alternatively we could also use the same interface as before and pass
+the whole data frame and specify the target column.
 
     >>> fc = dabl.SimpleClassifier(random_state=0)
     >>> X = titanic_clean.drop("survived", axis=1)
     >>> y = titanic_clean.survived
     >>> fc.fit(X, y)
-    DummyClassifier(random_state=0, strategy='prior')
-    accuracy: 0.6180    average_precision: 0.3820    recall_macro: 0.5000    roc_auc: 0.5000
+    DummyClassifier(strategy='prior')
+    accuracy: 0.618    average_precision: 0.382    recall_macro: 0.500    roc_auc: 0.500
     new best (using recall_macro):
-    accuracy             0.618028
-    average_precision    0.381972
-    recall_macro         0.500000
-    roc_auc              0.500000
-    Name: DummyClassifier(random_state=0, strategy='prior'), dtype: float64
+    accuracy             0.618
+    average_precision    0.382
+    recall_macro         0.500
+    roc_auc              0.500
+    Name: DummyClassifier(strategy='prior'), dtype: float64
     GaussianNB()
-    accuracy: 0.9007    average_precision: 0.8750    recall_macro: 0.9064    roc_auc: 0.9189
+    accuracy: 0.897    average_precision: 0.870    recall_macro: 0.902    roc_auc: 0.919
     new best (using recall_macro):
-    accuracy             0.900719
-    average_precision    0.875011
-    recall_macro         0.906354
-    roc_auc              0.918921
+    accuracy             0.897
+    average_precision    0.870
+    recall_macro         0.902
+    roc_auc              0.919
     Name: GaussianNB(), dtype: float64
     MultinomialNB()
-    accuracy: 0.8946    average_precision: 0.9841    recall_macro: 0.8976    roc_auc: 0.9873
-    DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
-    accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714
+    accuracy: 0.888    average_precision: 0.981    recall_macro: 0.891    roc_auc: 0.985
+    DecisionTreeClassifier(class_weight='balanced', max_depth=1)
+    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
     new best (using recall_macro):
-    accuracy             0.975540
-    average_precision    0.953971
-    recall_macro         0.971441
-    roc_auc              0.971441
-    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0), dtype: float64
-    DecisionTreeClassifier(class_weight='balanced', max_depth=5, random_state=0)
-    accuracy: 0.9587    average_precision: 0.9487    recall_macro: 0.9556    roc_auc: 0.9673
-    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01,
-                random_state=0)
-    accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714
-    LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
-              random_state=0, solver='lbfgs')
-    accuracy: 0.9679    average_precision: 0.9855    recall_macro: 0.9653    roc_auc: 0.9881
+    accuracy             0.976
+    average_precision    0.954
+    recall_macro         0.971
+    roc_auc              0.971
+    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
+    DecisionTreeClassifier(class_weight='balanced', max_depth=5)
+    accuracy: 0.957    average_precision: 0.942    recall_macro: 0.954    roc_auc: 0.970
+    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
+    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
+    LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs')
+    accuracy: 0.963    average_precision: 0.986    recall_macro: 0.961    roc_auc: 0.989
     Best model:
-    DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
+    DecisionTreeClassifier(class_weight='balanced', max_depth=1)
     Best Scores:
-    accuracy             0.975540
-    average_precision    0.953971
-    recall_macro         0.971441
-    roc_auc              0.971441
-    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0), dtype: float64
+    accuracy             0.976
+    average_precision    0.954
+    recall_macro         0.971
+    roc_auc              0.971
+    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
     SimpleClassifier(random_state=0, refit=True, verbose=1)
-

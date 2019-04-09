@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 
 from inspect import signature
@@ -23,12 +24,18 @@ def _changed_params(est):
     init = getattr(est.__init__, 'deprecated_original', est.__init__)
     init_params = signature(init).parameters
     for k, v in params.items():
-        if v != init_params[k].default:
+        if v != init_params[k].default and k != "random_state":
+            if k == "multi_class" and v == "auto":
+                # this is the new default
+                continue
             filtered_params[k] = v
     return filtered_params
 
 
 def nice_repr(est):
     class_name = est.__class__.__name__
-    return ('%s(%s)' % (class_name, _pprint(_changed_params(est),
+    changed_params = _changed_params(est)
+    name = ('%s(%s)' % (class_name, _pprint(changed_params,
                                             offset=len(class_name))))
+    name, _ = re.subn(r"\s+", " ", name)
+    return name

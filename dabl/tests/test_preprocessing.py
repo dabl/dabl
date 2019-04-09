@@ -178,6 +178,7 @@ def test_transform_dirty_float():
     assert (res.dtypes == float).all()
     assert res.a_column_missing.sum() == 9
     assert res.a_column_garbage.sum() == 1
+    assert (dfc.get_feature_names() == res.columns).all()
 
 
 @pytest.mark.parametrize(
@@ -259,8 +260,13 @@ def test_titanic_feature_names():
     ep.fit(clean(titanic.drop('survived', axis=1)))
     expected_names = [
         'age_dabl_continuous', 'body_dabl_continuous', 'fare_dabl_continuous',
-        'age_?_0.0', 'age_?_1.0', 'body_?_0.0', 'body_?_1.0', 'pclass_1',
-        'pclass_2', 'pclass_3', 'sex_female', 'sex_male', 'embarked_?',
+        'parch', 'sibsp', 'age_?_0.0', 'age_?_1.0', 'body_?_0.0', 'body_?_1.0',
+        'pclass_1',
+        'pclass_2', 'pclass_3', 'sex_female', 'sex_male', 'sibsp_0', 'sibsp_1',
+        'sibsp_2',
+        'sibsp_3', 'sibsp_4', 'sibsp_5', 'sibsp_8', 'parch_0', 'parch_1',
+        'parch_2',
+        'parch_3', 'parch_4', 'parch_5', 'parch_6', 'parch_9', 'embarked_?',
         'embarked_C', 'embarked_Q', 'embarked_S', 'boat_1', 'boat_10',
         'boat_11', 'boat_12', 'boat_13', 'boat_13 15', 'boat_13 15 B',
         'boat_14', 'boat_15', 'boat_15 16', 'boat_16', 'boat_2', 'boat_3',
@@ -268,3 +274,10 @@ def test_titanic_feature_names():
         'boat_8', 'boat_8 10', 'boat_9', 'boat_?', 'boat_A', 'boat_B',
         'boat_C', 'boat_C D', 'boat_D']
     assert ep.get_feature_names() == expected_names
+
+    # without clean
+    X = ep.fit_transform(titanic.drop('survived', axis=1))
+    # FIXME can't do that yet
+    # assert ep.get_feature_names() == expected_names_no_clean
+
+    assert not np.isnan(X).any()

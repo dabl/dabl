@@ -242,6 +242,9 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         ax.set_title("{:.3f}".format(score))
     fig.suptitle("Discriminating PCA directions")
     # LDA
+    if target.nunique() < 3:
+        # lda currently only 2d scatter plot.
+        return
     lda = LinearDiscriminantAnalysis(
         n_components=min(n_components, target.nunique() - 1))
     features_lda = lda.fit_transform(scale(features_imp), target)
@@ -347,7 +350,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='count',
         axes.ravel()[j].set_axis_off()
 
 
-def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1., verbose=10):
+def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
+                    verbose=10):
     """Exploration plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -411,7 +415,8 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1., verbose=10
         # class could be a string that's a float
         # seaborn is trying to be smart unless we declare it categorical
         # we actually fixed counts to have categorical index
-        # but melt destroys it: https://github.com/pandas-dev/pandas/issues/15853
+        # but melt destroys it:
+        # https://github.com/pandas-dev/pandas/issues/15853
         melted['class'] = melted['class'].astype('category')
         sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")

@@ -45,6 +45,14 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             result.append(cats)
         return pd.concat(result, axis=1)
 
+    def get_feature_names(self, input_features=None):
+        feature_names = []
+        for col in self.columns_:
+            enc = self.encoders_[col]
+            feature_names.extend(enc.get_feature_names([str(col)]))
+            feature_names.append("{}_dabl_continuous".format(col))
+        return feature_names
+
 
 def guess_ordinal(values):
     # compare against http://proceedings.mlr.press/v70/valera17a/valera17a.pdf
@@ -458,15 +466,29 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         else:
             types = self.types
 
+        types = types.copy()
+        # low card int encoded as categorical and continuous for now:
+        types.loc[types.low_card_int, 'continuous'] = True
+        types.loc[types.low_card_int, 'categorical'] = True
+
         # go over variable blocks
         # check for missing values
         # scale etc
-        pipe_categorical = make_pipeline(
-            SimpleImputer(strategy='constant', fill_value='dabl_missing'),
+        steps_categorical = []
+        if X.loc[:, types.categorical].isna().any(axis=None):
+            steps_categorical.append(
+                SimpleImputer(strategy='constant', fill_value='dabl_missing'))
+        steps_categorical.append(
             OneHotEncoder(categories='auto', handle_unknown='ignore',
                           sparse=False))
+        pipe_categorical = make_pipeline(*steps_categorical)
 
-        steps_continuous = [SimpleImputer(strategy='median')]
+        steps_continuous = []
+        if (X.loc[:, types.continuous].isna().any(axis=None)
+                or types['dirty_float'].any()):
+            # we could skip the imputer here, but if there's dirty
+            # floats, they'll have NaN, and we reuse the cont pipeline
+            steps_continuous.append(SimpleImputer(strategy='median'))
         if self.scale:
             steps_continuous.append(StandardScaler())
         # if X.loc[:, types['continuous']].isnull().values.any():
@@ -474,6 +496,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         pipe_continuous = make_pipeline(*steps_continuous)
         # FIXME only have one imputer/standard scaler in all
         # (right now copied in dirty floats and floats)
+
         pipe_dirty_float = make_pipeline(
             DirtyFloatCleaner(),
             make_column_transformer(
@@ -487,7 +510,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             transformer_cols.append(('categorical',
                                      pipe_categorical, types['categorical']))
         if types['dirty_float'].any():
-            # FIXME we're not really handling this here any more?
+            # FIXME we're not really handling this here any more? (yes we are)
             transformer_cols.append(('dirty_float',
                                      pipe_dirty_float, types['dirty_float']))
 
@@ -508,7 +531,8 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         for name, trans, cols in self.ct_.transformers_:
             if name == "continuous":
                 # three should be no all-nan columns in the imputer
-                if np.isnan(trans.steps[0][1].statistics_).any():
+                if (trans.steps[0][0] == "simpleimputer"
+                        and np.isnan(trans.steps[0][1].statistics_).any()):
                     raise ValueError("So unexpected! Looks like the imputer"
                                      " dropped some all-NaN columns."
                                      "Try calling 'clean' on your data first.")
@@ -521,6 +545,10 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
                 feature_names.extend(ohe.get_feature_names(ohe_cols))
             elif name == "remainder":
                 assert trans == "drop"
+            elif name == "dirty_float":
+                raise ValueError(
+                    "Can't compute feature names when handling dirty floats. "
+                    "Call 'clean' as a workaround")
             else:
                 raise ValueError(
                     "Can't compute feature names for {}".format(name))

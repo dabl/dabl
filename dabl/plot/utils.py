@@ -283,3 +283,28 @@ def _discrete_scatter(x, y, c, ax, alpha=None):
         mask = c == i
         ax.plot(x[mask], y[mask], 'o', label=i, alpha=alpha)
     ax.legend()
+
+
+def class_hists(data, column, target, bins="auto", ax=None, legend=False):
+    bin_edges = np.histogram_bin_edges(data[column], bins=bins)
+    if len(bin_edges < 10):
+        bin_edges = np.histogram_bin_edges(data[column], bins=10)
+
+    if ax is None:
+        ax = plt.gca()
+    counts = {}
+    for name, group in data.groupby(target)[column]:
+        this_counts, _ = np.histogram(group, bins=bin_edges)
+        counts[name] = this_counts
+    counts = pd.DataFrame(counts)
+    bottom = counts.values.max() * 1.1
+    for i, name in enumerate(counts.columns):
+        ax.bar(bin_edges[:-1], counts[name], bottom=bottom * i, label=name,
+               align='edge', width=(bin_edges[1] - bin_edges[0]) * .9)
+        ax.hlines(bottom * i, xmin=bin_edges[0], xmax=bin_edges[-1],
+                  linewidth=1)
+    if legend:
+        ax.legend()
+    ax.set_yticks(())
+    ax.set_xlabel(column)
+    return ax

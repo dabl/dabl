@@ -4,7 +4,8 @@ from abc import abstractmethod
 import numpy as np
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection import ParameterGrid, ParameterSampler
-from sklearn.utils import check_random_state, safe_indexing
+from sklearn.utils import check_random_state
+from sklearn.utils.validation import _num_samples
 from sklearn.base import is_classifier
 from sklearn.model_selection._split import check_cv
 
@@ -116,7 +117,7 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
             if not self.budget_on == 'n_samples':
                 raise ValueError(
                     "max_budget can only be 'auto' if budget_on='n_samples'")
-            self.max_budget_ = X.shape[0]
+            self.max_budget_ = _num_samples(X)
 
         if self.r_min_ > self.max_budget_:
             raise ValueError(
@@ -178,7 +179,8 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
             print('n_possible_iterations: {}'.format(n_possible_iterations))
             print('r_min_: {}'.format(self.r_min_))
             print('max_budget_: {}'.format(self.max_budget_))
-            print('aggressive_elimination: {}'.format(self.aggressive_elimination))
+            print('aggressive_elimination: {}'.format(
+                self.aggressive_elimination))
             print('force_exhaust_budget: {}'.format(self.force_exhaust_budget))
             print('ratio: {}'.format(self.ratio))
 

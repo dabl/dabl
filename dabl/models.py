@@ -53,10 +53,10 @@ class _BaseSimpleEstimator(BaseEstimator):
             name = nice_repr(estimator.steps[-1][1])
         except AttributeError:
             name = nice_repr(estimator)
-        name = name.replace("\s", " ")
+
         if self.verbose:
             print(name)
-            res_string = "".join("{}: {:.4f}    ".format(m, s)
+            res_string = "".join("{}: {:.3f}    ".format(m, s)
                                  for m, s in res_mean.items())
             print(res_string)
         res_mean.name = name
@@ -125,13 +125,15 @@ class _BaseSimpleEstimator(BaseEstimator):
             # make scoring configurable
             if scores[rank_scoring] > self.current_best_[rank_scoring]:
                 if self.verbose:
-                    print("new best (using {}):\n{}".format(
-                        rank_scoring, scores))
+                    with pd.option_context('precision', 3):
+                        print("new best (using {}):\n{}".format(
+                            rank_scoring, scores))
                 self.current_best_ = scores
                 best_est = est
         if self.verbose:
-            print("Best model:\n{}\nBest Scores:\n{}".format(
-                nice_repr(best_est), self.current_best_))
+            with pd.option_context('precision', 3):
+                print("Best model:\n{}\nBest Scores:\n{}".format(
+                      nice_repr(best_est), self.current_best_))
         if self.refit:
             self.est_ = make_pipeline(EasyPreprocessor(), best_est)
             self.est_.fit(X, y)

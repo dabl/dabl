@@ -47,26 +47,27 @@ automatically for now.  In dabl, we can also get a best guess of the column
 types in a convenient format:
 
     >>> types = dabl.detect_types(titanic_clean)
-    >>> print(types)
-                          continuous  dirty_float  low_card_int  categorical   date  free_string  useless
-    age_?                      False        False         False         True  False        False    False
-    age_dabl_continuous         True        False         False        False  False        False    False
-    boat                       False        False         False         True  False        False    False
-    body_?                     False        False         False         True  False        False    False
-    body_dabl_continuous        True        False         False        False  False        False    False
-    cabin                      False        False         False        False  False         True    False
-    embarked                   False        False         False         True  False        False    False
-    fare_?                     False        False         False        False  False        False     True
-    fare_dabl_continuous        True        False         False        False  False        False    False
-    home.dest                  False        False         False        False  False         True    False
-    name                       False        False         False        False  False         True    False
-    parch                      False        False          True        False  False        False    False
-    pclass                     False        False         False         True  False        False    False
-    sex                        False        False         False         True  False        False    False
-    sibsp                      False        False          True        False  False        False    False
-    survived                   False        False         False         True  False        False    False
-    ticket                     False        False         False        False  False         True    False
-
+    >>> print(types) # doctest: +ELLIPSIS
+                          continuous  dirty_float  ...  free_string  useless
+    age_?                      False        False  ...        False    False
+    age_dabl_continuous         True        False  ...        False    False
+    boat                       False        False  ...        False    False
+    body_?                     False        False  ...        False    False
+    body_dabl_continuous        True        False  ...        False    False
+    cabin                      False        False  ...         True    False
+    embarked                   False        False  ...        False    False
+    fare_?                     False        False  ...        False     True
+    fare_dabl_continuous        True        False  ...        False    False
+    home.dest                  False        False  ...         True    False
+    name                       False        False  ...         True    False
+    parch                      False        False  ...        False    False
+    pclass                     False        False  ...        False    False
+    sex                        False        False  ...        False    False
+    sibsp                      False        False  ...        False    False
+    survived                   False        False  ...        False    False
+    ticket                     False        False  ...         True    False
+    <BLANKLINE>
+    [17 rows x 7 columns]
 
 
 Having a very rough idea of the shape of our data, we can now start looking

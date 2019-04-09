@@ -147,7 +147,7 @@ cleaning of the data.
 
 Enhanced Model Building
 ------------------------
->>> # ac = AnyClassifier().fit(data, target_col="income") not implemented yet
+>>> ac = dabl.AnyClassifier().fit(data, target_col="income")
 
 After creating an initial model, it's interesting to explore more powerful
 models such as tree ensembles.  ``AnyClassifier`` searches over a space of
@@ -156,7 +156,7 @@ your goal is prediction, ``AnyClassifier`` can provide a strong baseline for
 further investigation.  Again, we can inspect our model to understand it
 better:
 
->>> # explain(ac)
+>>> explain(ac)
 
 
 Explainable Model Building

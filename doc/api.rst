@@ -59,7 +59,9 @@ Plotting
     :toctree: generated/
     :template: function.rst
 
+    discrete_scatter
     find_pretty_grid
+    mosaic_plot
     plot_supervised
     plot_classification_categorical
     plot_classification_continuous

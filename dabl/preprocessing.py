@@ -191,10 +191,6 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     integers = (kinds == "i") | (kinds == "u")
     # check if float column is actually all integers
     # we'll treat them as int for now.
-    for k, v in type_hints.items():
-        if v not in ['continuous', 'categorical', 'free_string',
-                     'useless', 'low_card_int']:
-            raise ValueError("Unknown type hint {} for {}".format(v, k))
     for col, isfloat in floats.items():
         if isfloat and (col not in type_hints
                         or type_hints[col] != "continuous"):

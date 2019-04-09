@@ -10,7 +10,5 @@ import matplotlib.pyplot as plt
 # returns a plain dataframe
 data = load_adult()
 
-plot_supervised(data, 'income',
-                type_hints={},
-                scatter_alpha=.1)
+plot_supervised(data, 'income', scatter_alpha=.1)
 plt.show()

@@ -172,7 +172,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     # FIXME if one class only has NaN for a value we crash! :-/
     # TODO univariate plot?
     # already on diagonal for pairplot but not for many features
-    if features.shape[1] <= 5 and features.shape[1] > 1:
+    if features.shape[1] <= 5:
         # for n_dim <= 5 we do full pairplot plot
         # FIXME filling in missing values here b/c of a bug in seaborn
         # we really shouldn't be doing this
@@ -419,6 +419,8 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
     # low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:
+            if col == target_col:
+                continue
             # kinda hacky for now
             if X[col].nunique() < 20:
                 types.loc[col, 'low_card_int'] = False

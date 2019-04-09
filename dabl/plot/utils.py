@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
+from matplotlib.patches import Rectangle
+
 
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import recall_score
@@ -170,6 +172,32 @@ def _shortname(some_string, maxlen=20):
         return some_string
 
 
+def mosaic_plot(data, rows, cols, ax=None):
+    cont = pd.crosstab(data[cols], data[rows])
+    sort = np.argsort((cont / cont.sum()).iloc[0])
+    cont = cont.iloc[:, sort]
+    if ax is None:
+        ax = plt.gca()
+    pos_y = 0
+    positions_y = []
+    for i, col in enumerate(cont.columns):
+        height = cont[col].sum()
+        positions_y.append(pos_y + height / 2)
+
+        pos_x = 0
+        for row in cont[col]:
+            width = row / height
+            rect = Rectangle((pos_x, pos_y), width, height, edgecolor='k',
+                             facecolor=plt.cm.tab10(i), alpha=pos_x + width)
+            pos_x += width
+            ax.add_patch(rect)
+        pos_y += height
+
+    ax.set_ylim(0, pos_y)
+    ax.set_yticks(positions_y)
+    ax.set_yticklabels(cont.columns)
+
+
 def _get_n_top(features, name):
     if features.shape[1] > 20:
         print("Showing only top 10 of {} {} features".format(
@@ -189,11 +217,12 @@ def _prune_categories(series, max_categories=10):
     return res
 
 
-def _prune_category_make_X(X, col, target_col):
+def _prune_category_make_X(X, col, target_col, max_categories=20):
     col_values = X[col]
-    if col_values.nunique() > 20:
+    if col_values.nunique() > max_categories:
         # keep only top 10 categories if there are more than 20
-        col_values = _prune_categories(col_values)
+        col_values = _prune_categories(col_values,
+                                       max_categories=min(10, max_categories))
         X_new = X[[target_col]].copy()
         X_new[col] = col_values
     else:

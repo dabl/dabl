@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from warnings import warn
 import pandas as pd
 
 
@@ -13,13 +12,12 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from statsmodels.graphics.mosaicplot import mosaic
 
 from ..preprocessing import detect_types, clean
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
-                    _discrete_scatter)
+                    _discrete_scatter, mosaic_plot)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -267,7 +265,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     # TODO fancy manifolds?
 
 
-def plot_classification_categorical(X, target_col, types=None, kind='count',
+def plot_classification_categorical(X, target_col, types=None, kind='auto',
                                     hue_order=None):
     """Exploration plots for categorical features in classification.
 
@@ -286,8 +284,23 @@ def plot_classification_categorical(X, target_col, types=None, kind='count',
     types : dataframe of types, optional.
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
+    kind : string, default 'auto'
+        Kind of plot to show. Options are 'count', 'proportion',
+        'mosaic' and 'auto'.
+        Count shows raw class counts within categories
+        (can be hard to read with imbalanced classes)
+        Proportion shows class proportions within categories
+        (can be misleading with imbalanced categories)
+        Mosaic shows both aspects, but can be a bit busy.
+        Auto uses mosaic plots for binary classification and counts otherwise.
+
     """
     types = _check_X_target_col(X, target_col, types, task="classification")
+    if kind == "auto":
+        if X[target_col].nunique() > 2:
+            kind = 'count'
+        else:
+            kind = 'mosaic'
 
     features = X.loc[:, types.categorical]
     if target_col in features.columns:
@@ -310,12 +323,12 @@ def plot_classification_categorical(X, target_col, types=None, kind='count',
     # large number of categories -> taller plot
     row_height = 3 if features.nunique().max() <= 5 else 5
     fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
-    # FIXME mosaic doesn't like constraint layout?
     plt.suptitle("Categorical Features vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[col_ind]
-        X_new = _prune_category_make_X(X, col, target_col)
         if kind == 'proportion':
+            X_new = _prune_category_make_X(X, col, target_col)
+
             df = (X_new.groupby(col)[target_col]
                   .value_counts(normalize=True)
                   .unstack()
@@ -324,16 +337,16 @@ def plot_classification_categorical(X, target_col, types=None, kind='count',
             ax.set_title(col)
             ax.set_ylabel(None)
         elif kind == 'mosaic':
-            warn("Mosaic plots are buggy right now, come back later.",
-                 UserWarning)
-            # This seems pretty broken, abandoning for now
-            # counts = pd.crosstab(X_new[col], X_new[target_col])
-
-            mosaic(X_new, [col, target_col],
-                   horizontal=False, ax=ax)
-            # ,
-            # labelizer=lambda k: counts.loc[k[0], k[1]])
+            # how many categories make up at least 1% of data:
+            n_cats = (X[col].value_counts() / len(X) > 0.01).sum()
+            n_cats = np.minimum(n_cats, 20)
+            X_new = _prune_category_make_X(X, col, target_col,
+                                           max_categories=n_cats)
+            mosaic_plot(X_new, col, target_col, ax=ax)
+            ax.set_title(col)
         elif kind == 'count':
+            X_new = _prune_category_make_X(X, col, target_col)
+
             # absolute counts
             # FIXME show f value
             # FIXME shorten titles?

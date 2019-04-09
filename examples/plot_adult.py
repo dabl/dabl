@@ -1,5 +1,5 @@
 """
-Ames Housing Dataset Visualization
+Adult Census Dataset Visualization
 ====================================
 """
 from dabl import plot_supervised

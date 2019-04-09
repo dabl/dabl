@@ -21,14 +21,13 @@ columns, what do they look like?
     (1309, 14)
 
     >>> titanic.head()
-       pclass  survived  ... body                        home.dest
-    0       1         1  ...    ?                     St Louis, MO
-    1       1         1  ...    ?  Montreal, PQ / Chesterville, ON
-    2       1         0  ...    ?  Montreal, PQ / Chesterville, ON
-    3       1         0  ...  135  Montreal, PQ / Chesterville, ON
-    4       1         0  ...    ?  Montreal, PQ / Chesterville, ON
-    <BLANKLINE>
-    [5 rows x 14 columns]
+       pclass  survived                                             name     sex     age  sibsp  parch  ticket      fare    cabin embarked boat body                        home.dest
+    0       1         1                    Allen, Miss. Elisabeth Walton  female      29      0      0   24160  211.3375       B5        S    2    ?                     St Louis, MO
+    1       1         1                   Allison, Master. Hudson Trevor    male  0.9167      1      2  113781    151.55  C22 C26        S   11    ?  Montreal, PQ / Chesterville, ON
+    2       1         0                     Allison, Miss. Helen Loraine  female       2      1      2  113781    151.55  C22 C26        S    ?    ?  Montreal, PQ / Chesterville, ON
+    3       1         0             Allison, Mr. Hudson Joshua Creighton    male      30      1      2  113781    151.55  C22 C26        S    ?  135  Montreal, PQ / Chesterville, ON
+    4       1         0  Allison, Mrs. Hudson J C (Bessie Waldo Daniels)  female      25      1      2  113781    151.55  C22 C26        S    ?    ?  Montreal, PQ / Chesterville, ON
+
 
 
 So far so good! There's already a bunch of things going on in the data that we
@@ -48,26 +47,25 @@ types in a convenient format:
 
     >>> types = dabl.detect_types(titanic_clean)
     >>> print(types)
-                          continuous  dirty_float  ...  free_string  useless
-    age_?                      False        False  ...        False    False
-    age_dabl_continuous         True        False  ...        False    False
-    boat                       False        False  ...        False    False
-    body_?                     False        False  ...        False    False
-    body_dabl_continuous        True        False  ...        False    False
-    cabin                      False        False  ...         True    False
-    embarked                   False        False  ...        False    False
-    fare_?                     False        False  ...        False     True
-    fare_dabl_continuous        True        False  ...        False    False
-    home.dest                  False        False  ...         True    False
-    name                       False        False  ...         True    False
-    parch                      False        False  ...        False    False
-    pclass                     False        False  ...        False    False
-    sex                        False        False  ...        False    False
-    sibsp                      False        False  ...        False    False
-    survived                   False        False  ...        False    False
-    ticket                     False        False  ...         True    False
-    <BLANKLINE>
-    [17 rows x 7 columns]
+                          continuous  dirty_float  low_card_int  categorical   date  free_string  useless
+    age_?                      False        False         False         True  False        False    False
+    age_dabl_continuous         True        False         False        False  False        False    False
+    boat                       False        False         False         True  False        False    False
+    body_?                     False        False         False         True  False        False    False
+    body_dabl_continuous        True        False         False        False  False        False    False
+    cabin                      False        False         False        False  False         True    False
+    embarked                   False        False         False         True  False        False    False
+    fare_?                     False        False         False        False  False        False     True
+    fare_dabl_continuous        True        False         False        False  False        False    False
+    home.dest                  False        False         False        False  False         True    False
+    name                       False        False         False        False  False         True    False
+    parch                      False        False          True        False  False        False    False
+    pclass                     False        False         False         True  False        False    False
+    sex                        False        False         False         True  False        False    False
+    sibsp                      False        False          True        False  False        False    False
+    survived                   False        False         False         True  False        False    False
+    ticket                     False        False         False        False  False         True    False
+
 
 
 Having a very rough idea of the shape of our data, we can now start looking
@@ -99,48 +97,44 @@ the whole data frame and specify the target column.
     >>> X = titanic_clean.drop("survived", axis=1)
     >>> y = titanic_clean.survived
     >>> fc.fit(X, y)
-    DummyClassifier(random_state=0, strategy='prior')
-    accuracy: 0.6180    average_precision: 0.3820    recall_macro: 0.5000    roc_auc: 0.5000    
+    DummyClassifier(strategy='prior')
+    accuracy: 0.618    average_precision: 0.382    recall_macro: 0.500    roc_auc: 0.500
     new best (using recall_macro):
-    accuracy             0.618028
-    average_precision    0.381972
-    recall_macro         0.500000
-    roc_auc              0.500000
-    Name: DummyClassifier(random_state=0, strategy='prior'), dtype: float64
+    accuracy             0.618
+    average_precision    0.382
+    recall_macro         0.500
+    roc_auc              0.500
+    Name: DummyClassifier(strategy='prior'), dtype: float64
     GaussianNB()
-    accuracy: 0.8969    average_precision: 0.8705    recall_macro: 0.9021    roc_auc: 0.9190    
+    accuracy: 0.897    average_precision: 0.870    recall_macro: 0.902    roc_auc: 0.919
     new best (using recall_macro):
-    accuracy             0.896903
-    average_precision    0.870464
-    recall_macro         0.902120
-    roc_auc              0.919032
+    accuracy             0.897
+    average_precision    0.870
+    recall_macro         0.902
+    roc_auc              0.919
     Name: GaussianNB(), dtype: float64
     MultinomialNB()
-    accuracy: 0.8885    average_precision: 0.9810    recall_macro: 0.8911    roc_auc: 0.9849    
-    DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
-    accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714    
+    accuracy: 0.888    average_precision: 0.981    recall_macro: 0.891    roc_auc: 0.985
+    DecisionTreeClassifier(class_weight='balanced', max_depth=1)
+    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
     new best (using recall_macro):
-    accuracy             0.975540
-    average_precision    0.953971
-    recall_macro         0.971441
-    roc_auc              0.971441
-    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0), dtype: float64
-    DecisionTreeClassifier(class_weight='balanced', max_depth=5, random_state=0)
-    accuracy: 0.9572    average_precision: 0.9422    recall_macro: 0.9536    roc_auc: 0.9704    
-    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01,
-                random_state=0)
-    accuracy: 0.9755    average_precision: 0.9540    recall_macro: 0.9714    roc_auc: 0.9714    
-    LogisticRegression(C=0.1, class_weight='balanced', multi_class='auto',
-              random_state=0, solver='lbfgs')
-    accuracy: 0.9626    average_precision: 0.9861    recall_macro: 0.9609    roc_auc: 0.9888    
+    accuracy             0.976
+    average_precision    0.954
+    recall_macro         0.971
+    roc_auc              0.971
+    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
+    DecisionTreeClassifier(class_weight='balanced', max_depth=5)
+    accuracy: 0.957    average_precision: 0.942    recall_macro: 0.954    roc_auc: 0.970
+    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
+    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
+    LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs')
+    accuracy: 0.963    average_precision: 0.986    recall_macro: 0.961    roc_auc: 0.989
     Best model:
-    DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0)
+    DecisionTreeClassifier(class_weight='balanced', max_depth=1)
     Best Scores:
-    accuracy             0.975540
-    average_precision    0.953971
-    recall_macro         0.971441
-    roc_auc              0.971441
-    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1, random_state=0), dtype: float64
+    accuracy             0.976
+    average_precision    0.954
+    recall_macro         0.971
+    roc_auc              0.971
+    Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
     SimpleClassifier(random_state=0, refit=True, verbose=1)
-
-

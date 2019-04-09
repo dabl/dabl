@@ -353,6 +353,24 @@ def discrete_scatter(x, y, c, ax, **kwargs):
 
 
 def class_hists(data, column, target, bins="auto", ax=None, legend=False):
+    """Grouped univariate histograms.
+
+    Parameters
+    ----------
+    data : pandas DataFrame
+        Input data to plot
+    column : column specifier
+        Column in the data to compute histograms over (must be continuous).
+    target : column specifier
+        Target column in data, must be categorical.
+    bins : string, int or array-like
+        Number of bins, 'auto' or bin edges. Passed to np.histogram_bin_edges.
+        We always show at least 10 bins for now.
+    ax : matplotlib axes
+        Axes to plot into
+    legend : boolean
+        Whether to create a legend.
+    """
     bin_edges = np.histogram_bin_edges(data[column], bins=bins)
     if len(bin_edges < 10):
         bin_edges = np.histogram_bin_edges(data[column], bins=10)

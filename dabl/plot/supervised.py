@@ -23,7 +23,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
 
 def plot_regression_continuous(X, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
-                               drop_outliers=True):
+                               drop_outliers=True, **kwargs):
     """Exploration plots for continuous features in regression.
 
     Creates plots of all the continuous features vs the target.
@@ -87,7 +87,7 @@ def plot_regression_continuous(X, target_col, types=None,
         axes.ravel()[j].set_axis_off()
 
 
-def plot_regression_categorical(X, target_col, types=None):
+def plot_regression_categorical(X, target_col, types=None, **kwargs):
     """Exploration plots for categorical features in regression.
 
     Creates box plots of target distribution for important categorical
@@ -148,7 +148,7 @@ def plot_regression_categorical(X, target_col, types=None):
 def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    scatter_alpha='auto', scatter_size="auto",
                                    univariate_plot='histogram',
-                                   drop_outliers=True):
+                                   drop_outliers=True, **kwargs):
     """Exploration plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -320,7 +320,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
 
 def plot_classification_categorical(X, target_col, types=None, kind='auto',
-                                    hue_order=None):
+                                    hue_order=None, **kwargs):
     """Exploration plots for categorical features in classification.
 
     Creates plots of categorical variable distributions for each target class.
@@ -418,7 +418,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
 
 
 def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
-                    scatter_size='auto', verbose=10):
+                    scatter_size='auto', verbose=10, **kwargs):
     """Exploration plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -477,8 +477,8 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
         plt.title("Target distribution")
         plot_regression_continuous(X, target_col, types=types,
                                    scatter_alpha=scatter_alpha,
-                                   scatter_size=scatter_size)
-        plot_regression_categorical(X, target_col, types=types)
+                                   scatter_size=scatter_size, **kwargs)
+        plot_regression_categorical(X, target_col, types=types, **kwargs)
     else:
         print("Target looks like classification")
         # regression
@@ -499,6 +499,6 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
         plot_classification_continuous(X, target_col, types=types,
                                        hue_order=counts.index,
                                        scatter_alpha=scatter_alpha,
-                                       scatter_size=scatter_size)
+                                       scatter_size=scatter_size, **kwargs)
         plot_classification_categorical(X, target_col, types=types,
-                                        hue_order=counts.index)
+                                        hue_order=counts.index, **kwargs)

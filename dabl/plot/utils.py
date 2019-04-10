@@ -199,15 +199,17 @@ def mosaic_plot(data, rows, cols, ax=None):
         ax = plt.gca()
     pos_y = 0
     positions_y = []
+    n_rows = cont.shape[0]
     for i, col in enumerate(cont.columns):
         height = cont[col].sum()
         positions_y.append(pos_y + height / 2)
 
         pos_x = 0
-        for row in cont[col]:
+        for j, row in enumerate(cont[col]):
             width = row / height
             rect = Rectangle((pos_x, pos_y), width, height, edgecolor='k',
-                             facecolor=plt.cm.tab10(i), alpha=pos_x + width)
+                             facecolor=plt.cm.tab10(i),
+                             alpha=(j + 1) / (n_rows + 1))
             pos_x += width
             ax.add_patch(rect)
         pos_y += height
@@ -447,8 +449,8 @@ def _get_scatter_size(scatter_size, X):
     if X.shape[0] < 100:
         return 10
     elif X.shape[0] < 1000:
-        return 8
-    elif X.shape[0] < 10000:
         return 5
+    elif X.shape[0] < 10000:
+        return 3
     else:
         return 2

@@ -480,6 +480,6 @@ def _get_scatter_size(scatter_size, X):
     elif X.shape[0] < 1000:
         return 80
     elif X.shape[0] < 10000:
-        return 50
+        return 10
     else:
-        return 30
+        return 5

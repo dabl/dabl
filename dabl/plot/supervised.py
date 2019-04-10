@@ -148,7 +148,8 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
 def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    scatter_alpha='auto', scatter_size="auto",
                                    univariate_plot='histogram',
-                                   drop_outliers=True, **kwargs):
+                                   drop_outliers=True, plot_pairwise=True,
+                                   **kwargs):
     """Exploration plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -178,6 +179,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         Supported: 'histogram' and 'kde'.
     drop_outliers : bool, default=True
         Whether to drop outliers when plotting.
+    plot_pairwise : bool, default=True
+        Whether to create pairwise plots. Can be a bit slow.
     """
     scatter_alpha = _get_scatter_alpha(scatter_alpha, X)
     scatter_size = _get_scatter_size(scatter_size, X)
@@ -250,6 +253,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         # FIXME remove "variable = " from title, add f score
 
         # pairwise plots
+        if not plot_pairwise:
+            return
         top_k = np.argsort(f)[-top_for_interactions:][::-1]
         top_pairs = _find_scatter_plots_classification(
             features_imp[:, top_k], target)

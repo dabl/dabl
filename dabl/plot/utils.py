@@ -315,6 +315,8 @@ def _find_scatter_plots_classification(X, target):
     # dummy = DummyClassifier(strategy='prior').fit(X, target)
     # baseline_score = recall_score(target, dummy.predict(X), average='macro')
     scores = []
+    # converting to int here might save some time
+    _, target = np.unique(target, return_inverse=True)
     for i, j in itertools.combinations(np.arange(X.shape[1]), 2):
         this_X = X[:, [i, j]]
         # assume this tree is simple enough so not be able to overfit in 2d

@@ -194,7 +194,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         X_imp = X.fillna(features.median(axis=0))
         # FIXME we should use "univariate_plot" here
         sns.pairplot(X_imp, vars=features.columns,
-                     hue=target_col)
+                     hue=target_col, diag_kind='hist',
+                     plot_kws={'alpha': scatter_alpha})
         plt.suptitle("Continuous features pairplot", y=1.02)
     else:
         # univariate plots
@@ -228,7 +229,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             for i, (ind, ax) in enumerate(zip(top_k, axes.ravel())):
                 class_hists(best_features, best_features.columns[i],
                             target_col, ax=ax, legend=i == 0)
-                ax.set_title("F={}".format(f[ind]))
+                ax.set_title("F={:.2E}".format(f[ind]))
             for j in range(i + 1, axes.size):
                 # turn off axis if we didn't fill last row
                 axes.ravel()[j].set_axis_off()
@@ -439,9 +440,15 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
     # low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:
-            # yes we don't need a loop
-            types.loc[col, 'low_card_int'] = False
-            types.loc[col, 'categorical'] = True
+            if col == target_col:
+                continue
+            # kinda hacky for now
+            if X[col].nunique() < 20:
+                types.loc[col, 'low_card_int'] = False
+                types.loc[col, 'categorical'] = True
+            else:
+                types.loc[col, 'low_card_int'] = False
+                types.loc[col, 'continuous'] = True
 
     if types.continuous[target_col]:
         print("Target looks like regression")

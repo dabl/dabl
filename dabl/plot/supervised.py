@@ -261,7 +261,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             j = top_k[y]
             discrete_scatter(features_imp[:, i], features_imp[:, j],
                              c=target, ax=ax, alpha=scatter_alpha,
-                             markersize=scatter_size)
+                             s=scatter_size)
             ax.set_xlabel(features.columns[i])
             ax.set_ylabel(features.columns[j])
             ax.set_title("{:.3f}".format(score))
@@ -287,7 +287,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
         discrete_scatter(features_pca[:, x], features_pca[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
-                         markersize=scatter_size)
+                         s=scatter_size)
         ax.set_xlabel("PCA {}".format(x))
         ax.set_ylabel("PCA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -311,7 +311,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
         discrete_scatter(features_lda[:, x], features_lda[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
-                         markersize=scatter_size)
+                         s=scatter_size)
         ax.set_xlabel("LDA {}".format(x))
         ax.set_ylabel("LDA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -351,7 +351,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
     """
     types = _check_X_target_col(X, target_col, types, task="classification")
     if kind == "auto":
-        if X[target_col].nunique() > 2:
+        if X[target_col].nunique() > 5:
             kind = 'count'
         else:
             kind = 'mosaic'

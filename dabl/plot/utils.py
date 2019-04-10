@@ -174,7 +174,7 @@ def _shortname(some_string, maxlen=20):
         return some_string
 
 
-def mosaic_plot(data, rows, cols, ax=None):
+def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None):
     """Create a mosaic plot from a dataframe.
 
     Right now only horizontal mosaic plots are supported,
@@ -188,6 +188,8 @@ def mosaic_plot(data, rows, cols, ax=None):
         Column in data to tabulate across rows.
     cols : column specifier
         Column in data to use to subpartition rows.
+    vary_lightness : bool, default=False
+        Whether to vary lightness across categories.
     ax : matplotlib axes or None
         Axes to plot into.
     """
@@ -199,7 +201,7 @@ def mosaic_plot(data, rows, cols, ax=None):
         ax = plt.gca()
     pos_y = 0
     positions_y = []
-    n_rows = cont.shape[0]
+    n_cols = cont.shape[1]
     for i, col in enumerate(cont.columns):
         height = cont[col].sum()
         positions_y.append(pos_y + height / 2)
@@ -207,9 +209,11 @@ def mosaic_plot(data, rows, cols, ax=None):
         pos_x = 0
         for j, row in enumerate(cont[col]):
             width = row / height
+            color = plt.cm.tab10(j)
+            if vary_lightness:
+                color = _lighten_color(color, (i + 1) / (n_cols + 1))
             rect = Rectangle((pos_x, pos_y), width, height, edgecolor='k',
-                             facecolor=plt.cm.tab10(i),
-                             alpha=(j + 1) / (n_rows + 1))
+                             facecolor=color)
             pos_x += width
             ax.add_patch(rect)
         pos_y += height
@@ -217,6 +221,26 @@ def mosaic_plot(data, rows, cols, ax=None):
     ax.set_ylim(0, pos_y)
     ax.set_yticks(positions_y)
     ax.set_yticklabels(cont.columns)
+
+
+def _lighten_color(color, amount=0.5):
+    """
+    Lightens the given color by multiplying (1-luminosity) by the given amount.
+    Input can be matplotlib color string, hex string, or RGB tuple.
+
+    https://stackoverflow.com/questions/37765197/darken-or-lighten-a-color-in-matplotlib
+
+    Examples:
+    >> lighten_color('g', 0.3)
+    >> lighten_color('#F034A3', 0.6)
+    >> lighten_color((.3,.55,.1), 0.5)
+    """
+    import matplotlib.colors as mc
+    import colorsys
+    c = color
+    amount += 0.5
+    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
+    return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
 def _get_n_top(features, name):
@@ -355,8 +379,11 @@ def discrete_scatter(x, y, c, ax=None, **kwargs):
         ax = plt.gca()
     for i in np.unique(c):
         mask = c == i
-        ax.plot(x[mask], y[mask], 'o', label=i, **kwargs)
-    ax.legend()
+        ax.scatter(x[mask], y[mask], label=i, **kwargs)
+    legend = ax.legend()
+    for handle in legend.legendHandles:
+        handle.set_alpha(1)
+        handle.set_sizes((100,))
 
 
 def class_hists(data, column, target, bins="auto", ax=None, legend=False):
@@ -449,10 +476,10 @@ def _get_scatter_size(scatter_size, X):
     if scatter_size != "auto":
         return scatter_size
     if X.shape[0] < 100:
-        return 10
+        return 100
     elif X.shape[0] < 1000:
-        return 5
+        return 80
     elif X.shape[0] < 10000:
-        return 3
+        return 50
     else:
-        return 2
+        return 30

@@ -1,3 +1,6 @@
+from warnings import warn
+from functools import reduce
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -261,6 +264,8 @@ def _fill_missing_categorical(X):
 
 
 def _make_subplots(n_plots, max_cols=5, row_height=3):
+    """Create a harmonious subplot grid.
+    """
     n_rows, n_cols = find_pretty_grid(n_plots, max_cols=max_cols)
     fig, axes = plt.subplots(n_rows, n_cols,
                              figsize=(4 * n_cols, row_height * n_rows),
@@ -369,9 +374,10 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
     legend : boolean
         Whether to create a legend.
     """
-    bin_edges = np.histogram_bin_edges(data[column], bins=bins)
-    if len(bin_edges) < 5:
-        bin_edges = np.histogram_bin_edges(data[column], bins=5)
+    col_data = data[column].dropna()
+    bin_edges = np.histogram_bin_edges(col_data, bins=bins)
+    if len(bin_edges) < 10:
+        bin_edges = np.histogram_bin_edges(col_data, bins=10)
 
     if ax is None:
         ax = plt.gca()
@@ -391,3 +397,34 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
     ax.set_yticks(())
     ax.set_xlabel(column)
     return ax
+
+
+def _find_inliers(series):
+    low = series.quantile(0.01)
+    high = series.quantile(0.99)
+    # the two is a complete hack
+    inner_range = (high - low) / 2
+    mask = series.between(low - inner_range, high + inner_range)
+    mask = mask | series.isna()
+    dropped = len(mask) - mask.sum()
+    if dropped > 0:
+        warn("Dropped {} outliers in column {}.".format(
+            int(dropped), series.name), UserWarning)
+    return mask
+
+
+def _clean_outliers(data):
+    def _find_outliers_series(series):
+        series = series.dropna()
+        low = series.quantile(0.01)
+        high = series.quantile(0.99)
+        # the two is a complete hack
+        inner_range = (high - low) / 2
+        return series.between(low - inner_range, high + inner_range)
+    mask = data.apply(_find_outliers_series)
+    mask = mask.apply(lambda x: reduce(np.logical_and, x), axis=1).fillna(True)
+    dropped = len(mask) - mask.sum()
+    if dropped > 0:
+        warn("Dropped {} outliers.".format(int(dropped)), UserWarning)
+        return mask
+    return None

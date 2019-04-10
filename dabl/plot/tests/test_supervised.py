@@ -81,6 +81,7 @@ def test_type_hints(add, feature_type, target_type):
     # one of the labels is 'target' iif regression
     labels = ax.get_ylabel() + ax.get_xlabel()
     assert ('target' in labels) == (target_type == 'continuous')
+    plt.close("all")
 
 
 def test_float_classification_target():

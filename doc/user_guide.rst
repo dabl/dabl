@@ -46,7 +46,7 @@ Data cleaning
 >>> import dabl
 >>> import pandas as pd
 >>> data = pd.read_csv(dabl.datasets.data_path("adult.csv.gz"))
->>> data_clean = dabl.clean(data)
+>>> data_clean = dabl.clean(data)[::10]
 
 The first step in any data analysis is data cleaning. dabl tries to detect the
 types of your data and apply appropriate conversions.  It also tries to detect

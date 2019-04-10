@@ -75,10 +75,10 @@ def plot_regression_continuous(X, target_col, types=None,
         if drop_outliers:
             inliers = _find_inliers(features.loc[:, col])
             ax.plot(features.loc[inliers, col], target[inliers], 'o',
-                    alpha=scatter_alpha, s=scatter_size)
+                    alpha=scatter_alpha, markersize=scatter_size)
         else:
             ax.plot(features.loc[:, col], target, 'o',
-                    alpha=scatter_alpha, s=scatter_size)
+                    alpha=scatter_alpha, markersize=scatter_size)
         ax.set_xlabel(_shortname(col))
         ax.set_title("F={:.2E}".format(f[col_idx]))
 

@@ -174,7 +174,7 @@ def _shortname(some_string, maxlen=20):
         return some_string
 
 
-def mosaic_plot(data, rows, cols, ax=None):
+def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None):
     """Create a mosaic plot from a dataframe.
 
     Right now only horizontal mosaic plots are supported,
@@ -188,6 +188,8 @@ def mosaic_plot(data, rows, cols, ax=None):
         Column in data to tabulate across rows.
     cols : column specifier
         Column in data to use to subpartition rows.
+    vary_lightness : bool, default=False
+        Whether to vary lightness across categories.
     ax : matplotlib axes or None
         Axes to plot into.
     """
@@ -207,9 +209,11 @@ def mosaic_plot(data, rows, cols, ax=None):
         pos_x = 0
         for j, row in enumerate(cont[col]):
             width = row / height
+            color = plt.cm.tab10(j)
+            if vary_lightness:
+                color = _lighten_color(color, (i + 1) / (n_cols + 1))
             rect = Rectangle((pos_x, pos_y), width, height, edgecolor='k',
-                             facecolor=_lighten_color(
-                                 plt.cm.tab10(j), (i + 1) / (n_cols + 1)))
+                             facecolor=color)
             pos_x += width
             ax.add_patch(rect)
         pos_y += height

@@ -351,7 +351,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
     """
     types = _check_X_target_col(X, target_col, types, task="classification")
     if kind == "auto":
-        if X[target_col].nunique() > 2:
+        if X[target_col].nunique() > 5:
             kind = 'count'
         else:
             kind = 'mosaic'

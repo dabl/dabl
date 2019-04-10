@@ -18,11 +18,12 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
                     class_hists, discrete_scatter, mosaic_plot,
-                    _find_inliers)
+                    _find_inliers, _get_scatter_alpha, _get_scatter_size)
 
 
 def plot_regression_continuous(X, target_col, types=None,
-                               scatter_alpha=1., drop_outliers=True):
+                               scatter_alpha='auto', scatter_size='auto',
+                               drop_outliers=True):
     """Exploration plots for continuous features in regression.
 
     Creates plots of all the continuous features vs the target.
@@ -37,12 +38,16 @@ def plot_regression_continuous(X, target_col, types=None,
     types : dataframe of types, optional.
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
-    scatter_alpha : float, default=1.
-        Alpha values for scatter plots.
+    scatter_alpha : float, default='auto'.
+        Alpha values for scatter plots. 'auto' is dirty hacks.
+    scatter_size : float, default='auto'.
+        Marker size for scatter plots. 'auto' is dirty hacks.
     drop_outliers : bool, default=True
         Whether to drop outliers when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
+    scatter_alpha = _get_scatter_alpha(scatter_alpha, X)
+    scatter_size = _get_scatter_size(scatter_size, X)
 
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
@@ -70,10 +75,10 @@ def plot_regression_continuous(X, target_col, types=None,
         if drop_outliers:
             inliers = _find_inliers(features.loc[:, col])
             ax.plot(features.loc[inliers, col], target[inliers], 'o',
-                    alpha=scatter_alpha)
+                    alpha=scatter_alpha, markersize=scatter_size)
         else:
             ax.plot(features.loc[:, col], target, 'o',
-                    alpha=scatter_alpha)
+                    alpha=scatter_alpha, markersize=scatter_size)
         ax.set_xlabel(_shortname(col))
         ax.set_title("F={:.2E}".format(f[col_idx]))
 
@@ -141,7 +146,7 @@ def plot_regression_categorical(X, target_col, types=None):
 
 
 def plot_classification_continuous(X, target_col, types=None, hue_order=None,
-                                   scatter_alpha=1.,
+                                   scatter_alpha='auto', scatter_size="auto",
                                    univariate_plot='histogram',
                                    drop_outliers=True):
     """Exploration plots for continuous features in classification.
@@ -165,13 +170,18 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     types : dataframe of types, optional.
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
-    scatter_alpha : float, default=1.
-        Alpha values for scatter plots.
+    scatter_alpha : float, default='auto'.
+        Alpha values for scatter plots. 'auto' is dirty hacks.
+    scatter_size : float, default='auto'.
+        Marker size for scatter plots. 'auto' is dirty hacks.
     univariate_plot : string, default="histogram"
         Supported: 'histogram' and 'kde'.
     drop_outliers : bool, default=True
         Whether to drop outliers when plotting.
     """
+    scatter_alpha = _get_scatter_alpha(scatter_alpha, X)
+    scatter_size = _get_scatter_size(scatter_size, X)
+
     types = _check_X_target_col(X, target_col, types, task='classification')
 
     features = X.loc[:, types.continuous]
@@ -250,7 +260,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             i = top_k[x]
             j = top_k[y]
             discrete_scatter(features_imp[:, i], features_imp[:, j],
-                             c=target, ax=ax, alpha=scatter_alpha)
+                             c=target, ax=ax, alpha=scatter_alpha,
+                             markersize=scatter_size)
             ax.set_xlabel(features.columns[i])
             ax.set_ylabel(features.columns[j])
             ax.set_title("{:.3f}".format(score))
@@ -275,7 +286,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                top_pairs.score, axes.ravel()):
 
         discrete_scatter(features_pca[:, x], features_pca[:, y],
-                         c=target, ax=ax, alpha=scatter_alpha)
+                         c=target, ax=ax, alpha=scatter_alpha,
+                         markersize=scatter_size)
         ax.set_xlabel("PCA {}".format(x))
         ax.set_ylabel("PCA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -298,7 +310,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                top_pairs.score, axes.ravel()):
 
         discrete_scatter(features_lda[:, x], features_lda[:, y],
-                         c=target, ax=ax, alpha=scatter_alpha)
+                         c=target, ax=ax, alpha=scatter_alpha,
+                         markersize=scatter_size)
         ax.set_xlabel("LDA {}".format(x))
         ax.set_ylabel("LDA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -404,8 +417,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
         axes.ravel()[j].set_axis_off()
 
 
-def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
-                    verbose=10):
+def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
+                    scatter_size='auto', verbose=10):
     """Exploration plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -422,8 +435,10 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
     type_hints : dict or None
         If dict, provide type information for columns.
         Keys are column names, values are types as provided by detect_types.
-    scatter_alpha : float, default=1.
-        Alpha values for scatter plots.
+    scatter_alpha : float, default='auto'
+        Alpha values for scatter plots. 'auto' is dirty hacks.
+    scatter_size : float, default='auto'.
+        Marker size for scatter plots. 'auto' is dirty hacks.
     verbose : int, default=10
         Controls the verbosity (output).
 
@@ -461,7 +476,8 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
         plt.ylabel("frequency")
         plt.title("Target distribution")
         plot_regression_continuous(X, target_col, types=types,
-                                   scatter_alpha=scatter_alpha)
+                                   scatter_alpha=scatter_alpha,
+                                   scatter_size=scatter_size)
         plot_regression_categorical(X, target_col, types=types)
     else:
         print("Target looks like classification")
@@ -482,6 +498,7 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha=1.,
         plt.title("Target distribution")
         plot_classification_continuous(X, target_col, types=types,
                                        hue_order=counts.index,
-                                       scatter_alpha=scatter_alpha)
+                                       scatter_alpha=scatter_alpha,
+                                       scatter_size=scatter_size)
         plot_classification_categorical(X, target_col, types=types,
                                         hue_order=counts.index)

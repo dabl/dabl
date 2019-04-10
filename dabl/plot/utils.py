@@ -327,7 +327,7 @@ def _find_scatter_plots_classification(X, target):
     return top_3
 
 
-def discrete_scatter(x, y, c, ax, **kwargs):
+def discrete_scatter(x, y, c, ax=None, **kwargs):
     """Scatter plot for categories.
 
     Creates a scatter plot for x and y grouped by c.
@@ -428,3 +428,27 @@ def _clean_outliers(data):
         warn("Dropped {} outliers.".format(int(dropped)), UserWarning)
         return mask
     return None
+
+
+def _get_scatter_alpha(scatter_alpha, X):
+    if scatter_alpha != "auto":
+        return scatter_alpha
+    if X.shape[0] < 100:
+        return .9
+    elif X.shape[0] < 1000:
+        return .5
+    else:
+        return .1
+
+
+def _get_scatter_size(scatter_size, X):
+    if scatter_size != "auto":
+        return scatter_size
+    if X.shape[0] < 100:
+        return 10
+    elif X.shape[0] < 1000:
+        return 8
+    elif X.shape[0] < 10000:
+        return 5
+    else:
+        return 2

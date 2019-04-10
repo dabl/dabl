@@ -75,10 +75,10 @@ def plot_regression_continuous(X, target_col, types=None,
         if drop_outliers:
             inliers = _find_inliers(features.loc[:, col])
             ax.plot(features.loc[inliers, col], target[inliers], 'o',
-                    alpha=scatter_alpha, markersize=scatter_size)
+                    alpha=scatter_alpha, s=scatter_size)
         else:
             ax.plot(features.loc[:, col], target, 'o',
-                    alpha=scatter_alpha, markersize=scatter_size)
+                    alpha=scatter_alpha, s=scatter_size)
         ax.set_xlabel(_shortname(col))
         ax.set_title("F={:.2E}".format(f[col_idx]))
 
@@ -261,7 +261,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             j = top_k[y]
             discrete_scatter(features_imp[:, i], features_imp[:, j],
                              c=target, ax=ax, alpha=scatter_alpha,
-                             markersize=scatter_size)
+                             s=scatter_size)
             ax.set_xlabel(features.columns[i])
             ax.set_ylabel(features.columns[j])
             ax.set_title("{:.3f}".format(score))
@@ -287,7 +287,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
         discrete_scatter(features_pca[:, x], features_pca[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
-                         markersize=scatter_size)
+                         s=scatter_size)
         ax.set_xlabel("PCA {}".format(x))
         ax.set_ylabel("PCA {}".format(y))
         ax.set_title("{:.3f}".format(score))
@@ -311,7 +311,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
         discrete_scatter(features_lda[:, x], features_lda[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
-                         markersize=scatter_size)
+                         s=scatter_size)
         ax.set_xlabel("LDA {}".format(x))
         ax.set_ylabel("LDA {}".format(y))
         ax.set_title("{:.3f}".format(score))

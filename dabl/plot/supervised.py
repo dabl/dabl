@@ -17,11 +17,12 @@ from ..preprocessing import detect_types, clean
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
-                    class_hists, discrete_scatter, mosaic_plot)
+                    class_hists, discrete_scatter, mosaic_plot,
+                    _find_inliers)
 
 
 def plot_regression_continuous(X, target_col, types=None,
-                               scatter_alpha=1.):
+                               scatter_alpha=1., drop_outliers=True):
     """Exploration plots for continuous features in regression.
 
     Creates plots of all the continuous features vs the target.
@@ -38,6 +39,8 @@ def plot_regression_continuous(X, target_col, types=None,
         types.
     scatter_alpha : float, default=1.
         Alpha values for scatter plots.
+    drop_outliers : bool, default=True
+        Whether to drop outliers when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
 
@@ -46,6 +49,7 @@ def plot_regression_continuous(X, target_col, types=None,
         features = features.drop(target_col, axis=1)
     if features.shape[1] == 0:
         return
+
     show_top = _get_n_top(features, "continuous")
 
     target = X[target_col]
@@ -59,13 +63,19 @@ def plot_regression_continuous(X, target_col, types=None,
 
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
-    for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
+    for i, (col_idx, ax) in enumerate(zip(top_k, axes.ravel())):
         if i % axes.shape[1] == 0:
             ax.set_ylabel(target_col)
-        ax.plot(features.iloc[:, col], target, 'o',
-                alpha=scatter_alpha)
-        ax.set_xlabel(_shortname(features.columns[col]))
-        ax.set_title("F={:.2E}".format(f[col]))
+        col = features.columns[col_idx]
+        if drop_outliers:
+            inliers = _find_inliers(features.loc[:, col])
+            ax.plot(features.loc[inliers, col], target[inliers], 'o',
+                    alpha=scatter_alpha)
+        else:
+            ax.plot(features.loc[:, col], target, 'o',
+                    alpha=scatter_alpha)
+        ax.set_xlabel(_shortname(col))
+        ax.set_title("F={:.2E}".format(f[col_idx]))
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
@@ -132,7 +142,7 @@ def plot_regression_categorical(X, target_col, types=None):
 
 def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    scatter_alpha=1.,
-                                   univariate_plot='histogram'):
+                                   univariate_plot='histogram', drop_outliers=True):
     """Exploration plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -158,6 +168,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         Alpha values for scatter plots.
     univariate_plot : string, default="histogram"
         Supported: 'histogram' and 'kde'.
+    drop_outliers : bool, default=True
+        Whether to drop outliers when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task='classification')
 
@@ -166,6 +178,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         features = features.drop(target_col, axis=1)
     if features.shape[1] == 0:
         return
+
     top_for_interactions = 20
     features_imp = SimpleImputer().fit_transform(features)
     target = X[target_col]

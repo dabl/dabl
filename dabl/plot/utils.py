@@ -265,6 +265,8 @@ def _fill_missing_categorical(X):
 
 
 def _make_subplots(n_plots, max_cols=5, row_height=3):
+    """Create a harmonious subplot grid.
+    """
     n_rows, n_cols = find_pretty_grid(n_plots, max_cols=max_cols)
     fig, axes = plt.subplots(n_rows, n_cols,
                              figsize=(4 * n_cols, row_height * n_rows),
@@ -374,9 +376,10 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
     legend : boolean
         Whether to create a legend.
     """
-    bin_edges = np.histogram_bin_edges(data[column], bins=bins)
+    col_data = data[column].dropna()
+    bin_edges = np.histogram_bin_edges(col_data, bins=bins)
     if len(bin_edges) < 10:
-        bin_edges = np.histogram_bin_edges(data[column], bins=10)
+        bin_edges = np.histogram_bin_edges(col_data, bins=10)
 
     if ax is None:
         ax = plt.gca()

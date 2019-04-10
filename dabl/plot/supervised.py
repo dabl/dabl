@@ -142,7 +142,8 @@ def plot_regression_categorical(X, target_col, types=None):
 
 def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    scatter_alpha=1.,
-                                   univariate_plot='histogram', drop_outliers=True):
+                                   univariate_plot='histogram',
+                                   drop_outliers=True):
     """Exploration plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -204,7 +205,13 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         # NaN for a particular class
         best_features = features.iloc[:, top_k].copy()
 
+        if drop_outliers:
+            for col in best_features.columns:
+                inliers = _find_inliers(best_features.loc[:, col])
+                best_features[~inliers] = np.NaN
+
         best_features[target_col] = target
+
         if univariate_plot == 'kde':
             df = best_features.melt(target_col)
             rows, cols = find_pretty_grid(show_top)
@@ -216,7 +223,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             g.axes[0].legend()
             plt.suptitle("Continuous features by target", y=1.02)
         elif univariate_plot == 'histogram':
-            fig, axes = _make_subplots(n_plots=show_top)
+            row_height = 3 if target.nunique() < 5 else 5
+            fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
             for i, (ind, ax) in enumerate(zip(top_k, axes.ravel())):
                 class_hists(best_features, best_features.columns[i],
                             target_col, ax=ax, legend=i == 0)

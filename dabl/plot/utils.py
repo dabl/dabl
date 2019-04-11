@@ -430,14 +430,13 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
         Whether to create a legend.
     """
     col_data = data[column].dropna()
+
     if ax is None:
         ax = plt.gca()
     if col_data.nunique() > 10:
         ordinal = False
         # histograms
         bin_edges = np.histogram_bin_edges(col_data, bins=bins)
-        # if len(bin_edges) < 10:
-        #    bin_edges = np.histogram_bin_edges(col_data, bins=10)
         if len(bin_edges) > 30:
             bin_edges = np.histogram_bin_edges(col_data, bins=30)
 
@@ -577,9 +576,15 @@ def _get_scatter_size(scatter_size, x):
     if scatter_size != "auto":
         return scatter_size
     if x.shape[0] < 100:
+<<<<<<< HEAD
         return 30
     elif x.shape[0] < 1000:
         return 30
+=======
+        return 30
+    elif x.shape[0] < 1000:
+        return 30
+>>>>>>> master
     elif x.shape[0] < 2000:
         return 10
     elif x.shape[0] < 10000:

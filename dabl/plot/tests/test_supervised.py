@@ -5,13 +5,14 @@ import matplotlib.pyplot as plt
 
 import itertools
 
-from sklearn.datasets import make_regression, make_blobs
+from sklearn.datasets import make_regression, make_blobs, load_digits
 from sklearn.preprocessing import KBinsDiscretizer
 from dabl.preprocessing import clean, detect_types
 from dabl.plot.supervised import (
     plot_supervised, plot_classification_categorical,
     plot_classification_continuous, plot_regression_categorical,
     plot_regression_continuous)
+from dabl.utils import data_df_from_bunch
 
 
 # FIXME: check that target is not y but a column name
@@ -123,3 +124,9 @@ def test_plot_wrong_target_type():
         plot_classification_categorical(X, 'target')
     with pytest.raises(ValueError, match="need categorical"):
         plot_classification_continuous(X, 'target')
+
+
+def test_plot_target_low_card_int():
+    data = load_digits()
+    df = data_df_from_bunch(data)
+    plot_supervised(df[::10], target_col='target')

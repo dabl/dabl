@@ -480,6 +480,7 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
     n_features = len(columns)
     fig, axes = plt.subplots(n_features, n_features,
                              figsize=(n_features * 3, n_features * 3))
+    axes = np.atleast_2d(axes)
     for ax, (i, j) in zip(axes.ravel(),
                           itertools.product(range(n_features), repeat=2)):
         legend = i == 0 and j == n_features - 1

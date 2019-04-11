@@ -430,24 +430,37 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
         Whether to create a legend.
     """
     col_data = data[column].dropna()
-    bin_edges = np.histogram_bin_edges(col_data, bins=bins)
-    # if len(bin_edges) < 10:
-    #    bin_edges = np.histogram_bin_edges(col_data, bins=10)
-    if len(bin_edges) > 30:
-        bin_edges = np.histogram_bin_edges(col_data, bins=30)
 
     if ax is None:
         ax = plt.gca()
-    counts = {}
-    for name, group in data.groupby(target)[column]:
-        this_counts, _ = np.histogram(group, bins=bin_edges)
-        counts[name] = this_counts
-    counts = pd.DataFrame(counts)
-    bottom = counts.values.max() * 1.1
+    if col_data.nunique() > 10:
+        ordinal = False
+        # histograms
+        bin_edges = np.histogram_bin_edges(col_data, bins=bins)
+        if len(bin_edges) > 30:
+            bin_edges = np.histogram_bin_edges(col_data, bins=30)
+
+        counts = {}
+        for name, group in data.groupby(target)[column]:
+            this_counts, _ = np.histogram(group, bins=bin_edges)
+            counts[name] = this_counts
+        counts = pd.DataFrame(counts)
+    else:
+        ordinal = True
+        # ordinal data, count distinct values
+        counts = data.groupby(target)[column].value_counts().unstack(target)
+    bottom = counts.max().max() * 1.1
     for i, name in enumerate(counts.columns):
-        ax.bar(bin_edges[:-1], counts[name], bottom=bottom * i, label=name,
-               align='edge', width=(bin_edges[1] - bin_edges[0]) * .9)
-        ax.hlines(bottom * i, xmin=bin_edges[0], xmax=bin_edges[-1],
+        if ordinal:
+            ax.bar(range(counts.shape[0]), counts[name], width=.9,
+                   bottom=bottom * i, tick_label=counts.index, linewidth=2,
+                   edgecolor='k')
+            xmin, xmax = 0 - .5, counts.shape[0] - .5
+        else:
+            ax.bar(bin_edges[:-1], counts[name], bottom=bottom * i, label=name,
+                   align='edge', width=(bin_edges[1] - bin_edges[0]) * .9)
+            xmin, xmax = bin_edges[0], bin_edges[-1]
+        ax.hlines(bottom * i, xmin=xmin, xmax=xmax,
                   linewidth=1)
     if legend:
         ax.legend()

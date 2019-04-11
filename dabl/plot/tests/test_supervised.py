@@ -129,4 +129,4 @@ def test_plot_wrong_target_type():
 def test_plot_target_low_card_int():
     data = load_digits()
     df = data_df_from_bunch(data)
-    plot_supervised(df[::10], target='target')
+    plot_supervised(df[::10], target_col='target')

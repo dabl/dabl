@@ -431,8 +431,10 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
     """
     col_data = data[column].dropna()
     bin_edges = np.histogram_bin_edges(col_data, bins=bins)
-    if len(bin_edges) < 10:
-        bin_edges = np.histogram_bin_edges(col_data, bins=10)
+    # if len(bin_edges) < 10:
+    #    bin_edges = np.histogram_bin_edges(col_data, bins=10)
+    if len(bin_edges) > 30:
+        bin_edges = np.histogram_bin_edges(col_data, bins=30)
 
     if ax is None:
         ax = plt.gca()
@@ -502,8 +504,9 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
             ax.set_xlabel("")
             ax.set_xticklabels(())
     despine(fig)
-    axes[0, 0].set_yticks(axes[0, 1].get_yticks())
-    axes[0, 0].set_ylim(axes[0, 1].get_ylim())
+    if n_features > 1:
+        axes[0, 0].set_yticks(axes[0, 1].get_yticks())
+        axes[0, 0].set_ylim(axes[0, 1].get_ylim())
 
 
 def _inlier_range(series):

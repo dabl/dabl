@@ -18,7 +18,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
                     class_hists, discrete_scatter, mosaic_plot,
-                    _find_inliers, pairplot)
+                    _find_inliers, pairplot, _get_scatter_alpha, _get_scatter_size)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -473,6 +473,9 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
         plt.xlabel(target_col)
         plt.ylabel("frequency")
         plt.title("Target distribution")
+        scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
+        scatter_size = _get_scatter_size(scatter_size, X[target_col])
+
         plot_regression_continuous(X, target_col, types=types,
                                    scatter_alpha=scatter_alpha,
                                    scatter_size=scatter_size, **kwargs)

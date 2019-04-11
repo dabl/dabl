@@ -576,15 +576,9 @@ def _get_scatter_size(scatter_size, x):
     if scatter_size != "auto":
         return scatter_size
     if x.shape[0] < 100:
-<<<<<<< HEAD
         return 30
     elif x.shape[0] < 1000:
         return 30
-=======
-        return 30
-    elif x.shape[0] < 1000:
-        return 30
->>>>>>> master
     elif x.shape[0] < 2000:
         return 10
     elif x.shape[0] < 10000:

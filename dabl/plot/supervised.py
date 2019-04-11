@@ -18,7 +18,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
                     class_hists, discrete_scatter, mosaic_plot,
-                    _find_inliers, _get_scatter_alpha, _get_scatter_size)
+                    _find_inliers, pairplot)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -46,8 +46,6 @@ def plot_regression_continuous(X, target_col, types=None,
         Whether to drop outliers when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
-    scatter_alpha = _get_scatter_alpha(scatter_alpha, X)
-    scatter_size = _get_scatter_size(scatter_size, X)
 
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
@@ -75,10 +73,10 @@ def plot_regression_continuous(X, target_col, types=None,
         if drop_outliers:
             inliers = _find_inliers(features.loc[:, col])
             ax.scatter(features.loc[inliers, col], target[inliers],
-                    alpha=scatter_alpha, s=scatter_size)
+                       alpha=scatter_alpha, s=scatter_size)
         else:
             ax.scatter(features.loc[:, col], target,
-                    alpha=scatter_alpha, s=scatter_size)
+                       alpha=scatter_alpha, s=scatter_size)
         ax.set_xlabel(_shortname(col))
         ax.set_title("F={:.2E}".format(f[col_idx]))
 
@@ -186,8 +184,6 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     -----
     important kwargs parameters are: scatter_size and scatter_alpha.
     """
-    scatter_alpha = _get_scatter_alpha(scatter_alpha, X)
-    scatter_size = _get_scatter_size(scatter_size, X)
 
     types = _check_X_target_col(X, target_col, types, task='classification')
 
@@ -200,19 +196,11 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     top_for_interactions = 20
     features_imp = SimpleImputer().fit_transform(features)
     target = X[target_col]
-    # FIXME if one class only has NaN for a value we crash! :-/
-    # TODO univariate plot?
-    # already on diagonal for pairplot but not for many features
+
     if features.shape[1] <= 5:
-        # for n_dim <= 5 we do full pairplot plot
-        # FIXME filling in missing values here b/c of a bug in seaborn
-        # we really shouldn't be doing this
-        # https://github.com/mwaskom/seaborn/issues/1699
-        X_imp = X.fillna(features.median(axis=0))
-        # FIXME we should use "univariate_plot" here
-        sns.pairplot(X_imp, vars=features.columns,
-                     hue=target_col, diag_kind='hist',
-                     plot_kws={'alpha': scatter_alpha})
+        pairplot(X, target_col=target_col, columns=features.columns,
+                 scatter_alpha=scatter_alpha,
+                 scatter_size=scatter_size)
         plt.suptitle("Continuous features pairplot", y=1.02)
     else:
         # univariate plots
@@ -481,7 +469,6 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
         # regression
         # make sure we include the target column in X
         # even though it's not categorical
-        plt.figure()
         plt.hist(X[target_col], bins='auto')
         plt.xlabel(target_col)
         plt.ylabel("frequency")

@@ -1,8 +1,10 @@
 import pytest
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
 
-from dabl.plot.utils import find_pretty_grid, plot_coefficients
+from dabl.utils import data_df_from_bunch
+from dabl.plot.utils import find_pretty_grid, plot_coefficients, pairplot
 
 
 def test_find_pretty_grid():
@@ -28,3 +30,8 @@ def test_plot_coefficients(n_features, n_top_features):
     plot_coefficients(coef, names, n_top_features=n_top_features)
     ax = plt.gca()
     assert len(ax.get_xticks()) == 5
+
+
+def test_pairplot_iris():
+    data = data_df_from_bunch(load_iris())
+    pairplot(data, target_col='target')

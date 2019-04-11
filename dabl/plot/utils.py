@@ -1,11 +1,14 @@
 from warnings import warn
 from functools import reduce
+import itertools
+
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import itertools
 from matplotlib.patches import Rectangle
+from seaborn.utils import despine
+
 
 # from sklearn.dummy import DummyClassifier
 # from sklearn.metrics import recall_score
@@ -355,7 +358,8 @@ def _find_scatter_plots_classification(X, target):
     return top_3
 
 
-def discrete_scatter(x, y, c, legend='first', clip_outliers=True, ax=None, **kwargs):
+def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
+                     alpha='auto', s='auto', ax=None, **kwargs):
     """Scatter plot for categories.
 
     Creates a scatter plot for x and y grouped by c.
@@ -373,18 +377,24 @@ def discrete_scatter(x, y, c, legend='first', clip_outliers=True, ax=None, **kwa
     legend : bool, or "first", default="first"
         Whether to create a legend. "first" mean only the
         first one in a given gridspec.
+    scatter_alpha : float, default='auto'
+        Alpha values for scatter plots. 'auto' is dirty hacks.
+    scatter_size : float, default='auto'.
+        Marker size for scatter plots. 'auto' is dirty hacks.
     ax : matplotlib axes, default=None
         Axes to plot into
     kwargs :
-        Passed through to plt.plot
+        Passed through to plt.scatter
     """
+    alpha = _get_scatter_alpha(alpha, x)
+    s = _get_scatter_size(s, x)
     if ax is None:
         ax = plt.gca()
     if legend == "first":
         legend = (ax.get_geometry()[2] == 1)
     for i in np.unique(c):
         mask = c == i
-        ax.scatter(x[mask], y[mask], label=i, **kwargs)
+        ax.scatter(x[mask], y[mask], label=i, s=s, alpha=alpha, **kwargs)
     if clip_outliers:
         x_low, x_high = _inlier_range(x)
         y_low, y_high = _inlier_range(y)
@@ -444,6 +454,57 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
     return ax
 
 
+def pairplot(data, target_col, columns=None, scatter_alpha='auto',
+             scatter_size='auto'):
+    """Pairplot (scattermatrix)
+
+    Because there's already too many implementations of this.
+    This is meant for classification only.
+    This is very bare-bones right now :-/
+
+    Parameters
+    ----------
+    data : pandas dataframe
+        Input data
+    target_col : column specifier
+        Target column in data.
+    columns : column specifiers, default=None.
+        Columns in data to include. None means all.
+    scatter_alpha : float, default='auto'
+        Alpha values for scatter plots. 'auto' is dirty hacks.
+    scatter_size : float, default='auto'.
+        Marker size for scatter plots. 'auto' is dirty hacks.
+    """
+    if columns is None:
+        columns = data.columns.drop(target_col)
+    n_features = len(columns)
+    fig, axes = plt.subplots(n_features, n_features,
+                             figsize=(n_features * 3, n_features * 3))
+    for ax, (i, j) in zip(axes.ravel(),
+                          itertools.product(range(n_features), repeat=2)):
+        legend = i == 0 and j == n_features - 1
+        if i == j:
+            class_hists(data, columns[i], target_col, ax=ax.twinx())
+        else:
+            discrete_scatter(data[columns[j]], data[columns[i]],
+                             c=data[target_col], legend=legend, ax=ax,
+                             alpha=scatter_alpha,
+                             s=scatter_size)
+        if j == 0:
+            ax.set_ylabel(columns[i])
+        else:
+            ax.set_ylabel("")
+            ax.set_yticklabels(())
+        if i == n_features - 1:
+            ax.set_xlabel(columns[j])
+        else:
+            ax.set_xlabel("")
+            ax.set_xticklabels(())
+    despine(fig)
+    axes[0, 0].set_yticks(axes[0, 1].get_yticks())
+    axes[0, 0].set_ylim(axes[0, 1].get_ylim())
+
+
 def _inlier_range(series):
     low = np.nanquantile(series, 0.01)
     high = np.nanquantile(series, 0.99)
@@ -481,29 +542,29 @@ def _clean_outliers(data):
     return None
 
 
-def _get_scatter_alpha(scatter_alpha, X):
+def _get_scatter_alpha(scatter_alpha, x):
     if scatter_alpha != "auto":
         return scatter_alpha
-    if X.shape[0] < 100:
+    if x.shape[0] < 100:
         return .9
-    elif X.shape[0] < 1000:
+    elif x.shape[0] < 1000:
         return .5
-    elif X.shape[0] < 10000:
+    elif x.shape[0] < 10000:
         return .2
     else:
         return .1
 
 
-def _get_scatter_size(scatter_size, X):
+def _get_scatter_size(scatter_size, x):
     if scatter_size != "auto":
         return scatter_size
-    if X.shape[0] < 100:
+    if x.shape[0] < 100:
         return 30
-    elif X.shape[0] < 1000:
+    elif x.shape[0] < 1000:
         return 30
-    elif X.shape[0] < 2000:
+    elif x.shape[0] < 2000:
         return 10
-    elif X.shape[0] < 10000:
+    elif x.shape[0] < 10000:
         return 2
     else:
         return 1

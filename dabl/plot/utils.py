@@ -355,7 +355,7 @@ def _find_scatter_plots_classification(X, target):
     return top_3
 
 
-def discrete_scatter(x, y, c, ax=None, **kwargs):
+def discrete_scatter(x, y, c, legend='first', clip_outliers=True, ax=None, **kwargs):
     """Scatter plot for categories.
 
     Creates a scatter plot for x and y grouped by c.
@@ -370,6 +370,9 @@ def discrete_scatter(x, y, c, ax=None, **kwargs):
         y coordinates to scatter
     c : array-like
         Grouping of samples (similar to hue in seaborn)
+    legend : bool, or "first", default="first"
+        Whether to create a legend. "first" mean only the
+        first one in a given gridspec.
     ax : matplotlib axes, default=None
         Axes to plot into
     kwargs :
@@ -377,13 +380,24 @@ def discrete_scatter(x, y, c, ax=None, **kwargs):
     """
     if ax is None:
         ax = plt.gca()
+    if legend == "first":
+        legend = (ax.get_geometry()[2] == 1)
     for i in np.unique(c):
         mask = c == i
         ax.scatter(x[mask], y[mask], label=i, **kwargs)
-    legend = ax.legend()
-    for handle in legend.legendHandles:
-        handle.set_alpha(1)
-        handle.set_sizes((100,))
+    if clip_outliers:
+        x_low, x_high = _inlier_range(x)
+        y_low, y_high = _inlier_range(y)
+        xlims = ax.get_xlim()
+        ylims = ax.get_ylim()
+        ax.set_xlim(max(x_low, xlims[0]), min(x_high, xlims[1]))
+        ax.set_ylim(max(y_low, ylims[0]), min(y_high, ylims[1]))
+
+    if legend:
+        legend = ax.legend()
+        for handle in legend.legendHandles:
+            handle.set_alpha(1)
+            handle.set_sizes((100,))
 
 
 def class_hists(data, column, target, bins="auto", ax=None, legend=False):
@@ -430,12 +444,18 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
     return ax
 
 
-def _find_inliers(series):
-    low = series.quantile(0.01)
-    high = series.quantile(0.99)
+def _inlier_range(series):
+    low = np.nanquantile(series, 0.01)
+    high = np.nanquantile(series, 0.99)
+    assert low < high
     # the two is a complete hack
     inner_range = (high - low) / 2
-    mask = series.between(low - inner_range, high + inner_range)
+    return low - inner_range, high + inner_range
+
+
+def _find_inliers(series):
+    low, high = _inlier_range(series)
+    mask = series.between(low, high)
     mask = mask | series.isna()
     dropped = len(mask) - mask.sum()
     if dropped > 0:
@@ -468,6 +488,8 @@ def _get_scatter_alpha(scatter_alpha, X):
         return .9
     elif X.shape[0] < 1000:
         return .5
+    elif X.shape[0] < 10000:
+        return .2
     else:
         return .1
 
@@ -476,10 +498,12 @@ def _get_scatter_size(scatter_size, X):
     if scatter_size != "auto":
         return scatter_size
     if X.shape[0] < 100:
-        return 100
+        return 30
     elif X.shape[0] < 1000:
-        return 80
-    elif X.shape[0] < 10000:
+        return 30
+    elif X.shape[0] < 2000:
         return 10
+    elif X.shape[0] < 10000:
+        return 2
     else:
-        return 5
+        return 1

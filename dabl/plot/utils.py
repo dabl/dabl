@@ -1,7 +1,7 @@
 from warnings import warn
 from functools import reduce
 import itertools
-
+import scipy
 
 import numpy as np
 import pandas as pd
@@ -410,7 +410,8 @@ def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
             handle.set_sizes((100,))
 
 
-def class_hists(data, column, target, bins="auto", ax=None, legend=False):
+def class_hists(data, column, target, bins="auto", ax=None, legend=False,
+                skew_threshold=None):
     """Grouped univariate histograms.
 
     Parameters
@@ -430,15 +431,29 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
         Whether to create a legend.
     """
     col_data = data[column].dropna()
-
+    log = False
     if ax is None:
         ax = plt.gca()
     if col_data.nunique() > 10:
         ordinal = False
-        # histograms
-        bin_edges = np.histogram_bin_edges(col_data, bins=bins)
-        if len(bin_edges) > 30:
-            bin_edges = np.histogram_bin_edges(col_data, bins=30)
+        if (col_data.min() >= 0 and
+                skew_threshold is not None and
+                scipy.stats.skew(col_data) > skew_threshold):
+            log = True
+            # exponentially distributed count data maybe?
+            if (col_data == col_data.astype(np.int)).all():
+                print("meh!")
+                bin_edges = 10 ** np.arange(10)
+            else:
+                bin_edges = np.logspace(-1, np.log10(col_data.max()), num=10)
+                if bin_edges[0] > col_data.min():
+                    bin_edges = np.hstack([[col_data.min()], bin_edges])
+        else:
+
+            # histograms
+            bin_edges = np.histogram_bin_edges(col_data, bins=bins)
+            if len(bin_edges) > 30:
+                bin_edges = np.histogram_bin_edges(col_data, bins=30)
 
         counts = {}
         for name, group in data.groupby(target)[column]:
@@ -451,7 +466,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
         counts = data.groupby(target)[column].value_counts().unstack(target)
     bottom = counts.max().max() * 1.1
     for i, name in enumerate(counts.columns):
-        if ordinal:
+        if ordinal or log:
             ax.bar(range(counts.shape[0]), counts[name], width=.9,
                    bottom=bottom * i, tick_label=counts.index, linewidth=2,
                    edgecolor='k')

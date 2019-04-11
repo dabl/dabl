@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-
+import scipy
 
 from sklearn.feature_selection import (f_regression,
                                        mutual_info_regression,
@@ -148,6 +148,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    scatter_alpha='auto', scatter_size="auto",
                                    univariate_plot='histogram',
                                    drop_outliers=True, plot_pairwise=True,
+                                   skew_threshold=None,
                                    **kwargs):
     """Exploration plots for continuous features in classification.
 
@@ -236,8 +237,11 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
             for i, (ind, ax) in enumerate(zip(top_k, axes.ravel())):
                 class_hists(best_features, best_features.columns[i],
-                            target_col, ax=ax, legend=i == 0)
-                ax.set_title("F={:.2E}".format(f[ind]))
+                            target_col, ax=ax, legend=i == 0,
+                            skew_threshold=skew_threshold)
+                ax.set_title("F={:.2E} skew={:.2f}".format(
+                    f[ind], scipy.stats.skew(
+                        best_features.iloc[:, i].dropna())))
             for j in range(i + 1, axes.size):
                 # turn off axis if we didn't fill last row
                 axes.ravel()[j].set_axis_off()

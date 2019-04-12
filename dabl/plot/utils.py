@@ -14,7 +14,7 @@ from seaborn.utils import despine
 # from sklearn.metrics import recall_score
 from sklearn.tree import DecisionTreeClassifier
 
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit
 
 
 from ..preprocessing import detect_types
@@ -344,15 +344,17 @@ def _find_scatter_plots_classification(X, target):
     scores = []
     # converting to int here might save some time
     _, target = np.unique(target, return_inverse=True)
+    # limit to 2000 training points for speed?
+    train_size = min(2000, int(.9 * X.shape[0]))
+    cv = StratifiedShuffleSplit(n_splits=3, train_size=train_size)
     for i, j in itertools.combinations(np.arange(X.shape[1]), 2):
         this_X = X[:, [i, j]]
         # assume this tree is simple enough so not be able to overfit in 2d
         # so we don't bother with train/test split
-        tree = DecisionTreeClassifier(max_leaf_nodes=8).fit(this_X, target)
+        tree = DecisionTreeClassifier(max_leaf_nodes=8)
         scores.append((i, j, np.mean(cross_val_score(
-            tree, this_X, target, cv=5, scoring='recall_macro'))))
-        # scores.append((i, j, recall_score(target, tree.predict(this_X),
-        #                                  average='macro')))
+            tree, this_X, target, cv=cv, scoring='recall_macro'))))
+
     scores = pd.DataFrame(scores, columns=['feature0', 'feature1', 'score'])
     top_3 = scores.sort_values(by='score').iloc[-3:][::-1]
     return top_3

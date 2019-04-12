@@ -348,9 +348,7 @@ def clean(X, type_hints=None, verbose=0):
     # get rid of dirty floats, add indicators
     X = _safe_clean(X, types=types)
     # deal with low cardinality ints
-    for col in types.index[types.low_card_int]:
-        # for now let's just check for smooth distributions
-        pass
+    # TODO ?
     # ensure that the indicator variables are also marked as categorical
     # we could certainly do this nicer, but at this point calling
     # detect_types shouldn't be expensive any more
@@ -363,10 +361,8 @@ def clean(X, type_hints=None, verbose=0):
     return X
 
 
-def _safe_clean(X, onehot=False, types=None):
+def _safe_clean(X, types=None):
     """Cleaning / preprocessing outside of cross-validation
-
-    FIXME this leads to duplicating integer columns! no good!
 
     This function is "safe" to use outside of cross-validation in that
     it only does preprocessing that doesn't use statistics that could
@@ -380,8 +376,6 @@ def _safe_clean(X, onehot=False, types=None):
     ----------
     X : dataframe
         Dirty data
-    onehot : boolean, default=False
-        Whether to do one-hot encoding of categorical data.
 
     Returns
     -------
@@ -396,17 +390,10 @@ def _safe_clean(X, onehot=False, types=None):
         res.append(DirtyFloatCleaner().fit_transform(
             X.loc[:, types['dirty_float']]))
     if types['useless'].any() or types['dirty_float'].any():
-        if onehot:
-            # FIXME REMOVE THIS HERE
-            res.append(X.loc[:, types['continuous']])
-            cat_indices = types.index[types['categorical']]
-            res.append(pd.get_dummies(X.loc[:, types['categorical']],
-                                      columns=cat_indices))
-        else:
-            good_types = (types.continuous | types.categorical
-                          | types.low_card_int | types.date
-                          | types.free_string)
-            res.append(X.loc[:, good_types])
+        good_types = (types.continuous | types.categorical
+                      | types.low_card_int | types.date
+                      | types.free_string)
+        res.append(X.loc[:, good_types])
         return pd.concat(res, axis=1)
     return X
 

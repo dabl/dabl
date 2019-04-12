@@ -364,7 +364,7 @@ def clean(X, type_hints=None, return_types=False, verbose=0):
         X = pd.concat([X.loc[:, ~types.dirty_float], X_df], axis=1)
         # we should know what these are but maybe running this again is fine?
         types_df = detect_types(X_df)
-        types = pd.concat([types, types_df])
+        types = pd.concat([types[~types.dirty_float], types_df])
     # deal with low cardinality ints
     # TODO ?
     # ensure that the indicator variables are also marked as categorical

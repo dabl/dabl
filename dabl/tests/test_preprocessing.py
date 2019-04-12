@@ -245,7 +245,7 @@ def test_titanic_detection():
 
     assert (types == true_types).all()
     titanic_clean, clean_types = clean(titanic, return_types=True)
-    assert (clean_types == detect_types(titanic_clean)).all()
+    assert (clean_types == detect_types(titanic_clean)).all(axis=None)
     titanic_nan = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'),
                               na_values='?')
     types_table = detect_types(titanic_nan)
@@ -261,21 +261,18 @@ def test_titanic_feature_names():
     ep = EasyPreprocessor()
     ep.fit(clean(titanic.drop('survived', axis=1)))
     expected_names = [
-        'age_dabl_continuous', 'body_dabl_continuous', 'fare_dabl_continuous',
-        'parch', 'sibsp',
-        'pclass_1',
-        'pclass_2', 'pclass_3', 'sex_female', 'sex_male', 'sibsp_0', 'sibsp_1',
-        'sibsp_2',
+        'sibsp', 'parch', 'age_dabl_continuous', 'fare_dabl_continuous',
+        'body_dabl_continuous', 'pclass_1', 'pclass_2', 'pclass_3',
+        'sex_female', 'sex_male', 'sibsp_0', 'sibsp_1', 'sibsp_2',
         'sibsp_3', 'sibsp_4', 'sibsp_5', 'sibsp_8', 'parch_0', 'parch_1',
-        'parch_2',
-        'parch_3', 'parch_4', 'parch_5', 'parch_6', 'parch_9', 'embarked_?',
-        'embarked_C', 'embarked_Q', 'embarked_S', 'boat_1', 'boat_10',
-        'boat_11', 'boat_12', 'boat_13', 'boat_13 15', 'boat_13 15 B',
-        'boat_14', 'boat_15', 'boat_15 16', 'boat_16', 'boat_2', 'boat_3',
-        'boat_4', 'boat_5', 'boat_5 7', 'boat_5 9', 'boat_6', 'boat_7',
-        'boat_8', 'boat_8 10', 'boat_9', 'boat_?', 'boat_A', 'boat_B',
-        'boat_C', 'boat_C D', 'boat_D', 'age_?_0.0', 'age_?_1.0',
-        'body_?_0.0', 'body_?_1.0']
+        'parch_2', 'parch_3', 'parch_4', 'parch_5', 'parch_6', 'parch_9',
+        'embarked_?', 'embarked_C', 'embarked_Q', 'embarked_S', 'boat_1',
+        'boat_10', 'boat_11', 'boat_12', 'boat_13', 'boat_13 15',
+        'boat_13 15 B', 'boat_14', 'boat_15', 'boat_15 16', 'boat_16',
+        'boat_2', 'boat_3', 'boat_4', 'boat_5', 'boat_5 7', 'boat_5 9',
+        'boat_6', 'boat_7', 'boat_8', 'boat_8 10', 'boat_9', 'boat_?',
+        'boat_A', 'boat_B', 'boat_C', 'boat_C D', 'boat_D', 'age_?_0.0',
+        'age_?_1.0', 'body_?_0.0', 'body_?_1.0']
     assert ep.get_feature_names() == expected_names
 
     # without clean

@@ -167,6 +167,9 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
             X.columns[duplicated]))
     if type_hints is None:
         type_hints = dict()
+    # apply type hints drops useless columns,
+    # but in the end we want to check against original columns
+    X_org = X
     X = _apply_type_hints(X, type_hints=type_hints)
 
     n_samples, n_features = X.shape
@@ -239,9 +242,14 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     # constant features are useless
     useless = (n_values < 2) | useless
     # also throw out near constant:
-    most_common_count = X.apply(lambda x: x.value_counts().max())
-
-    near_constant = most_common_count / X.count() > near_constant_threshold
+    near_constant = pd.Series(0, index=X.columns, dtype=bool)
+    for col in X.columns:
+        count = X[col].count()
+        if n_values[col] / count > .9:
+            # save some computation
+            continue
+        if X[col].value_counts().max() / count > near_constant_threshold:
+            near_constant[col] = True
     if near_constant.any():
         warn("Discarding near-constant features: {}".format(
              near_constant.index[near_constant].tolist()))
@@ -272,6 +280,9 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         res.loc[k, v] = True
     res = res.fillna(False)
     res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
+    # reorder res to have the same order as X.columns
+    res = res.loc[X_org.columns]
+    assert (X_org.columns == res.index).all()
 
     assert np.all(res.sum(axis=1) == 1)
 
@@ -319,7 +330,7 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def clean(X, type_hints=None, verbose=0):
+def clean(X, type_hints=None, return_types=False, verbose=0):
     """Public clean interface
 
     Parameters
@@ -327,6 +338,8 @@ def clean(X, type_hints=None, verbose=0):
     type_hints : dict or None
         If dict, provide type information for columns.
         Keys are column names, values are types as provided by detect_types.
+    return_types : bool, default=False
+        Whether to return the inferred types
     verbose : int, default=0
         Verbosity control.
     """
@@ -338,71 +351,32 @@ def clean(X, type_hints=None, verbose=0):
         warn("Index not unique, resetting index!", UserWarning)
         X = X.reset_index()
     types = detect_types(X, type_hints=type_hints, verbose=verbose)
+    # drop useless columns
+    X = X.loc[:, ~types.useless]
+    types = types[~types.useless]
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
-    # get rid of dirty floats, add indicators
-    X = _safe_clean(X, types=types)
+
+    if types['dirty_float'].any():
+        # don't use ColumnTransformer that can't return dataframe yet
+        X_df = DirtyFloatCleaner().fit_transform(
+            X.loc[:, types['dirty_float']])
+        X = pd.concat([X.loc[:, ~types.dirty_float], X_df], axis=1)
+        # we should know what these are but maybe running this again is fine?
+        types_df = detect_types(X_df)
+        types = pd.concat([types[~types.dirty_float], types_df])
     # deal with low cardinality ints
-    for col in types.index[types.low_card_int]:
-        # for now let's just check for smooth distributions
-        pass
+    # TODO ?
     # ensure that the indicator variables are also marked as categorical
     # we could certainly do this nicer, but at this point calling
     # detect_types shouldn't be expensive any more
     # though if we have actual string columns that are free strings... hum
-    types = detect_types(X, type_hints=type_hints)
     for col in types.index[types.categorical]:
         # ensure categories are strings, otherwise imputation might fail
         X[col] = X[col].astype('category', copy=False).cat.rename_categories(
             lambda x: str(x))
-    return X
-
-
-def _safe_clean(X, onehot=False, types=None):
-    """Cleaning / preprocessing outside of cross-validation
-
-    FIXME this leads to duplicating integer columns! no good!
-
-    This function is "safe" to use outside of cross-validation in that
-    it only does preprocessing that doesn't use statistics that could
-    leak information from the test set (like scaling or imputation).
-
-    Using this method prior to analysis can speed up your pipelines.
-
-    The main operation is checking for string-encoded floats.
-
-    Parameters
-    ----------
-    X : dataframe
-        Dirty data
-    onehot : boolean, default=False
-        Whether to do one-hot encoding of categorical data.
-
-    Returns
-    -------
-    X_cleaner : dataframe
-        Slightly cleaner dataframe.
-    """
-    if types is None:
-        types = detect_types(X)
-    res = []
-    if types['dirty_float'].any():
-        # don't use ColumnTransformer that can't return dataframe yet
-        res.append(DirtyFloatCleaner().fit_transform(
-            X.loc[:, types['dirty_float']]))
-    if types['useless'].any() or types['dirty_float'].any():
-        if onehot:
-            # FIXME REMOVE THIS HERE
-            res.append(X.loc[:, types['continuous']])
-            cat_indices = types.index[types['categorical']]
-            res.append(pd.get_dummies(X.loc[:, types['categorical']],
-                                      columns=cat_indices))
-        else:
-            good_types = (types.continuous | types.categorical
-                          | types.low_card_int | types.date
-                          | types.free_string)
-            res.append(X.loc[:, good_types])
-        return pd.concat(res, axis=1)
+    if return_types:
+        return X, types
     return X
 
 

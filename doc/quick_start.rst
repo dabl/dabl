@@ -49,25 +49,26 @@ types in a convenient format:
     >>> types = dabl.detect_types(titanic_clean)
     >>> print(types) # doctest: +ELLIPSIS
                           continuous  dirty_float  ...  free_string  useless
-    age_?                      False        False  ...        False    False
-    age_dabl_continuous         True        False  ...        False    False
-    boat                       False        False  ...        False    False
-    body_?                     False        False  ...        False    False
-    body_dabl_continuous        True        False  ...        False    False
-    cabin                      False        False  ...         True    False
-    embarked                   False        False  ...        False    False
-    fare_?                     False        False  ...        False     True
-    fare_dabl_continuous        True        False  ...        False    False
-    home.dest                  False        False  ...         True    False
-    name                       False        False  ...         True    False
-    parch                      False        False  ...        False    False
     pclass                     False        False  ...        False    False
+    survived                   False        False  ...        False    False
+    name                       False        False  ...         True    False
     sex                        False        False  ...        False    False
     sibsp                      False        False  ...        False    False
-    survived                   False        False  ...        False    False
+    parch                      False        False  ...        False    False
     ticket                     False        False  ...         True    False
+    cabin                      False        False  ...         True    False
+    embarked                   False        False  ...        False    False
+    boat                       False        False  ...        False    False
+    home.dest                  False        False  ...         True    False
+    age_?                      False        False  ...        False    False
+    age_dabl_continuous         True        False  ...        False    False
+    fare_?                     False        False  ...        False     True
+    fare_dabl_continuous        True        False  ...        False    False
+    body_?                     False        False  ...        False    False
+    body_dabl_continuous        True        False  ...        False    False
     <BLANKLINE>
     [17 rows x 7 columns]
+
 
 
 Having a very rough idea of the shape of our data, we can now start looking
@@ -98,7 +99,7 @@ the whole data frame and specify the target column.
     >>> y = titanic_clean.survived
     >>> fc.fit(X, y)
     DummyClassifier(strategy='prior')
-    accuracy: 0.618    average_precision: 0.382    recall_macro: 0.500    roc_auc: 0.500
+    accuracy: 0.618    average_precision: 0.382    recall_macro: 0.500    roc_auc: 0.500    
     new best (using recall_macro):
     accuracy             0.618
     average_precision    0.382
@@ -106,7 +107,7 @@ the whole data frame and specify the target column.
     roc_auc              0.500
     Name: DummyClassifier(strategy='prior'), dtype: float64
     GaussianNB()
-    accuracy: 0.897    average_precision: 0.870    recall_macro: 0.902    roc_auc: 0.919
+    accuracy: 0.897    average_precision: 0.870    recall_macro: 0.902    roc_auc: 0.919    
     new best (using recall_macro):
     accuracy             0.897
     average_precision    0.870
@@ -114,9 +115,9 @@ the whole data frame and specify the target column.
     roc_auc              0.919
     Name: GaussianNB(), dtype: float64
     MultinomialNB()
-    accuracy: 0.888    average_precision: 0.981    recall_macro: 0.891    roc_auc: 0.985
+    accuracy: 0.888    average_precision: 0.981    recall_macro: 0.891    roc_auc: 0.985    
     DecisionTreeClassifier(class_weight='balanced', max_depth=1)
-    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
+    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971    
     new best (using recall_macro):
     accuracy             0.976
     average_precision    0.954
@@ -124,11 +125,11 @@ the whole data frame and specify the target column.
     roc_auc              0.971
     Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
     DecisionTreeClassifier(class_weight='balanced', max_depth=5)
-    accuracy: 0.957    average_precision: 0.942    recall_macro: 0.954    roc_auc: 0.970
+    accuracy: 0.957    average_precision: 0.943    recall_macro: 0.953    roc_auc: 0.970    
     DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
-    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
+    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971    
     LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs')
-    accuracy: 0.963    average_precision: 0.986    recall_macro: 0.961    roc_auc: 0.989
+    accuracy: 0.963    average_precision: 0.986    recall_macro: 0.961    roc_auc: 0.989    
     Best model:
     DecisionTreeClassifier(class_weight='balanced', max_depth=1)
     Best Scores:
@@ -138,3 +139,4 @@ the whole data frame and specify the target column.
     roc_auc              0.971
     Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
     SimpleClassifier(random_state=0, refit=True, verbose=1)
+

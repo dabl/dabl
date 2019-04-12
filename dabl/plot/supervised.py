@@ -148,6 +148,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    scatter_alpha='auto', scatter_size="auto",
                                    univariate_plot='histogram',
                                    drop_outliers=True, plot_pairwise=True,
+                                   top_k_interactions=10,
                                    **kwargs):
     """Exploration plots for continuous features in classification.
 
@@ -180,6 +181,11 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         Whether to drop outliers when plotting.
     plot_pairwise : bool, default=True
         Whether to create pairwise plots. Can be a bit slow.
+    top_k_interactions : int, default=10
+        How many pairwise interactions to consider
+        (ranked by univariate f scores).
+        Runtime is quadratic in this, but higher numbers might find more
+        interesting interactions.
 
     Notes
     -----
@@ -194,7 +200,6 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     if features.shape[1] == 0:
         return
 
-    top_for_interactions = 20
     features_imp = SimpleImputer().fit_transform(features)
     target = X[target_col]
 
@@ -250,11 +255,12 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         # pairwise plots
         if not plot_pairwise:
             return
-        top_k = np.argsort(f)[-top_for_interactions:][::-1]
+        top_k = np.argsort(f)[-top_k_interactions:][::-1]
         top_pairs = _find_scatter_plots_classification(
             features_imp[:, top_k], target)
         fig, axes = plt.subplots(1, len(top_pairs),
-                                 figsize=(len(top_pairs) * 4, 4))
+                                 figsize=(len(top_pairs) * 4, 4),
+                                 constrained_layout=True)
         for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                    top_pairs.score, axes.ravel()):
             i = top_k[x]
@@ -266,10 +272,12 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             ax.set_ylabel(features.columns[j])
             ax.set_title("{:.3f}".format(score))
         fig.suptitle("Top feature interactions")
+    if not plot_pairwise:
+        return
     # get some PCA directions
     # we're using all features here, not only most informative
     # should we use only those?
-    n_components = min(top_for_interactions, features.shape[0],
+    n_components = min(top_k_interactions, features.shape[0],
                        features.shape[1])
     if n_components < 2:
         return
@@ -277,8 +285,9 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     features_pca = pca.fit_transform(scale(features_imp))
     top_pairs = _find_scatter_plots_classification(features_pca, target)
     # copy and paste from above. Refactor?
-    fig, axes = plt.subplots(1, len(top_pairs),
-                             figsize=(len(top_pairs) * 4, 4))
+    fig, axes = plt.subplots(1, len(top_pairs) + 1,
+                             figsize=((len(top_pairs) + 1) * 4, 4),
+                             constrained_layout=True)
     if len(top_pairs) <= 1:
         # we don't want ravel to fail, this is awkward!
         axes = np.array([axes])
@@ -291,6 +300,12 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         ax.set_xlabel("PCA {}".format(x))
         ax.set_ylabel("PCA {}".format(y))
         ax.set_title("{:.3f}".format(score))
+    ax = axes.ravel()[-1]
+    ax.plot(pca.explained_variance_ratio_, label='variance')
+    ax.plot(np.cumsum(pca.explained_variance_ratio_),
+            label='cumulative variance')
+    ax.set_title("Scree plot (PCA explained variance)")
+    ax.legend()
     fig.suptitle("Discriminating PCA directions")
     # LDA
     if target.nunique() < 3:
@@ -302,7 +317,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     top_pairs = _find_scatter_plots_classification(features_lda, target)
     # copy and paste from above. Refactor?
     fig, axes = plt.subplots(1, len(top_pairs),
-                             figsize=(len(top_pairs) * 4, 4))
+                             figsize=(len(top_pairs) * 4, 4),
+                             constrained_layout=True)
     if len(top_pairs) <= 1:
         # we don't want ravel to fail, this is awkward!
         axes = np.array([axes])
@@ -418,7 +434,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
 
 
 def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
-                    scatter_size='auto', verbose=10, **kwargs):
+                    scatter_size='auto', verbose=10, plot_pairwise=True,
+                    **kwargs):
     """Exploration plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -439,6 +456,9 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
         Alpha values for scatter plots. 'auto' is dirty hacks.
     scatter_size : float, default='auto'.
         Marker size for scatter plots. 'auto' is dirty hacks.
+    plot_pairwise : bool, default=True
+        Whether to include pairwise scatterplots for classification.
+        These can be somewhat expensive to compute.
     verbose : int, default=10
         Controls the verbosity (output).
 
@@ -449,9 +469,9 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
     plot_classification_continuous
     plot_classification_categorical
     """
-    X = clean(X, type_hints=type_hints)
+    X, types = clean(X, type_hints=type_hints, return_types=True)
     # recompute types after cleaning:
-    types = _check_X_target_col(X, target_col, type_hints=type_hints)
+    types = _check_X_target_col(X, target_col, types=types)
     # low_cardinality integers plot better as categorical
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:
@@ -498,9 +518,9 @@ def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
         melted['class'] = melted['class'].astype('category')
         sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")
-        plot_classification_continuous(X, target_col, types=types,
-                                       hue_order=counts.index,
-                                       scatter_alpha=scatter_alpha,
-                                       scatter_size=scatter_size, **kwargs)
+        plot_classification_continuous(
+            X, target_col, types=types, hue_order=counts.index,
+            scatter_alpha=scatter_alpha, scatter_size=scatter_size,
+            plot_pairwise=plot_pairwise, **kwargs)
         plot_classification_categorical(X, target_col, types=types,
                                         hue_order=counts.index, **kwargs)

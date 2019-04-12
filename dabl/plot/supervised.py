@@ -282,7 +282,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     if n_components < 2:
         return
     pca = PCA(n_components=n_components)
-    features_pca = pca.fit_transform(scale(features_imp))
+    features_scaled = scale(features_imp)
+    features_pca = pca.fit_transform(features_scaled)
     top_pairs = _find_scatter_plots_classification(features_pca, target)
     # copy and paste from above. Refactor?
     fig, axes = plt.subplots(1, len(top_pairs) + 1,
@@ -308,12 +309,20 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     ax.legend()
     fig.suptitle("Discriminating PCA directions")
     # LDA
-    if target.nunique() < 3:
-        # lda currently only 2d scatter plot.
-        return
+
     lda = LinearDiscriminantAnalysis(
         n_components=min(n_components, target.nunique() - 1))
-    features_lda = lda.fit_transform(scale(features_imp), target)
+    features_lda = lda.fit_transform(features_scaled, target)
+    print("Linear Discriminant Analysis training set score: {}".format(
+          lda.score(features_scaled, target)))
+    if features_lda.shape[1] < 2:
+        # Do a single plot and exit
+        plt.figure()
+        single_lda = pd.DataFrame({'feature': features_lda.ravel(),
+                                   'target': target})
+        class_hists(single_lda, 'feature', 'target', legend=True)
+        plt.title("Linear Discriminant")
+        return
     top_pairs = _find_scatter_plots_classification(features_lda, target)
     # copy and paste from above. Refactor?
     fig, axes = plt.subplots(1, len(top_pairs),

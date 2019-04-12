@@ -352,7 +352,7 @@ def clean(X, type_hints=None, return_types=False, verbose=0):
         X = X.reset_index()
     types = detect_types(X, type_hints=type_hints, verbose=verbose)
     # drop useless columns
-    X = X.loc[:, ~types.useless]
+    X = X.loc[:, ~types.useless].copy()
     types = types[~types.useless]
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)

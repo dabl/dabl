@@ -303,7 +303,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     ax = axes.ravel()[-1]
     ax.plot(pca.explained_variance_ratio_, label='variance')
     ax.plot(np.cumsum(pca.explained_variance_ratio_),
-                  label='cumulative variance')
+            label='cumulative variance')
     ax.set_title("Scree plot (PCA explained variance)")
     ax.legend()
     fig.suptitle("Discriminating PCA directions")

@@ -238,12 +238,14 @@ def test_titanic_detection():
     titanic = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'))
     types_table = detect_types(titanic)
     types = types_table.T.idxmax()
-    true_types = [
-        'dirty_float', 'categorical', 'dirty_float', 'free_string',
-        'categorical', 'dirty_float', 'free_string', 'free_string',
-        'low_card_int', 'categorical',
-        'categorical', 'low_card_int', 'categorical', 'free_string']
+    true_types = ['categorical', 'categorical', 'free_string', 'categorical',
+                  'dirty_float', 'low_card_int', 'low_card_int', 'free_string',
+                  'dirty_float', 'free_string', 'categorical', 'categorical',
+                  'dirty_float', 'free_string']
+
     assert (types == true_types).all()
+    titanic_clean, clean_types = clean(titanic, return_types=True)
+    assert (clean_types == detect_types(titanic_clean)).all()
     titanic_nan = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'),
                               na_values='?')
     types_table = detect_types(titanic_nan)
@@ -260,7 +262,7 @@ def test_titanic_feature_names():
     ep.fit(clean(titanic.drop('survived', axis=1)))
     expected_names = [
         'age_dabl_continuous', 'body_dabl_continuous', 'fare_dabl_continuous',
-        'parch', 'sibsp', 'age_?_0.0', 'age_?_1.0', 'body_?_0.0', 'body_?_1.0',
+        'parch', 'sibsp',
         'pclass_1',
         'pclass_2', 'pclass_3', 'sex_female', 'sex_male', 'sibsp_0', 'sibsp_1',
         'sibsp_2',
@@ -272,7 +274,8 @@ def test_titanic_feature_names():
         'boat_14', 'boat_15', 'boat_15 16', 'boat_16', 'boat_2', 'boat_3',
         'boat_4', 'boat_5', 'boat_5 7', 'boat_5 9', 'boat_6', 'boat_7',
         'boat_8', 'boat_8 10', 'boat_9', 'boat_?', 'boat_A', 'boat_B',
-        'boat_C', 'boat_C D', 'boat_D']
+        'boat_C', 'boat_C D', 'boat_D', 'age_?_0.0', 'age_?_1.0',
+        'body_?_0.0', 'body_?_1.0']
     assert ep.get_feature_names() == expected_names
 
     # without clean

@@ -239,9 +239,14 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     # constant features are useless
     useless = (n_values < 2) | useless
     # also throw out near constant:
-    most_common_count = X.apply(lambda x: x.value_counts().max())
-
-    near_constant = most_common_count / X.count() > near_constant_threshold
+    near_constant = pd.Series(0, index=X.columns, dtype=bool)
+    for col in X.columns:
+        count = X[col].count()
+        if n_values[col] / count > .9:
+            # save some computation
+            continue
+        if X[col].value_counts().max() / count > near_constant_threshold:
+            near_constant[col] = True
     if near_constant.any():
         warn("Discarding near-constant features: {}".format(
              near_constant.index[near_constant].tolist()))

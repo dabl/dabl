@@ -336,7 +336,7 @@ def _short_tick_names(ax):
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=20))
 
 
-def _find_scatter_plots_classification(X, target):
+def _find_scatter_plots_classification(X, target, how_many=3):
     # input is continuous
     # look at all pairs of features, find most promising ones
     # dummy = DummyClassifier(strategy='prior').fit(X, target)
@@ -356,8 +356,8 @@ def _find_scatter_plots_classification(X, target):
             tree, this_X, target, cv=cv, scoring='recall_macro'))))
 
     scores = pd.DataFrame(scores, columns=['feature0', 'feature1', 'score'])
-    top_3 = scores.sort_values(by='score').iloc[-3:][::-1]
-    return top_3
+    top = scores.sort_values(by='score').iloc[-how_many:][::-1]
+    return top
 
 
 def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
@@ -527,7 +527,7 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
 def _inlier_range(series):
     low = np.nanquantile(series, 0.01)
     high = np.nanquantile(series, 0.99)
-    assert low < high
+    assert low <= high
     # the two is a complete hack
     inner_range = (high - low) / 2
     return low - inner_range, high + inner_range

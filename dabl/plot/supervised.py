@@ -12,6 +12,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.metrics import recall_score
 
 from ..preprocessing import detect_types, clean, guess_ordinal
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
@@ -257,7 +258,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
             return
         top_k = np.argsort(f)[-top_k_interactions:][::-1]
         top_pairs = _find_scatter_plots_classification(
-            features_imp[:, top_k], target)
+            features_imp[:, top_k], target, how_many=4)
         fig, axes = plt.subplots(1, len(top_pairs),
                                  figsize=(len(top_pairs) * 4, 4),
                                  constrained_layout=True)
@@ -282,8 +283,10 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     if n_components < 2:
         return
     pca = PCA(n_components=n_components)
-    features_pca = pca.fit_transform(scale(features_imp))
-    top_pairs = _find_scatter_plots_classification(features_pca, target)
+    features_scaled = scale(features_imp)
+    features_pca = pca.fit_transform(features_scaled)
+    top_pairs = _find_scatter_plots_classification(
+        features_pca, target, how_many=3)
     # copy and paste from above. Refactor?
     fig, axes = plt.subplots(1, len(top_pairs) + 1,
                              figsize=((len(top_pairs) + 1) * 4, 4),
@@ -308,13 +311,23 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     ax.legend()
     fig.suptitle("Discriminating PCA directions")
     # LDA
-    if target.nunique() < 3:
-        # lda currently only 2d scatter plot.
-        return
+
     lda = LinearDiscriminantAnalysis(
         n_components=min(n_components, target.nunique() - 1))
-    features_lda = lda.fit_transform(scale(features_imp), target)
-    top_pairs = _find_scatter_plots_classification(features_lda, target)
+    features_lda = lda.fit_transform(features_scaled, target)
+    # we should probably do macro-average recall here as everywhere else?
+    print("Linear Discriminant Analysis training set score: {:.3f}".format(
+          recall_score(target, lda.predict(features_scaled), average='macro')))
+    if features_lda.shape[1] < 2:
+        # Do a single plot and exit
+        plt.figure()
+        single_lda = pd.DataFrame({'feature': features_lda.ravel(),
+                                   'target': target})
+        class_hists(single_lda, 'feature', 'target', legend=True)
+        plt.title("Linear Discriminant")
+        return
+    top_pairs = _find_scatter_plots_classification(
+        features_lda, target, how_many=4)
     # copy and paste from above. Refactor?
     fig, axes = plt.subplots(1, len(top_pairs),
                              figsize=(len(top_pairs) * 4, 4),

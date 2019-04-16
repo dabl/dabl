@@ -7,6 +7,10 @@ The data analysis baseline library.
 ## Warning
 This is pre-alpha software and is still very-much in flux.
 
+## Try it out
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/amueller/dabl/master)
+
 ## Current scope and upcoming features
 This library is very much still under development. Current code focuses mostly on exploratory visualiation and preprocessing.
 There are also drop-in replacements for GridSearchCV and RandomizedSearchCV using successive halfing.

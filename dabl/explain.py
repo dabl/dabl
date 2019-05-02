@@ -5,7 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
-from .models import SimpleClassifier, SimpleRegressor
+from .models import SimpleClassifier, SimpleRegressor, AnyClassifier
 from .plot.utils import plot_coefficients
 from ._plot_tree import plot_tree
 
@@ -22,6 +22,8 @@ def explain(estimator, feature_names=None):
     if (isinstance(estimator, SimpleClassifier)
             or isinstance(estimator, SimpleRegressor)):
         # get the pipeline
+        estimator = estimator.est_
+    elif isinstance(estimator, AnyClassifier):
         estimator = estimator.est_
     if isinstance(estimator, Pipeline):
         assert len(estimator.steps) == 2

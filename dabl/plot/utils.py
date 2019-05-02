@@ -129,10 +129,9 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10,
 
 
 def heatmap(values, xlabel, ylabel, xticklabels, yticklabels, cmap=None,
-            vmin=None, vmax=None, ax=None, fmt="%0.2f"):
+            vmin=None, vmax=None, ax=None, fmt="%0.2f", origin='lower'):
     if ax is None:
         ax = plt.gca()
-    # plot the mean cross-validation scores
     img = ax.pcolor(values, cmap=cmap, vmin=vmin, vmax=vmax)
     img.update_scalarmappable()
     ax.set_xlabel(xlabel)
@@ -142,6 +141,9 @@ def heatmap(values, xlabel, ylabel, xticklabels, yticklabels, cmap=None,
     ax.set_xticklabels(xticklabels)
     ax.set_yticklabels(yticklabels)
     ax.set_aspect(1)
+    if origin == 'upper':
+        ylim = ax.get_ylim()
+        ax.set_ylim(ylim[::-1])
 
     for p, color, value in zip(img.get_paths(), img.get_facecolors(),
                                img.get_array()):

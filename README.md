@@ -12,7 +12,7 @@ This is pre-alpha software and is still very-much in flux.
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/amueller/dabl/master)
 
 ## Current scope and upcoming features
-This library is very much still under development. Current code focuses mostly on exploratory visualiation and preprocessing.
+This library is very much still under development. Current code focuses mostly on exploratory visualization and preprocessing.
 There are also drop-in replacements for GridSearchCV and RandomizedSearchCV using successive halfing.
 The next step in the development will be adding portfolios in the style of
 [POSH

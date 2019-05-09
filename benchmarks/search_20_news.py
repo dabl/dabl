@@ -3,7 +3,6 @@ Benchmarking successive halving on a text processing pipeline
 =============================================================
 
 
-
                     training time   test score   best CV score
 ---------------------------------------------------------------
 GridSearchCV             19984.9 s      0.8567          0.9262
@@ -51,7 +50,7 @@ print("Test Score Successive Halving: ",
       sh.score(data_test.data, data_test.target))
 print("Parameters Successive Halving: ", sh.best_params_)
 
-gs = GridSearchCV(pipe, param_grid, cv=5, verbose=10)
+gs = GridSearchCV(pipe, param_grid, cv=5)
 print("Start Grid Search")
 tick = time()
 gs.fit(data_train.data, data_train.target)

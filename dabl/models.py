@@ -337,10 +337,12 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
         gs = GridSuccessiveHalving(
             estimator=pipe, param_grid=param_grid,
             force_exhaust_budget=self.force_exhaust_budget,
-            verbose=self.verbose, refit=False, cv=5, error_score='raise',
+            verbose=self.verbose, cv=5, error_score='raise',
             scoring='recall_macro')
         self.search_ = gs
         gs.fit(X, y)
+        self.est_ = gs.best_estimator_
+
         print("best classifier: ", gs.best_params_['classifier'])
         print("best score: {:.3f}".format(gs.best_score_))
         return self

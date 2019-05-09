@@ -220,14 +220,14 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
             if self.budget_on == 'n_samples':
                 stratify = y if is_classifier(self.estimator) else None
                 X_iter, y_iter = resample(X, y, replace=False,
-                                          random_state=rng, stratify=stratify)
+                                          random_state=rng, stratify=stratify,
+                                          n_samples=r_i)
             else:
                 # Need copy so that r_i of next iteration do not overwrite
                 candidate_params = [c.copy() for c in candidate_params]
                 for candidate in candidate_params:
                     candidate[self.budget_on] = r_i
                 X_iter, y_iter = X, y
-
             more_results = {'iter': [iter_i] * n_candidates,
                             'r_i': [r_i] * n_candidates}
             results = evaluate_candidates(candidate_params, X_iter, y_iter,

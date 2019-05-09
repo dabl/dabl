@@ -18,6 +18,8 @@ import numpy as np
 import scipy as sp
 
 from time import time
+
+import sklearn
 from sklearn.pipeline import Pipeline
 from sklearn.datasets import fetch_20newsgroups
 
@@ -40,17 +42,21 @@ class log_uniform():
                                                random_state=random_state))[0]
 
 
+sklearn.set_config(print_changed_only=True)
+
+
 data_train = fetch_20newsgroups(subset="train")
 data_test = fetch_20newsgroups(subset="test")
 
 pipe = Pipeline([('vect', CountVectorizer()),
-                 ('clf', LogisticRegression(tol=0.01, solver='saga',
-                                            penalty='elasticnet'))])
+                 ('clf', LogisticRegression(tol=0.1, solver='saga',
+                                            penalty='elasticnet',
+                                            multi_class='multinomial'))])
 param_dist = {
     'clf__C': log_uniform(-3, 3),
     'clf__l1_ratio': sp.stats.uniform(0, 1),
     'vect': [TfidfVectorizer(), CountVectorizer()],
-    'vect__min_df': sp.stats.randint(0, 10),
+    'vect__min_df': sp.stats.randint(1, 10),
     'vect__ngram_range': [(1, 1), (1, 2), (1, 3)]}
 print("Parameter dist:")
 print(param_dist)

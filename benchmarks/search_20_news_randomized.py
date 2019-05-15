@@ -72,9 +72,10 @@ print("Parameters Successive Halving: ", sh.best_params_)
 
 gs = RandomizedSearchCV(pipe, param_dist, n_iter=sh.n_candidates_, cv=5,
                         verbose=10)
-print("Start Grid Search")
+print("Start Randomized Search")
 tick = time()
 gs.fit(data_train.data, data_train.target)
-print("Training Time Grid Search: ", time() - tick)
-print("Test Score Grid Search: ", gs.score(data_test.data, data_test.target))
-print("Parameters Grid Search: ", gs.best_params_)
+print("Training Time Randomized Search: ", time() - tick)
+print("Test Score Randomized Search: ", gs.score(data_test.data,
+                                                 data_test.target))
+print("Parameters Randomized Search: ", gs.best_params_)

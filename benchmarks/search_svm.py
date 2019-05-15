@@ -15,6 +15,7 @@ Parameters Grid Search:  {'C': 10.0, 'gamma': 0.1}
 
 """
 from time import time
+import argparse
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -22,9 +23,13 @@ from sklearn.datasets import fetch_openml, load_digits
 
 from dabl.search import GridSuccessiveHalving
 
-use_mnist = False
 
-if use_mnist:
+parser = argparse.ArgumentParser()
+parser.add_argument('--mnist', action="store_true", default=False,
+                    help='Use mnist dataset instead of digits')
+args = parser.parse_args()
+
+if args.mnist:
     digits = fetch_openml("mnist_784")
     scale = 255
 else:

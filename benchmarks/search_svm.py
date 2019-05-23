@@ -12,6 +12,13 @@ Training Time Grid Search:  39.42753505706787
 Test Score Grid Search:  0.9911111111111112
 Parameters Grid Search:  {'C': 10.0, 'gamma': 0.1}
 
+On mnist
+Parameter grid:
+Start successive halving
+Training Time Successive Halving 385.18258142471313
+Test Score Successive Halving:  0.9813142857142857
+Parameters Successive Halving:  {'C': 10.0, 'gamma': 0.01
+Grid search takes 10+ hours
 
 """
 from time import time

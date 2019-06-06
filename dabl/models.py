@@ -29,7 +29,10 @@ class _BaseSimpleEstimator(BaseEstimator):
         if not self.refit:
             raise ValueError("Must specify refit=True to predict.")
         check_is_fitted(self, 'est_')
-        self.est_.predict(X)
+        if getattr(self, 'classes_', None) is not None:
+            return self.classes_[self.est_.predict(X)]
+
+        return self.est_.predict(X)
 
     def _evaluate_one(self, estimator, data_preproc, scorers):
         res = []
@@ -292,6 +295,13 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
         else:
             raise ValueError("Unknown target type: {}".format(target_type))
         return y, scoring
+
+    def predict(self, X):
+        check_is_fitted(self, 'est_')
+        if getattr(self, 'classes_', None) is not None:
+            return self.classes_[self.est_.predict(X)]
+
+        return self.est_.predict(X)
 
     def fit(self, X, y=None, target_col=None):
         """Fit estimator.

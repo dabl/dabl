@@ -349,7 +349,7 @@ def clean(X, type_hints=None, return_types=False, verbose=0):
 
     if not X.index.is_unique:
         warn("Index not unique, resetting index!", UserWarning)
-        X = X.reset_index()
+        X = X.reset_index(drop=True)
     types = detect_types(X, type_hints=type_hints, verbose=verbose)
     # drop useless columns
     X = X.loc[:, ~types.useless].copy()

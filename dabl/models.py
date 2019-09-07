@@ -265,7 +265,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
 
 
 class AnyClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, n_jobs=None, force_exhaust_budget=False, verbose=0):
+    def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget
@@ -355,4 +355,5 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
 
         print("best classifier: ", gs.best_params_['classifier'])
         print("best score: {:.3f}".format(gs.best_score_))
+
         return self

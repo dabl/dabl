@@ -108,7 +108,7 @@ def _float_col_is_int(series):
 
 def detect_types(X, type_hints=None, max_int_cardinality='auto',
                  dirty_float_threshold=.9,
-                 near_constant_threshold=1.05, verbose=0):
+                 near_constant_threshold=0.95, verbose=0):
     """Detect types of dataframe columns.
 
     Columns are labeled as one of the following types:

@@ -65,12 +65,12 @@ def get_any_classifiers():
     sklearn_ests = [
 
         
-        # LogisticRegression(C=1, solver='lbfgs', multi_class='multinomial'),
-        # LogisticRegression(C=10, solver='lbfgs', multi_class='multinomial'),
-        # LogisticRegression(C=.1, solver='lbfgs', multi_class='multinomial'),
-        # RandomForestClassifier(max_features=None, n_estimators=100),
-        # RandomForestClassifier(max_features='sqrt', n_estimators=100),
-        # RandomForestClassifier(max_features='log2', n_estimators=100),
+        LogisticRegression(C=1, solver='lbfgs', multi_class='multinomial'),
+        LogisticRegression(C=10, solver='lbfgs', multi_class='multinomial'),
+        LogisticRegression(C=.1, solver='lbfgs', multi_class='multinomial'),
+        RandomForestClassifier(max_features=None, n_estimators=100),
+        RandomForestClassifier(max_features='sqrt', n_estimators=100),
+        RandomForestClassifier(max_features='log2', n_estimators=100),
     
         HistGradientBoostingClassifier(l2_regularization=1e-08, learning_rate=0.01,
                                loss='auto', max_bins=128, max_depth=19,
@@ -200,7 +200,7 @@ def get_any_classifiers():
 
         SVC(C=1000, cache_size=200, class_weight=None, coef0=0.0,
             decision_function_shape='ovr', degree=3, gamma=0.03162277660168379,
-            kernel='rbf', max_iter=-1, probability=False, random_state=1,
+            kernel='rbf', max_iter=-1, probability=True, random_state=1,
             shrinking=True, tol=0.001, verbose=False),
 
         HistGradientBoostingClassifier(l2_regularization=10.0, learning_rate=0.1,

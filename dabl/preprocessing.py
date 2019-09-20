@@ -108,7 +108,7 @@ def _float_col_is_int(series):
 
 def detect_types(X, type_hints=None, max_int_cardinality='auto',
                  dirty_float_threshold=.9,
-                 near_constant_threshold=.95, verbose=0):
+                 near_constant_threshold=1.05, verbose=0):
     """Detect types of dataframe columns.
 
     Columns are labeled as one of the following types:
@@ -455,7 +455,8 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         steps_categorical = []
         if X.loc[:, types.categorical].isna().any(axis=None):
             steps_categorical.append(
-                SimpleImputer(strategy='constant', fill_value='dabl_missing'))
+                #SimpleImputer(strategy='constant', fill_value='dabl_missing'))
+                SimpleImputer(strategy='most_frequent'))
         steps_categorical.append(
             OneHotEncoder(categories='auto', handle_unknown='ignore',
                           sparse=False))

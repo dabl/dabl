@@ -265,7 +265,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
 
 
 class AnyClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0):
+    def __init__(self, n_jobs=None, force_exhaust_budget=False, verbose=0):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget
@@ -300,8 +300,10 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, 'est_')
         if getattr(self, 'classes_', None) is not None:
             return self.classes_[self.est_.predict(X)]
-
         return self.est_.predict(X)
+
+    def predict_proba(self, X):
+        return self.est_.predict_proba(X)
 
     def fit(self, X, y=None, target_col=None):
         """Fit estimator.
@@ -330,7 +332,7 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
         if target_col is not None:
             y = X[target_col]
             X = X.drop(target_col, axis=1)
-        types = detect_types(X)
+        types = detect_types(X, near_constant_threshold = 0.95)
         self.feature_names_ = X.columns
         self.types_ = types
 

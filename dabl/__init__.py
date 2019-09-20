@@ -7,3 +7,5 @@ from . import datasets
 __all__ = ['EasyPreprocessor', 'SimpleClassifier', 'SimpleRegressor',
            'explain', 'clean',
            'detect_types', 'plot_supervised', 'datasets']
+           
+__version__ = '0.1.0'

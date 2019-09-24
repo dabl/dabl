@@ -6,6 +6,7 @@ from sklearn.compose import make_column_transformer, ColumnTransformer
 from sklearn.utils.validation import check_is_fitted
 import pandas as pd
 import numpy as np
+import warnings
 from warnings import warn
 
 _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
@@ -547,5 +548,9 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             in `X`
         """
         # Check is fit had been called
-        check_is_fitted(self, ['ct_'])
+        with warnings.catch_warnings():
+            # fix when requiring sklearn 0.22
+            # check_is_fitted will not have arguments any more
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            check_is_fitted(self, ['ct_'])
         return self.ct_.transform(X)

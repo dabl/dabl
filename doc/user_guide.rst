@@ -141,7 +141,7 @@ column inside of X as``target_col``.
 The SimpleClassifier also performs preprocessing such as missing value
 imputation and one-hot-encoding.  You can inspect the model using:
 
->>> dabl.explain(ec)
+>>> dabl.explain(ec) # doctest: +SKIP
 
 This can lead to additional insights and guide costom processing and
 cleaning of the data.

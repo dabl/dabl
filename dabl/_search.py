@@ -86,7 +86,11 @@ class CustomBaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                  'attribute'
                                  % (type(self).__name__, method_name))
         else:
-            check_is_fitted(self, 'best_estimator_')
+            with warnings.catch_warnings():
+                # fix when requiring sklearn 0.22
+                # check_is_fitted will not have arguments any more
+                warnings.filterwarnings('ignore', category=DeprecationWarning)
+                check_is_fitted(self, 'best_estimator_')
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict(self, X):

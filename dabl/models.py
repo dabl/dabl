@@ -28,7 +28,11 @@ class _BaseSimpleEstimator(BaseEstimator):
     def predict(self, X):
         if not self.refit:
             raise ValueError("Must specify refit=True to predict.")
-        check_is_fitted(self, 'est_')
+        with warnings.catch_warnings():
+            # fix when requiring sklearn 0.22
+            # check_is_fitted will not have arguments any more
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            check_is_fitted(self, 'est_')
         if getattr(self, 'classes_', None) is not None:
             return self.classes_[self.est_.predict(X)]
 
@@ -297,7 +301,11 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
         return y, scoring
 
     def predict(self, X):
-        check_is_fitted(self, 'est_')
+        with warnings.catch_warnings():
+            # fix when requiring sklearn 0.22
+            # check_is_fitted will not have arguments any more
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            check_is_fitted(self, 'est_')
         if getattr(self, 'classes_', None) is not None:
             return self.classes_[self.est_.predict(X)]
 

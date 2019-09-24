@@ -9,6 +9,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _fit_and_score
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.testing import set_random_state
@@ -43,10 +44,11 @@ class _BaseSimpleEstimator(BaseEstimator):
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore',
                                         category=UndefinedMetricWarning)
-                results = _fit_and_score(estimator, X, y, scorer=scorers,
-                                         train=train, test=test, parameters={},
-                                         fit_params={})
-            res.append(results)
+                test_scores = _fit_and_score(estimator, X, y, scorer=scorers,
+                                             train=train, test=test,
+                                             parameters={}, fit_params={},
+                                             verbose=self.verbose)[0]
+            res.append(test_scores)
 
         res_mean = pd.DataFrame(res).mean(axis=0)
         try:
@@ -120,7 +122,8 @@ class _BaseSimpleEstimator(BaseEstimator):
         self.current_best_ = {rank_scoring: -np.inf}
         for est in estimators:
             set_random_state(est, self.random_state)
-            scores = self._evaluate_one(est, data_preproc, self.scoring_)
+            scorers, _ = _check_multimetric_scoring(est, self.scoring_)
+            scores = self._evaluate_one(est, data_preproc, scorers)
             # make scoring configurable
             if scores[rank_scoring] > self.current_best_[rank_scoring]:
                 if self.verbose:

@@ -99,9 +99,9 @@ the whole data frame and specify the target column.
     >>> fc = dabl.SimpleClassifier(random_state=0)
     >>> X = titanic_clean.drop("survived", axis=1)
     >>> y = titanic_clean.survived
-    >>> fc.fit(X, y)
+    >>> fc.fit(X, y) # doctest: +SKIP
     DummyClassifier(strategy='prior')
-    accuracy: 0.618    average_precision: 0.382    recall_macro: 0.500    roc_auc: 0.500
+    accuracy: 0.618    average_precision: 0.382    recall_macro: 0.500    roc_auc: 0.500    
     new best (using recall_macro):
     accuracy             0.618
     average_precision    0.382
@@ -109,7 +109,7 @@ the whole data frame and specify the target column.
     roc_auc              0.500
     Name: DummyClassifier(strategy='prior'), dtype: float64
     GaussianNB()
-    accuracy: 0.897    average_precision: 0.870    recall_macro: 0.902    roc_auc: 0.919
+    accuracy: 0.897    average_precision: 0.870    recall_macro: 0.902    roc_auc: 0.919    
     new best (using recall_macro):
     accuracy             0.897
     average_precision    0.870
@@ -117,9 +117,9 @@ the whole data frame and specify the target column.
     roc_auc              0.919
     Name: GaussianNB(), dtype: float64
     MultinomialNB()
-    accuracy: 0.888    average_precision: 0.981    recall_macro: 0.891    roc_auc: 0.985
+    accuracy: 0.888    average_precision: 0.981    recall_macro: 0.891    roc_auc: 0.985    
     DecisionTreeClassifier(class_weight='balanced', max_depth=1)
-    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
+    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971    
     new best (using recall_macro):
     accuracy             0.976
     average_precision    0.954
@@ -127,11 +127,11 @@ the whole data frame and specify the target column.
     roc_auc              0.971
     Name: DecisionTreeClassifier(class_weight='balanced', max_depth=1), dtype: float64
     DecisionTreeClassifier(class_weight='balanced', max_depth=5)
-    accuracy: 0.957    average_precision: 0.943    recall_macro: 0.953    roc_auc: 0.970
+    accuracy: 0.957    average_precision: 0.943    recall_macro: 0.953    roc_auc: 0.970    
     DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
-    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
-    LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs')
-    accuracy: 0.963    average_precision: 0.986    recall_macro: 0.961    roc_auc: 0.989
+    accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971    
+    LogisticRegression(C=0.1, class_weight='balanced')
+    accuracy: 0.963    average_precision: 0.986    recall_macro: 0.961    roc_auc: 0.989    
     Best model:
     DecisionTreeClassifier(class_weight='balanced', max_depth=1)
     Best Scores:

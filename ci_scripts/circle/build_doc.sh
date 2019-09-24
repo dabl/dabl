@@ -112,7 +112,7 @@ conda update --yes --quiet conda
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
-  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
+  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.* pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib sphinx_rtd_theme scikit-learn=0.20.3 seaborn
 

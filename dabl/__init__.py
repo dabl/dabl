@@ -4,6 +4,8 @@ from .plot.supervised import plot_supervised
 from .explain import explain
 from . import datasets
 
+__version__ = "0.1.0"
+
 __all__ = ['EasyPreprocessor', 'SimpleClassifier', 'SimpleRegressor',
            'explain', 'clean',
            'detect_types', 'plot_supervised', 'datasets']

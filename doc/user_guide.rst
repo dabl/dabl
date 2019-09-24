@@ -79,53 +79,53 @@ leakage through spurious representations of the target in the data.
 
 Initial Model Building
 -----------------------
->>> ec = dabl.SimpleClassifier(random_state=0).fit(data, target_col="income")
-DummyClassifier(strategy='prior')
-accuracy: 0.759    average_precision: 0.241    recall_macro: 0.500    roc_auc: 0.500
-new best (using recall_macro):
-accuracy             0.759
-average_precision    0.241
-recall_macro         0.500
-roc_auc              0.500
-Name: DummyClassifier(strategy='prior'), dtype: float64
-GaussianNB()
-accuracy: 0.407    average_precision: 0.288    recall_macro: 0.605    roc_auc: 0.607
-new best (using recall_macro):
-accuracy             0.407
-average_precision    0.288
-recall_macro         0.605
-roc_auc              0.607
-Name: GaussianNB(), dtype: float64
-MultinomialNB()
-accuracy: 0.831    average_precision: 0.773    recall_macro: 0.815    roc_auc: 0.908
-new best (using recall_macro):
-accuracy             0.831
-average_precision    0.773
-recall_macro         0.815
-roc_auc              0.908
-Name: MultinomialNB(), dtype: float64
-DecisionTreeClassifier(class_weight='balanced', max_depth=1)
-accuracy: 0.710    average_precision: 0.417    recall_macro: 0.759    roc_auc: 0.759
-DecisionTreeClassifier(class_weight='balanced', max_depth=5)
-accuracy: 0.784    average_precision: 0.711    recall_macro: 0.811    roc_auc: 0.894
-DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
-accuracy: 0.718    average_precision: 0.561    recall_macro: 0.779    roc_auc: 0.848
-LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs')
-accuracy: 0.819    average_precision: 0.789    recall_macro: 0.832    roc_auc: 0.915
-new best (using recall_macro):
-accuracy             0.819
-average_precision    0.789
-recall_macro         0.832
-roc_auc              0.915
-Name: LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs'), dtype: float64
-Best model:
-LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs')
-Best Scores:
-accuracy             0.819
-average_precision    0.789
-recall_macro         0.832
-roc_auc              0.915
-Name: LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs'), dtype: float64
+>>> ec = dabl.SimpleClassifier(random_state=0).fit(data, target_col="income") # doctest: +SKIP
+    DummyClassifier(strategy='prior')
+    accuracy: 0.759    average_precision: 0.241    recall_macro: 0.500    roc_auc: 0.500    
+    new best (using recall_macro):
+    accuracy             0.759
+    average_precision    0.241
+    recall_macro         0.500
+    roc_auc              0.500
+    Name: DummyClassifier(strategy='prior'), dtype: float64
+    GaussianNB()
+    accuracy: 0.407    average_precision: 0.288    recall_macro: 0.605    roc_auc: 0.607    
+    new best (using recall_macro):
+    accuracy             0.407
+    average_precision    0.288
+    recall_macro         0.605
+    roc_auc              0.607
+    Name: GaussianNB(), dtype: float64
+    MultinomialNB()
+    accuracy: 0.831    average_precision: 0.773    recall_macro: 0.815    roc_auc: 0.908    
+    new best (using recall_macro):
+    accuracy             0.831
+    average_precision    0.773
+    recall_macro         0.815
+    roc_auc              0.908
+    Name: MultinomialNB(), dtype: float64
+    DecisionTreeClassifier(class_weight='balanced', max_depth=1)
+    accuracy: 0.710    average_precision: 0.417    recall_macro: 0.759    roc_auc: 0.759    
+    DecisionTreeClassifier(class_weight='balanced', max_depth=5)
+    accuracy: 0.784    average_precision: 0.711    recall_macro: 0.811    roc_auc: 0.894    
+    DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
+    accuracy: 0.718    average_precision: 0.561    recall_macro: 0.779    roc_auc: 0.848    
+    LogisticRegression(C=0.1, class_weight='balanced')
+    accuracy: 0.819    average_precision: 0.789    recall_macro: 0.832    roc_auc: 0.915    
+    new best (using recall_macro):
+    accuracy             0.819
+    average_precision    0.789
+    recall_macro         0.832
+    roc_auc              0.915
+    Name: LogisticRegression(C=0.1, class_weight='balanced'), dtype: float64
+    Best model:
+    LogisticRegression(C=0.1, class_weight='balanced')
+    Best Scores:
+    accuracy             0.819
+    average_precision    0.789
+    recall_macro         0.832
+    roc_auc              0.915
+    Name: LogisticRegression(C=0.1, class_weight='balanced'), dtype: float64
 
 
 
@@ -141,7 +141,7 @@ column inside of X as``target_col``.
 The SimpleClassifier also performs preprocessing such as missing value
 imputation and one-hot-encoding.  You can inspect the model using:
 
->>> dabl.explain(ec)
+>>> dabl.explain(ec) # doctest: +SKIP
 
 This can lead to additional insights and guide costom processing and
 cleaning of the data.

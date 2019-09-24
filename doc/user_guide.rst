@@ -79,7 +79,7 @@ leakage through spurious representations of the target in the data.
 
 Initial Model Building
 -----------------------
->>> ec = dabl.SimpleClassifier(random_state=0).fit(data, target_col="income")
+>>> ec = dabl.SimpleClassifier(random_state=0).fit(data, target_col="income") # doctest: +SKIP
     DummyClassifier(strategy='prior')
     accuracy: 0.759    average_precision: 0.241    recall_macro: 0.500    roc_auc: 0.500    
     new best (using recall_macro):

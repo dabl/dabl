@@ -99,7 +99,7 @@ the whole data frame and specify the target column.
     >>> fc = dabl.SimpleClassifier(random_state=0)
     >>> X = titanic_clean.drop("survived", axis=1)
     >>> y = titanic_clean.survived
-    >>> fc.fit(X, y)
+    >>> fc.fit(X, y) # doctest: +SKIP
     DummyClassifier(strategy='prior')
     accuracy: 0.618    average_precision: 0.382    recall_macro: 0.500    roc_auc: 0.500    
     new best (using recall_macro):

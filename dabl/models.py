@@ -3,14 +3,13 @@ import numpy as np
 import pandas as pd
 
 from sklearn.metrics import make_scorer, average_precision_score
-from sklearn.base import BaseEstimator, ClassifierMixin, clone, RegressorMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.multiclass import type_of_target
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn.metrics.scorer import _check_multimetric_scoring
-from sklearn.model_selection._validation import _multimetric_score
+from sklearn.model_selection._validation import _fit_and_score
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.testing import set_random_state
 from sklearn.dummy import DummyClassifier
@@ -37,18 +36,17 @@ class _BaseSimpleEstimator(BaseEstimator):
     def _evaluate_one(self, estimator, data_preproc, scorers):
         res = []
         for X_train, X_test, y_train, y_test in data_preproc:
-            est = clone(estimator)
-            est.fit(X_train, y_train)
-            # fit_time = time.time() - start_time
-            # _score will return dict if is_multimetric is True
+            X = np.vstack([X_train, X_test])
+            y = np.hstack([y_train, y_test])
+            train = np.arange(len(X_train))
+            test = np.arange(len(X_train), len(X_test) + len(X_train))
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore',
                                         category=UndefinedMetricWarning)
-                test_scores = _multimetric_score(est, X_test, y_test, scorers)
-            # score_time = time.time() - start_time - fit_time
-            # train_scores = _multimetric_score(estimator, X_train, y_train,
-            #                                   scorers)
-            res.append(test_scores)
+                results = _fit_and_score(estimator, X, y, scorer=scorers,
+                                         train=train, test=test, parameters={},
+                                         fit_params={})
+            res.append(results)
 
         res_mean = pd.DataFrame(res).mean(axis=0)
         try:
@@ -118,13 +116,11 @@ class _BaseSimpleEstimator(BaseEstimator):
             data_preproc.append((X_train, X_test, y.iloc[train], y.iloc[test]))
 
         estimators = self._get_estimators()
-        scorers, _ = _check_multimetric_scoring(estimators[1],
-                                                scoring=self.scoring_)
         rank_scoring = self._rank_scoring
         self.current_best_ = {rank_scoring: -np.inf}
         for est in estimators:
             set_random_state(est, self.random_state)
-            scores = self._evaluate_one(est, data_preproc, scorers)
+            scores = self._evaluate_one(est, data_preproc, self.scoring_)
             # make scoring configurable
             if scores[rank_scoring] > self.current_best_[rank_scoring]:
                 if self.verbose:

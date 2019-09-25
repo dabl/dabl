@@ -14,7 +14,7 @@ from sklearn.model_selection._validation import _multimetric_score
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.testing import set_random_state
 from sklearn.dummy import DummyClassifier
-
+from sklearn.utils.metaestimators import if_delegate_has_method
 
 from .preprocessing import EasyPreprocessor, clean, detect_types
 from .pipelines import (get_fast_classifiers, get_fast_regressors,
@@ -304,6 +304,10 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
 
     def predict_proba(self, X):
         return self.est_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='est_')
+    def decision_function(self, X):
+        return self.est_.decision_function(X)
 
     def fit(self, X, y=None, target_col=None):
         """Fit estimator.

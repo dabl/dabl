@@ -455,8 +455,8 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         steps_categorical = []
         if X.loc[:, types.categorical].isna().any(axis=None):
             steps_categorical.append(
-                #SimpleImputer(strategy='constant', fill_value='dabl_missing'))
-                SimpleImputer(strategy='most_frequent'))
+                SimpleImputer(strategy='constant', fill_value='dabl_missing'))
+                #SimpleImputer(strategy='most_frequent'))
         steps_categorical.append(
             OneHotEncoder(categories='auto', handle_unknown='ignore',
                           sparse=False))

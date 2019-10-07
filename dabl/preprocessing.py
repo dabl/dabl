@@ -29,7 +29,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        if self.values == X.values:
+        if (self.columns == X.columns).all():
             raise ValueError("Given the same columns")
         result = []
         for col in self.columns_:

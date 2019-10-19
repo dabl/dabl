@@ -23,6 +23,11 @@ from .utils import nice_repr
 from .search import GridSuccessiveHalving
 
 
+def _format_scores(scores):
+    return " ".join(('{}: {:.3f}'.format(name, score)
+                     for name, score in scores.items()))
+
+
 class _BaseSimpleEstimator(BaseEstimator):
 
     def predict(self, X):
@@ -62,10 +67,8 @@ class _BaseSimpleEstimator(BaseEstimator):
             name = nice_repr(estimator)
 
         if self.verbose:
-            print(name)
-            res_string = "".join("{}: {:.3f}    ".format(m, s)
-                                 for m, s in res_mean.items())
-            print(res_string)
+            print("Running {}".format(name))
+            print(_format_scores(res_mean))
         res_mean.name = name
         self.log_.append(res_mean)
         return res_mean
@@ -131,15 +134,17 @@ class _BaseSimpleEstimator(BaseEstimator):
             # make scoring configurable
             if scores[rank_scoring] > self.current_best_[rank_scoring]:
                 if self.verbose:
-                    with pd.option_context('precision', 3):
-                        print("new best (using {}):\n{}".format(
-                            rank_scoring, scores))
+                    print("=== new best {} (using {}):".format(
+                        scores.name,
+                        rank_scoring))
+                    print(_format_scores(scores))
+                    print()
+
                 self.current_best_ = scores
                 best_est = est
         if self.verbose:
-            with pd.option_context('precision', 3):
-                print("Best model:\n{}\nBest Scores:\n{}".format(
-                      nice_repr(best_est), self.current_best_))
+            print("\nBest model:\n{}\nBest Scores:\n{}".format(
+                  nice_repr(best_est), _format_scores(self.current_best_)))
         if self.refit:
             self.est_ = make_pipeline(EasyPreprocessor(), best_est)
             self.est_.fit(X, y)
@@ -182,10 +187,12 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
             scoring = {'accuracy': 'accuracy',
                        'average_precision': my_average_precision_scorer,
                        'roc_auc': 'roc_auc',
-                       'recall_macro': 'recall_macro'
+                       'recall_macro': 'recall_macro',
+                       'f1_macro': 'f1_macro'
                        }
         elif target_type == "multiclass":
-            scoring = ['accuracy', 'recall_macro', 'precision_macro']
+            scoring = ['accuracy', 'recall_macro', 'precision_macro',
+                       'f1_macro']
         else:
             raise ValueError("Unknown target type: {}".format(target_type))
         return y, scoring
@@ -355,7 +362,7 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
             estimator=pipe, param_grid=param_grid,
             force_exhaust_budget=self.force_exhaust_budget,
             verbose=self.verbose, cv=5, error_score='raise',
-            scoring='recall_macro')
+            scoring=self.scoring_, refit='recall_macro')
         self.search_ = gs
         gs.fit(X, y)
         self.est_ = gs.best_estimator_

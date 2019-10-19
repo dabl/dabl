@@ -51,9 +51,10 @@ def explain(estimator, feature_names=None):
                  " to show the full information.")
         # FIXME !!! bug in plot_tree with integer class names
         class_names = [str(c) for c in estimator.classes_]
-        plt.figure(figsize=(8, 10))
+        plt.figure(figsize=(18, 10))
         plot_tree(estimator, feature_names=feature_names,
-                  class_names=class_names, filled=True, max_depth=5)
+                  class_names=class_names, filled=True, max_depth=5,
+                  precision=2, proportion=True)
         # FIXME This is a bad thing to show!
         plot_coefficients(estimator.feature_importances_, feature_names)
         plt.ylabel("Impurity Decrease")

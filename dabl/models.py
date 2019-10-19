@@ -164,6 +164,12 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
 
     verbose : integer, default=1
         Verbosity (higher is more output)
+
+    Attributes
+    ----------
+    est_ : sklearn estimator
+        Best estimator found.
+
     """
     def __init__(self, refit=True, random_state=None, verbose=1):
         self.verbose = verbose

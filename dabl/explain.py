@@ -1,13 +1,15 @@
 import numpy as np
 from warnings import warn
 
-from sklearn.tree import DecisionTreeClassifier
+import matplotlib.pyplot as plt
+
+from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
 from .models import SimpleClassifier, SimpleRegressor, AnyClassifier
+from .utils import nice_repr
 from .plot.utils import plot_coefficients
-from ._plot_tree import plot_tree
 
 
 def explain(estimator, feature_names=None):
@@ -40,19 +42,21 @@ def explain(estimator, feature_names=None):
         estimator = final_est
 
     if isinstance(estimator, DecisionTreeClassifier):
-        print(estimator)
+        print(nice_repr(estimator))
         try:
             print("Depth: {}".format(estimator.get_depth()))
             print("Number of leaves: {}".format(estimator.get_n_leaves()))
         except AttributeError:
-            warn("Can't show tree depth, install scikit-learn 0.21-dev"
+            warn("Can't show tree depth, install scikit-learn 0.21"
                  " to show the full information.")
         # FIXME !!! bug in plot_tree with integer class names
         class_names = [str(c) for c in estimator.classes_]
+        plt.figure(figsize=(8, 10))
         plot_tree(estimator, feature_names=feature_names,
                   class_names=class_names, filled=True, max_depth=5)
         # FIXME This is a bad thing to show!
         plot_coefficients(estimator.feature_importances_, feature_names)
+        plt.ylabel("Impurity Decrease")
     elif hasattr(estimator, 'coef_'):
         # probably a linear model, can definitely show the coefficients
         # would be nice to have the target name here
@@ -71,6 +75,7 @@ def explain(estimator, feature_names=None):
         # FIXME This is a bad thing to show!
 
         plot_coefficients(estimator.feature_importances_, feature_names)
+        plt.ylabel("Imputity Decrease")
 
     else:
         raise ValueError("Don't know how to explain estimator {} "

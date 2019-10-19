@@ -4,6 +4,7 @@ import pandas as pd
 from scipy.sparse import issparse
 from inspect import signature
 from sklearn.base import _pprint
+from .preprocessing import clean
 
 
 def data_df_from_bunch(data_bunch):
@@ -20,6 +21,23 @@ def data_df_from_bunch(data_bunch):
     except AttributeError:
         df['target'] = data_bunch.target
     return df
+
+
+def _validate_Xyt(X, y, target_col):
+    """Ensure y and target_col are exclusive.
+
+    Make sure either y or target_col is passed.
+    If target_col is passed, extract it from X.
+    """
+    if ((y is None and target_col is None)
+            or (y is not None) and (target_col is not None)):
+        raise ValueError(
+            "Need to specify exactly one of y and target_col.")
+    X = clean(X)
+    if target_col is not None:
+        y = X[target_col]
+        X = X.drop(target_col, axis=1)
+    return X, y
 
 
 def _changed_params(est):

@@ -6,19 +6,67 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report, confusion_matrix
 
 from .models import SimpleClassifier, SimpleRegressor, AnyClassifier
-from .utils import nice_repr
-from .plot.utils import plot_coefficients
+from .utils import nice_repr, _validate_Xyt
+from .plot.utils import plot_coefficients, plot_multiclass_roc_curve
 
 
-def explain(estimator, feature_names=None):
+def classification_metrics(estimator, X_val, y_val):
+    y_pred = estimator.predict(X_val)
+    print(classification_report(y_val, y_pred))
+    print(confusion_matrix(y_val, y_pred))
+    try:
+        from sklearn.metrics import plot_roc_curve
+        if len(estimator.classes_) == 2:
+            plot_roc_curve(estimator, X_val, y_val)
+        elif len(estimator.classes_) > 2:
+            plot_multiclass_roc_curve(estimator, X_val, y_val)
+    except ImportError:
+        warn("Can't plot roc curve, install sklearn 0.22-dev")
+
+
+def explain(estimator, X_val=None, y_val=None, target_col=None,
+            feature_names=None):
+    """Explain estimator.
+
+    Provide basic properties and evaluation plots for the estimator.
+
+    Parameters
+    ----------
+    estimator : dabl or sklearn estimator
+        Model to evaluate.
+
+    X_val : DataFrame, optional
+        Validation set. Used for computing hold-out evaluations
+        like roc-curves, permutation importance or partial dependence plots.
+
+    y_val : Series or numpy array, optional.
+        Validation set labels. You need to specify either y_val or target_col.
+
+    target_col : string or int, optional
+        Column name of target if included in X.
+    """
     if feature_names is None:
         try:
             feature_names = estimator.feature_names_
         except AttributeError:
             raise ValueError("Can't determine input feature names, "
                              "please pass them.")
+    classifier = False
+    if hasattr(estimator, 'classes_') and len(estimator.classes_) >= 2:
+        classifier = True
+
+    if X_val is not None:
+        X_val, y_val = _validate_Xyt(X_val, y_val, target_col)
+
+        if classifier:
+            # classification metrics:
+            classification_metrics(estimator, X_val, y_val)
+        else:
+            # FIXME
+            pass
 
     # Start unpacking the estimator to get to the final step
     if (isinstance(estimator, SimpleClassifier)
@@ -40,6 +88,7 @@ def explain(estimator, feature_names=None):
 
         # now we have input feature names for the final step
         estimator = final_est
+    # done unwrapping, start evaluating
 
     if isinstance(estimator, DecisionTreeClassifier):
         print(nice_repr(estimator))

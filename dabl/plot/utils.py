@@ -13,6 +13,7 @@ from seaborn.utils import despine
 # from sklearn.dummy import DummyClassifier
 # from sklearn.metrics import recall_score
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import roc_curve
 
 from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit
 
@@ -589,3 +590,19 @@ def _get_scatter_size(scatter_size, x):
         return 2
     else:
         return 1
+
+
+def plot_multiclass_roc_curve(estimator, X_val, y_val):
+    if len(estimator.classes_) < 3:
+        raise ValueError("Only for multi-class")
+    try:
+        y_score = estimator.predict_proba(X_val)
+    except AttributeError:
+        y_score = estimator.decision_function(X_val)
+    fig, axes = _make_subplots(len(estimator.classes_))
+    for i, (ax, c) in enumerate(zip(axes.ravel(), estimator.classes_)):
+        fpr, tpr, _ = roc_curve(y_val == c, y_score[:, i])
+        ax.plot(fpr, tpr)
+        ax.set_xlabel("False Positive Rate")
+        ax.set_ylabel("True Positive Rate (recall)")
+        ax.set_title("ROC curve for class {}".format(c))

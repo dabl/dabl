@@ -12,6 +12,7 @@ from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _fit_and_score
 from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.testing import set_random_state
 from sklearn.dummy import DummyClassifier
 
@@ -19,7 +20,7 @@ from sklearn.dummy import DummyClassifier
 from .preprocessing import EasyPreprocessor, clean, detect_types
 from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
-from .utils import nice_repr
+from .utils import nice_repr, _validate_Xyt
 from .search import GridSuccessiveHalving
 
 
@@ -38,8 +39,6 @@ class _BaseSimpleEstimator(BaseEstimator):
             # check_is_fitted will not have arguments any more
             warnings.filterwarnings('ignore', category=DeprecationWarning)
             check_is_fitted(self, 'est_')
-        if getattr(self, 'classes_', None) is not None:
-            return self.classes_[self.est_.predict(X)]
 
         return self.est_.predict(X)
 
@@ -73,6 +72,14 @@ class _BaseSimpleEstimator(BaseEstimator):
         self.log_.append(res_mean)
         return res_mean
 
+    @if_delegate_has_method(delegate='est_')
+    def predict_proba(self, X):
+        return self.est_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='est_')
+    def decision_function(self, X):
+        return self.est_.decision_function(X)
+
     def _fit(self, X, y=None, target_col=None):
         """Fit estimator.
 
@@ -91,14 +98,7 @@ class _BaseSimpleEstimator(BaseEstimator):
         target_col : string or int, optional
             Column name of target if included in X.
         """
-        if ((y is None and target_col is None)
-                or (y is not None) and (target_col is not None)):
-            raise ValueError(
-                "Need to specify exactly one of y and target_col.")
-        X = clean(X)
-        if target_col is not None:
-            y = X[target_col]
-            X = X.drop(target_col, axis=1)
+        X, y = _validate_Xyt(X, y, target_col)
         types = detect_types(X)
         self.feature_names_ = X.columns
         self.types_ = types
@@ -181,8 +181,8 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
 
     def _preprocess_target(self, y):
         target_type = type_of_target(y)
-        le = LabelEncoder()
-        y = pd.Series(le.fit_transform(y))
+        le = LabelEncoder().fit(y)
+        # y = pd.Series(le.fit_transform(y))
         self.classes_ = le.classes_
 
         if target_type == "binary":
@@ -318,8 +318,6 @@ class AnyClassifier(BaseEstimator, ClassifierMixin):
             # check_is_fitted will not have arguments any more
             warnings.filterwarnings('ignore', category=DeprecationWarning)
             check_is_fitted(self, 'est_')
-        if getattr(self, 'classes_', None) is not None:
-            return self.classes_[self.est_.predict(X)]
 
         return self.est_.predict(X)
 

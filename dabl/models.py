@@ -83,6 +83,14 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         self.log_.append(res_mean)
         return res_mean
 
+    @if_delegate_has_method(delegate='est_')
+    def predict_proba(self, X):
+        return self.est_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='est_')
+    def decision_function(self, X):
+        return self.est_.decision_function(X)
+
     def _fit(self, X, y=None, target_col=None):
         """Fit estimator.
 

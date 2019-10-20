@@ -118,15 +118,15 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
             warn("Can't show tree depth, install scikit-learn 0.21"
                  " to show the full information.")
         # FIXME !!! bug in plot_tree with integer class names
-        class_names = [str(c) for c in inner_estimator.classes_]
+        class_names = [str(c) for c in estimator.classes_]
         plt.figure(figsize=(18, 10))
         plot_tree(inner_estimator, feature_names=feature_names,
                   class_names=class_names, filled=True, max_depth=5,
                   precision=2, proportion=True)
         # FIXME This is a bad thing to show!
-        plot_coefficients(inner_estimator.feature_importances_, feature_names)
+        plot_coefficients(estimator.feature_importances_, feature_names)
         plt.ylabel("Impurity Decrease")
-    elif hasattr(inner_estimator, 'coef_'):
+    elif hasattr(estimator, 'coef_'):
         # probably a linear model, can definitely show the coefficients
         # would be nice to have the target name here
         if hasattr(inner_estimator, "classes_"):

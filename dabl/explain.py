@@ -124,7 +124,7 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                   class_names=class_names, filled=True, max_depth=5,
                   precision=2, proportion=True)
         # FIXME This is a bad thing to show!
-        plot_coefficients(estimator.feature_importances_, feature_names)
+        plot_coefficients(inner_estimator.feature_importances_, feature_names)
         plt.ylabel("Impurity Decrease")
     elif hasattr(estimator, 'coef_'):
         # probably a linear model, can definitely show the coefficients

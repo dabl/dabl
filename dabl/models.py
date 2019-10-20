@@ -41,17 +41,6 @@ class _DablBaseEstimator(BaseEstimator):
 
 
 class _BaseSimpleEstimator(_DablBaseEstimator):
-
-    @if_delegate_has_method(delegate='est_')
-    def predict_proba(self, X):
-        return self.est_.predict_proba(X)
-
-    @if_delegate_has_method(delegate='est_')
-    def decision_function(self, X):
-        return self.est_.decision_function(X)
-
-
-class _BaseSimpleEstimator(_DablBaseEstimator):
     def predict(self, X):
         if not self.refit:
             raise ValueError("Must specify refit=True to predict.")

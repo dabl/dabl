@@ -123,37 +123,8 @@ pip install numpydoc==0.8
 # Build and install in dev mode
 python setup.py develop
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
-then
-    # List available documentation versions if on master
-    python ci_scripts/circle/list_versions.py > doc/versions.rst
-fi
-
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
 
 cd -
 set +o pipefail
-
-affected_doc_paths() {
-    files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
-    echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
-    dabl_files=$(echo "$files" | grep '^dabl/')
-    if [ -n "$dabl_files" ]
-    then
-        grep -hlR -f<(echo "$dabl_files" | sed 's/^/scikit-learn\/blob\/[a-z0-9]*\//') doc/_build/html/modules/generated | cut -d/ -f5-
-    fi
-}
-
-if [ -n "$CI_PULL_REQUEST" ]
-then
-    echo "The following documentation files may have been changed by PR #$CI_PULL_REQUEST:"
-    affected=$(affected_doc_paths)
-    echo "$affected"
-    (
-    echo '<html><body><ul>'
-    echo "$affected" | sed 's|.*|<li><a href="&">&</a></li>|'
-    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p></body></html>'
-    ) > 'doc/_build/html/_changed.html'
-fi

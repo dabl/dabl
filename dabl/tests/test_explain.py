@@ -20,4 +20,4 @@ def test_explain_smoke_titanic():
     explain(tree, feature_names=ep.get_feature_names())
     pipe = make_pipeline(EasyPreprocessor(), LogisticRegression())
     pipe.fit(X, y)
-    explain(pipe, pipe.steps[0][1].get_feature_names())
+    explain(pipe, feature_names=pipe.steps[0][1].get_feature_names())

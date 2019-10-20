@@ -1,7 +1,6 @@
 import pytest
 import os
 import pandas as pd
-from sklearn.base import BaseEstimator
 from sklearn.datasets import load_iris, make_blobs, load_boston
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression

@@ -64,7 +64,7 @@ Exploratory Data analysis
 -------------------------
 >>> dabl.plot_supervised(data, target_col="income")
 Target looks like classification
-Linear Discriminant Analysis training set score: 0.530
+Linear Discriminant Analysis training set score: ...
 
 
 The next step in any task should be exploratory data analysis. dabl provides a

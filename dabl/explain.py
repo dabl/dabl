@@ -8,6 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.inspection import plot_partial_dependence
+from sklearn.feature_selection import SelectFromModel
 
 from .models import SimpleClassifier, SimpleRegressor, AnyClassifier
 from .utils import nice_repr, _validate_Xyt
@@ -95,7 +96,7 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                   class_names=class_names, filled=True, max_depth=5,
                   precision=2, proportion=True)
         # FIXME This is a bad thing to show!
-        interesting_features = plot_coefficients(
+        plot_coefficients(
             inner_estimator.feature_importances_, feature_names)
         plt.ylabel("Impurity Decrease")
 
@@ -112,11 +113,11 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
             if coef.ndim > 1:
                 raise ValueError("Don't know how to handle "
                                  "multi-target regressor")
-            interesting_features = plot_coefficients(coef, feature_names)
+            plot_coefficients(coef, feature_names)
 
     elif isinstance(inner_estimator, RandomForestClassifier):
         # FIXME This is a bad thing to show!
-        interesting_features = plot_coefficients(
+        plot_coefficients(
             inner_estimator.feature_importances_, feature_names)
         plt.ylabel("Imputity Decrease")
 
@@ -125,11 +126,12 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                          "yet.".format(inner_estimator))
 
     if X_val is not None:
-        print("Computing partial dependence plots...")
         # feature names might change during preprocessing
         # but we don't want partial dependence plots for one-hot features
-        features = [f for f in feature_names if f in interesting_features]
+        fs = SelectFromModel(inner_estimator, prefit=True, max_features=10)
+        features = fs.transform([feature_names]).ravel()
         if not hasattr(inner_estimator, 'coef_'):
+            print("Computing partial dependence plots...")
             n_rows, n_cols = find_pretty_grid(len(features))
             try:
                 if n_classes <= 2:

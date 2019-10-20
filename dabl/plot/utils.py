@@ -129,6 +129,7 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10,
     ax.set_ylabel("Coefficient magnitude")
     ax.set_xlabel("Feature")
     ax.set_title(classname)
+    return feature_names[interesting_coefficients]
 
 
 def heatmap(values, xlabel, ylabel, xticklabels, yticklabels, cmap=None,

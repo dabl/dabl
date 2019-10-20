@@ -76,24 +76,8 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
             # classification metrics:
             classification_metrics(estimator, X_val, y_val)
         else:
-            # FIXME
+            # FIXME add regression metrics
             pass
-        if not hasattr(inner_estimator, 'coef_'):
-            n_rows, n_cols = find_pretty_grid(len(feature_names))
-            print("Computing partial dependence plots...")
-            try:
-                if n_classes <= 2:
-                    plot_partial_dependence(
-                        estimator, X_val, features=feature_names,
-                        feature_names=feature_names, n_cols=n_cols)
-                else:
-                    for c in estimator.classes_:
-                        plot_partial_dependence(estimator, X_val,
-                                                features=feature_names,
-                                                feature_names=feature_names,
-                                                target=c, n_cols=n_cols)
-            except ValueError as e:
-                warn("Couldn't run partial dependence plot: " + str(e))
 
     if isinstance(inner_estimator, DecisionTreeClassifier):
         print(nice_repr(inner_estimator))
@@ -111,7 +95,8 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                   class_names=class_names, filled=True, max_depth=5,
                   precision=2, proportion=True)
         # FIXME This is a bad thing to show!
-        plot_coefficients(inner_estimator.feature_importances_, feature_names)
+        interesting_features = plot_coefficients(
+            inner_estimator.feature_importances_, feature_names)
         plt.ylabel("Impurity Decrease")
 
     elif hasattr(inner_estimator, 'coef_'):
@@ -127,16 +112,45 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
             if coef.ndim > 1:
                 raise ValueError("Don't know how to handle "
                                  "multi-target regressor")
-            plot_coefficients(coef, feature_names)
+            interesting_features = plot_coefficients(coef, feature_names)
 
     elif isinstance(inner_estimator, RandomForestClassifier):
         # FIXME This is a bad thing to show!
-        plot_coefficients(inner_estimator.feature_importances_, feature_names)
+        interesting_features = plot_coefficients(
+            inner_estimator.feature_importances_, feature_names)
         plt.ylabel("Imputity Decrease")
 
     else:
         raise ValueError("Don't know how to explain estimator {} "
                          "yet.".format(inner_estimator))
+
+    if X_val is not None:
+        print("Computing partial dependence plots...")
+        # feature names might change during preprocessing
+        # but we don't want partial dependence plots for one-hot features
+        features = [f for f in feature_names if f in interesting_features]
+        if not hasattr(inner_estimator, 'coef_'):
+            n_rows, n_cols = find_pretty_grid(len(features))
+            try:
+                if n_classes <= 2:
+                    plot = plot_partial_dependence(
+                        estimator, X_val, features=features,
+                        feature_names=feature_names, n_cols=n_cols)
+                    plot.figure_.suptitle("Partial Dependence")
+                    for ax in plot.axes_.ravel():
+                        ax.set_ylabel('')
+                else:
+                    for c in estimator.classes_:
+                        plot = plot_partial_dependence(
+                            estimator, X_val, features=features,
+                            feature_names=feature_names,
+                            target=c, n_cols=n_cols)
+                        plot.figure_.suptitle(
+                            "Partial Dependence for class {}".format(c))
+                        for ax in plot.axes_.ravel():
+                            ax.set_ylabel('')
+            except ValueError as e:
+                warn("Couldn't run partial dependence plot: " + str(e))
 
 
 def _extract_inner_estimator(estimator, feature_names):

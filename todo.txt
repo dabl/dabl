@@ -1,4 +1,4 @@
-add permutation importance, partial dependence curves
+add permutation importance, partial dependencefe curves
 add feature engineering for explainable models
 refactor pca and lda plots together
 make univariate pca nad lda plots maybe
@@ -14,3 +14,14 @@ we need to think about this!
 types are different for feature engineering and visualization.
 try to convert floats to ints as well?
 
+# NEW? where's the other one?! damn...
+
+only plot pdp if few classes, otherwise restrict to user-specified classes
+
+calibration plots
+
+select pdp plot features by some measure of variable importance?
+
+refactor finding "interesting features" in a model-agnostic way?
+
+partial dependence plot can't take advantage of fast method for now :(

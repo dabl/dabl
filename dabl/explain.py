@@ -12,7 +12,7 @@ from sklearn.inspection import plot_partial_dependence
 from .models import SimpleClassifier, SimpleRegressor, AnyClassifier
 from .utils import nice_repr, _validate_Xyt
 from .plot.utils import (plot_coefficients, plot_multiclass_roc_curve,
-                         find_pretty_grid)
+                         find_pretty_grid, _make_subplots)
 
 
 def classification_metrics(estimator, X_val, y_val):
@@ -22,7 +22,8 @@ def classification_metrics(estimator, X_val, y_val):
     try:
         from sklearn.metrics import plot_roc_curve
         if len(estimator.classes_) == 2:
-            plot_roc_curve(estimator, X_val, y_val)
+            plot_roc_curve(estimator, X_val, y_val,
+                           pos_label=estimator.classes_[1])
         elif len(estimator.classes_) > 2:
             plot_multiclass_roc_curve(estimator, X_val, y_val)
     except ImportError:
@@ -56,6 +57,7 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
         except AttributeError:
             raise ValueError("Can't determine input feature names, "
                              "please pass them.")
+
     classifier = False
     if hasattr(estimator, 'classes_') and len(estimator.classes_) >= 2:
         n_classes = len(estimator.classes_)
@@ -63,8 +65,12 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
     else:
         n_classes = 1
 
+    inner_estimator, feature_names = _extract_inner_estimator(
+        estimator, feature_names)
+
     if X_val is not None:
-        X_val, y_val = _validate_Xyt(X_val, y_val, target_col)
+        X_val, y_val = _validate_Xyt(X_val, y_val, target_col,
+                                     do_clean=False)
 
         if classifier:
             # classification metrics:
@@ -72,19 +78,68 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
         else:
             # FIXME
             pass
-        # FIXME Skip for linear models?
-        n_rows, n_cols = find_pretty_grid(len(feature_names))
-        print("Computing partial dependence plots...")
-        if n_classes <= 2:
-            plot_partial_dependence(estimator, X_val, features=feature_names,
-                                    feature_names=feature_names, n_cols=n_cols)
-        else:
-            for c in estimator.classes_:
-                plot_partial_dependence(estimator, X_val,
-                                        features=feature_names,
-                                        feature_names=feature_names,
-                                        target=c, n_cols=n_cols)
+        if not hasattr(inner_estimator, 'coef_'):
+            n_rows, n_cols = find_pretty_grid(len(feature_names))
+            print("Computing partial dependence plots...")
+            try:
+                if n_classes <= 2:
+                    plot_partial_dependence(
+                        estimator, X_val, features=feature_names,
+                        feature_names=feature_names, n_cols=n_cols)
+                else:
+                    for c in estimator.classes_:
+                        plot_partial_dependence(estimator, X_val,
+                                                features=feature_names,
+                                                feature_names=feature_names,
+                                                target=c, n_cols=n_cols)
+            except ValueError as e:
+                warn("Couldn't run partial dependence plot: " + str(e))
 
+    if isinstance(inner_estimator, DecisionTreeClassifier):
+        print(nice_repr(inner_estimator))
+        try:
+            print("Depth: {}".format(inner_estimator.get_depth()))
+            print("Number of leaves: {}".format(
+                inner_estimator.get_n_leaves()))
+        except AttributeError:
+            warn("Can't show tree depth, install scikit-learn 0.21"
+                 " to show the full information.")
+        # FIXME !!! bug in plot_tree with integer class names
+        class_names = [str(c) for c in estimator.classes_]
+        plt.figure(figsize=(18, 10))
+        plot_tree(inner_estimator, feature_names=feature_names,
+                  class_names=class_names, filled=True, max_depth=5,
+                  precision=2, proportion=True)
+        # FIXME This is a bad thing to show!
+        plot_coefficients(inner_estimator.feature_importances_, feature_names)
+        plt.ylabel("Impurity Decrease")
+
+    elif hasattr(inner_estimator, 'coef_'):
+        # probably a linear model, can definitely show the coefficients
+        if n_classes > 2:
+            fix, axes = _make_subplots(n_classes)
+            coef = np.atleast_2d(inner_estimator.coef_)
+            for ax, k, c in zip(axes.ravel(), inner_estimator.classes_, coef):
+                plot_coefficients(c, feature_names, ax=ax,
+                                  classname="class: {}".format(k))
+        else:
+            coef = np.squeeze(inner_estimator.coef_)
+            if coef.ndim > 1:
+                raise ValueError("Don't know how to handle "
+                                 "multi-target regressor")
+            plot_coefficients(coef, feature_names)
+
+    elif isinstance(inner_estimator, RandomForestClassifier):
+        # FIXME This is a bad thing to show!
+        plot_coefficients(inner_estimator.feature_importances_, feature_names)
+        plt.ylabel("Imputity Decrease")
+
+    else:
+        raise ValueError("Don't know how to explain estimator {} "
+                         "yet.".format(inner_estimator))
+
+
+def _extract_inner_estimator(estimator, feature_names):
     # Start unpacking the estimator to get to the final step
     inner_estimator = estimator
     if (isinstance(inner_estimator, SimpleClassifier)
@@ -107,45 +162,4 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
         # now we have input feature names for the final step
         inner_estimator = final_est
     # done unwrapping, start evaluating
-
-    if isinstance(inner_estimator, DecisionTreeClassifier):
-        print(nice_repr(inner_estimator))
-        try:
-            print("Depth: {}".format(inner_estimator.get_depth()))
-            print("Number of leaves: {}".format(
-                inner_estimator.get_n_leaves()))
-        except AttributeError:
-            warn("Can't show tree depth, install scikit-learn 0.21"
-                 " to show the full information.")
-        # FIXME !!! bug in plot_tree with integer class names
-        class_names = [str(c) for c in estimator.classes_]
-        plt.figure(figsize=(18, 10))
-        plot_tree(inner_estimator, feature_names=feature_names,
-                  class_names=class_names, filled=True, max_depth=5,
-                  precision=2, proportion=True)
-        # FIXME This is a bad thing to show!
-        plot_coefficients(inner_estimator.feature_importances_, feature_names)
-        plt.ylabel("Impurity Decrease")
-    elif hasattr(estimator, 'coef_'):
-        # probably a linear model, can definitely show the coefficients
-        # would be nice to have the target name here
-        if hasattr(inner_estimator, "classes_"):
-            coef = np.atleast_2d(inner_estimator.coef_)
-            for k, c in zip(inner_estimator.classes_, coef):
-                plot_coefficients(c, feature_names,
-                                  classname="class: {}".format(k))
-        else:
-            coef = np.squeeze(inner_estimator.coef_)
-            if coef.ndim > 1:
-                raise ValueError("Don't know how to handle "
-                                 "multi-target regressor")
-            plot_coefficients(coef, feature_names)
-    elif isinstance(inner_estimator, RandomForestClassifier):
-        # FIXME This is a bad thing to show!
-
-        plot_coefficients(inner_estimator.feature_importances_, feature_names)
-        plt.ylabel("Imputity Decrease")
-
-    else:
-        raise ValueError("Don't know how to explain estimator {} "
-                         "yet.".format(inner_estimator))
+    return inner_estimator, feature_names

@@ -2,6 +2,8 @@ import pytest
 import os
 import pandas as pd
 from sklearn.datasets import load_iris, make_blobs, load_boston
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
 
 from dabl.models import SimpleClassifier, SimpleRegressor
 from dabl.utils import data_df_from_bunch
@@ -40,3 +42,18 @@ def test_regression_boston():
     data = data_df_from_bunch(boston)
     er = SimpleRegressor()
     er.fit(data, target_col='target')
+
+
+@pytest.mark.parametrize('model', [LinearSVC(), LogisticRegression()])
+def test_deletation_simple(monkeypatch, model):
+    def mock_get_estimators_linearsvc(self):
+        return [model]
+
+    monkeypatch.setattr(SimpleClassifier, '_get_estimators',
+                        mock_get_estimators_linearsvc)
+    sc = SimpleClassifier(random_state=0)
+    sc.fit(X_blobs, y_blobs)
+    assert isinstance(sc.est_[1], type(model))
+    assert (hasattr(sc, 'decision_function')
+            == hasattr(model, 'decision_function'))
+    assert hasattr(sc, 'predict_proba') == hasattr(model, 'predict_proba')

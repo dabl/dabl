@@ -182,7 +182,7 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
     def _preprocess_target(self, y):
         target_type = type_of_target(y)
         le = LabelEncoder().fit(y)
-        # y = pd.Series(le.fit_transform(y))
+        y = pd.Series(y)
         self.classes_ = le.classes_
 
         if target_type == "binary":

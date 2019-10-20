@@ -29,7 +29,18 @@ def _format_scores(scores):
                      for name, score in scores.items()))
 
 
-class _BaseSimpleEstimator(BaseEstimator):
+class _DablBaseEstimator(BaseEstimator):
+
+    @if_delegate_has_method(delegate='est_')
+    def predict_proba(self, X):
+        return self.est_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='est_')
+    def decision_function(self, X):
+        return self.est_.decision_function(X)
+
+
+class _BaseSimpleEstimator(_DablBaseEstimator):
 
     def predict(self, X):
         if not self.refit:
@@ -71,14 +82,6 @@ class _BaseSimpleEstimator(BaseEstimator):
         res_mean.name = name
         self.log_.append(res_mean)
         return res_mean
-
-    @if_delegate_has_method(delegate='est_')
-    def predict_proba(self, X):
-        return self.est_.predict_proba(X)
-
-    @if_delegate_has_method(delegate='est_')
-    def decision_function(self, X):
-        return self.est_.decision_function(X)
 
     def _fit(self, X, y=None, target_col=None):
         """Fit estimator.
@@ -280,7 +283,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
         return self._fit(X=X, y=y, target_col=target_col)
 
 
-class AnyClassifier(BaseEstimator, ClassifierMixin):
+class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
     def __init__(self, n_jobs=None, force_exhaust_budget=False, verbose=0):
         self.verbose = verbose
         self.n_jobs = n_jobs

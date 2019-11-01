@@ -293,22 +293,14 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
     def _preprocess_target(self, y):
         # copy and paste from above, should be a mixin
         target_type = type_of_target(y)
-        le = LabelEncoder()
-        y = pd.Series(le.fit_transform(y))
+        le = LabelEncoder().fit(y)
+        y = pd.Series(y)
         self.classes_ = le.classes_
 
         if target_type == "binary":
-            minority_class = y.value_counts().index[1]
-            my_average_precision_scorer = make_scorer(
-                average_precision_score, pos_label=minority_class,
-                needs_threshold=True)
-            scoring = {'accuracy': 'accuracy',
-                       'average_precision': my_average_precision_scorer,
-                       'roc_auc': 'roc_auc',
-                       'recall_macro': 'recall_macro'
-                       }
+            scoring = 'recall_macro'
         elif target_type == "multiclass":
-            scoring = ['accuracy', 'recall_macro', 'precision_macro']
+            scoring = 'recall_macro'
         else:
             raise ValueError("Unknown target type: {}".format(target_type))
         return y, scoring

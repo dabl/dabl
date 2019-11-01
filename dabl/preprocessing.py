@@ -15,7 +15,7 @@ _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
     # should this error if the inputs are not string?
     def fit(self, X, y=None):
-         # FIXME clean float columns will make this fail
+        # FIXME clean float columns will make this fail
         if not isinstance(X, pd.DataFrame):
             raise TypeError("X is not a dataframe. Convert or call `clean`.")
         encoders = {}
@@ -30,7 +30,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        if (self.columns_ == X.columns).all() != True:
+        if (self.columns_ == X.columns).all() is False:
             raise ValueError("Given the same columns")
         result = []
         for col in self.columns_:
@@ -111,7 +111,7 @@ def _float_col_is_int(series):
 
 def detect_types(X, type_hints=None, max_int_cardinality='auto',
                  dirty_float_threshold=.9,
-                 near_constant_threshold=.95, verbose=0):
+                 near_constant_threshold=0.95, verbose=0):
     """Detect types of dataframe columns.
 
     Columns are labeled as one of the following types:

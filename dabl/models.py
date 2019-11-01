@@ -16,7 +16,6 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.testing import set_random_state
 from sklearn.dummy import DummyClassifier
 
-
 from .preprocessing import EasyPreprocessor, clean, detect_types
 from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
@@ -81,14 +80,6 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         res_mean.name = name
         self.log_.append(res_mean)
         return res_mean
-
-    @if_delegate_has_method(delegate='est_')
-    def predict_proba(self, X):
-        return self.est_.predict_proba(X)
-
-    @if_delegate_has_method(delegate='est_')
-    def decision_function(self, X):
-        return self.est_.decision_function(X)
 
     def _fit(self, X, y=None, target_col=None):
         """Fit estimator.
@@ -383,4 +374,5 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
         print("best classifier: ", gs.best_params_['classifier'])
         print("best score: {:.3f}".format(gs.best_score_))
+
         return self

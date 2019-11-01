@@ -303,7 +303,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
                 dirty_float.index[dirty_float].tolist()
             ))
         if res.useless.sum() > 0:
-            print("WARN dropped columns (too many unique values): {}".format(
+            print("WARN dropped useless columns: {}".format(
                 res.index[res.useless].tolist()
             ))
     return res

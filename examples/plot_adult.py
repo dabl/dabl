@@ -2,7 +2,7 @@
 Adult Census Dataset Visualization
 ====================================
 """
-from dabl import plot_supervised
+from dabl import plot
 from dabl.datasets import load_adult
 import matplotlib.pyplot as plt
 
@@ -10,5 +10,5 @@ import matplotlib.pyplot as plt
 # returns a plain dataframe
 data = load_adult()
 
-plot_supervised(data, 'income', scatter_alpha=.1)
+plot(data, 'income', scatter_alpha=.1)
 plt.show()

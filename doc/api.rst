@@ -14,7 +14,7 @@ High-level API
 
    clean
    detect_types
-   plot_supervised
+   plot
 
 .. autosummary::
    :toctree: generated/
@@ -63,7 +63,7 @@ Plotting
     discrete_scatter
     find_pretty_grid
     mosaic_plot
-    plot_supervised
+    plot
     plot_classification_categorical
     plot_classification_continuous
     plot_regression_categorical

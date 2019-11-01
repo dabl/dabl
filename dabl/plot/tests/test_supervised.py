@@ -9,7 +9,7 @@ from sklearn.datasets import make_regression, make_blobs, load_digits
 from sklearn.preprocessing import KBinsDiscretizer
 from dabl.preprocessing import clean, detect_types
 from dabl.plot.supervised import (
-    plot_supervised, plot_classification_categorical,
+    plot, plot_classification_categorical,
     plot_classification_continuous, plot_regression_categorical,
     plot_regression_continuous)
 from dabl.utils import data_df_from_bunch
@@ -61,7 +61,7 @@ def test_plots_smoke(continuous_features, categorical_features, task):
     else:
         assert column_types[-1] == 'continuous'
 
-    plot_supervised(X_clean, 'target')
+    plot(X_clean, 'target')
     plt.close("all")
 
 
@@ -72,7 +72,7 @@ def test_plots_smoke(continuous_features, categorical_features, task):
 def test_type_hints(add, feature_type, target_type):
     X = pd.DataFrame(np.random.randint(4, size=100)) + add
     X['target'] = np.random.uniform(size=100)
-    plot_supervised(X, type_hints={0: feature_type,
+    plot(X, type_hints={0: feature_type,
                                    'target': target_type},
                     target_col='target')
     # get title of figure
@@ -92,10 +92,10 @@ def test_float_classification_target():
     data['target'] = y.astype(np.float)
     types = detect_types(data)
     assert types.categorical['target']
-    plot_supervised(data, 'target')
+    plot(data, 'target')
     # same with "actual float" - we need to specify classification for that :-/
     data['target'] = y.astype(np.float) + .2
-    plot_supervised(data, 'target', type_hints={'target': 'categorical'})
+    plot(data, 'target', type_hints={'target': 'categorical'})
     plt.close("all")
 
 
@@ -129,4 +129,4 @@ def test_plot_wrong_target_type():
 def test_plot_target_low_card_int():
     data = load_digits()
     df = data_df_from_bunch(data)
-    plot_supervised(df[::10], target_col='target')
+    plot(df[::10], target_col='target')

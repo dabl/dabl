@@ -6,6 +6,7 @@ from sklearn.compose import make_column_transformer, ColumnTransformer
 from sklearn.utils.validation import check_is_fitted
 import pandas as pd
 import numpy as np
+import warnings
 from warnings import warn
 
 _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
@@ -14,8 +15,9 @@ _FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
     # should this error if the inputs are not string?
     def fit(self, X, y=None):
-        # FIXME ensure X is dataframe?
         # FIXME clean float columns will make this fail
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError("X is not a dataframe. Convert or call `clean`.")
         encoders = {}
         for col in X.columns:
             floats = X[col].str.match(_FLOAT_REGEX)
@@ -28,7 +30,8 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        # FIXME check that columns are the same?
+        if (self.columns_ == X.columns).all() is False:
+            raise ValueError("Given the same columns")
         result = []
         for col in self.columns_:
             nofloats = ~X[col].str.match(_FLOAT_REGEX)
@@ -300,7 +303,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
                 dirty_float.index[dirty_float].tolist()
             ))
         if res.useless.sum() > 0:
-            print("WARN dropped columns (too many unique values): {}".format(
+            print("WARN dropped useless columns: {}".format(
                 res.index[res.useless].tolist()
             ))
     return res
@@ -408,14 +411,19 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
     scale : boolean, default=True
         Whether to scale continuous data.
 
+    force_imputation : bool, default=True
+        Whether to create imputers even if not training data is missing.
+
     verbose : int, default=0
         Control output verbosity.
 
     """
-    def __init__(self, scale=True, verbose=0, types=None):
+    def __init__(self, scale=True, force_imputation=True, verbose=0,
+                 types=None):
         self.verbose = verbose
         self.scale = scale
         self.types = types
+        self.force_imputation = force_imputation
 
     def fit(self, X, y=None):
         """A reference implementation of a fitting function for a transformer.
@@ -453,17 +461,18 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         # check for missing values
         # scale etc
         steps_categorical = []
-        if X.loc[:, types.categorical].isna().any(axis=None):
+        if (self.force_imputation
+                or X.loc[:, types.categorical].isna().any(axis=None)):
             steps_categorical.append(
-                SimpleImputer(strategy='constant', fill_value='dabl_missing'))
-                #SimpleImputer(strategy='most_frequent'))
+                SimpleImputer(strategy='most_frequent', add_indicator=True))
         steps_categorical.append(
             OneHotEncoder(categories='auto', handle_unknown='ignore',
                           sparse=False))
         pipe_categorical = make_pipeline(*steps_categorical)
 
         steps_continuous = []
-        if (X.loc[:, types.continuous].isna().any(axis=None)
+        if (self.force_imputation
+                or X.loc[:, types.continuous].isna().any(axis=None)
                 or types['dirty_float'].any()):
             # we could skip the imputer here, but if there's dirty
             # floats, they'll have NaN, and we reuse the cont pipeline
@@ -548,5 +557,9 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             in `X`
         """
         # Check is fit had been called
-        check_is_fitted(self, ['ct_'])
+        with warnings.catch_warnings():
+            # fix when requiring sklearn 0.22
+            # check_is_fitted will not have arguments any more
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            check_is_fitted(self, ['ct_'])
         return self.ct_.transform(X)

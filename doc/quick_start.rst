@@ -73,10 +73,10 @@ types in a convenient format:
 
 Having a very rough idea of the shape of our data, we can now start looking
 at the actual content. The easiest way to do that is using visualization of
-univariate and bivariate patterns. With plot_supervised,
+univariate and bivariate patterns. With plot,
 we can create plot of the features deemed most important for our task.
 
-    >>> dabl.plot_supervised(titanic, 'survived')
+    >>> dabl.plot(titanic, 'survived')
     Target looks like classification
     Linear Discriminant Analysis training set score: 0.578
 
@@ -85,7 +85,7 @@ we can create plot of the features deemed most important for our task.
     >>> import pandas as pd
     >>> import dabl
     >>> titanic = pd.read_csv(dabl.datasets.data_path("titanic.csv"))
-    >>> dabl.plot_supervised(titanic, 'survived')
+    >>> dabl.plot(titanic, 'survived')
     Target looks like classification
     Linear Discriminant Analysis training set score: 0.578
     >>> import matplotlib.pyplot as plt; plt.show()
@@ -99,7 +99,7 @@ the whole data frame and specify the target column.
     >>> fc = dabl.SimpleClassifier(random_state=0)
     >>> X = titanic_clean.drop("survived", axis=1)
     >>> y = titanic_clean.survived
-    >>> fc.fit(X, y)
+    >>> fc.fit(X, y) # doctest: +SKIP
     DummyClassifier(strategy='prior')
     accuracy: 0.618    average_precision: 0.382    recall_macro: 0.500    roc_auc: 0.500
     new best (using recall_macro):
@@ -130,7 +130,7 @@ the whole data frame and specify the target column.
     accuracy: 0.957    average_precision: 0.943    recall_macro: 0.953    roc_auc: 0.970
     DecisionTreeClassifier(class_weight='balanced', min_impurity_decrease=0.01)
     accuracy: 0.976    average_precision: 0.954    recall_macro: 0.971    roc_auc: 0.971
-    LogisticRegression(C=0.1, class_weight='balanced', solver='lbfgs')
+    LogisticRegression(C=0.1, class_weight='balanced')
     accuracy: 0.963    average_precision: 0.986    recall_macro: 0.961    roc_auc: 0.989
     Best model:
     DecisionTreeClassifier(class_weight='balanced', max_depth=1)

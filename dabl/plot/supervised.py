@@ -446,7 +446,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
         axes.ravel()[j].set_axis_off()
 
 
-def plot_supervised(X, target_col, type_hints=None, scatter_alpha='auto',
+def plot(X, target_col, type_hints=None, scatter_alpha='auto',
                     scatter_size='auto', verbose=10, plot_pairwise=True,
                     **kwargs):
     """Exploration plots for classification and regression.

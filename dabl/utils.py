@@ -23,7 +23,7 @@ def data_df_from_bunch(data_bunch):
     return df
 
 
-def _validate_Xyt(X, y, target_col):
+def _validate_Xyt(X, y, target_col, do_clean=True):
     """Ensure y and target_col are exclusive.
 
     Make sure either y or target_col is passed.
@@ -33,7 +33,8 @@ def _validate_Xyt(X, y, target_col):
             or (y is not None) and (target_col is not None)):
         raise ValueError(
             "Need to specify exactly one of y and target_col.")
-    X = clean(X)
+    if do_clean:
+        X = clean(X)
     if target_col is not None:
         y = X[target_col]
         X = X.drop(target_col, axis=1)

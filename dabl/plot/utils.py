@@ -75,7 +75,7 @@ def find_pretty_grid(n_plots, max_cols=5):
 
 
 def plot_coefficients(coefficients, feature_names, n_top_features=10,
-                      classname=None):
+                      classname=None, ax=None):
     """Visualize coefficients of a linear model.
 
     Parameters
@@ -91,6 +91,7 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10,
         positive) and smallest (most negative)  n_top_features coefficients,
         for a total of 2 * n_top_features coefficients.
     """
+
     coefficients = coefficients.squeeze()
     feature_names = np.asarray(feature_names)
     if coefficients.ndim > 1:
@@ -113,20 +114,22 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10,
     new_inds = np.argsort(coef[interesting_coefficients])
     interesting_coefficients = interesting_coefficients[new_inds]
     # plot them
-    plt.figure(figsize=(len(interesting_coefficients), 5))
+    if ax is None:
+        plt.figure(figsize=(len(interesting_coefficients), 5))
+        ax = plt.gca()
     colors = ['red' if c < 0 else 'blue'
               for c in coef[interesting_coefficients]]
-    plt.bar(np.arange(len(interesting_coefficients)),
-            coef[interesting_coefficients],
-            color=colors)
+    ax.bar(np.arange(len(interesting_coefficients)),
+           coef[interesting_coefficients],
+           color=colors)
     feature_names = np.array(feature_names)
-    plt.subplots_adjust(bottom=0.3)
-    plt.xticks(np.arange(0, len(interesting_coefficients)),
-               feature_names[interesting_coefficients], rotation=60,
-               ha="right")
-    plt.ylabel("Coefficient magnitude")
-    plt.xlabel("Feature")
-    plt.title(classname)
+    ax.set_xticks(np.arange(0, len(interesting_coefficients)))
+    ax.set_xticklabels(feature_names[interesting_coefficients], rotation=60,
+                       ha="right")
+    ax.set_ylabel("Coefficient magnitude")
+    ax.set_xlabel("Feature")
+    ax.set_title(classname)
+    return feature_names[interesting_coefficients]
 
 
 def heatmap(values, xlabel, ylabel, xticklabels, yticklabels, cmap=None,

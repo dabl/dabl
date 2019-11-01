@@ -6,10 +6,15 @@ import pytest
 import pandas as pd
 import numpy as np
 from sklearn.datasets import load_iris, load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LogisticRegression
 
 from dabl.preprocessing import (detect_types, EasyPreprocessor,
                                 DirtyFloatCleaner, clean)
 from dabl.utils import data_df_from_bunch
+from dabl.datasets import load_titanic
+
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
                       'second': ['word', 'no', ''],
@@ -289,3 +294,15 @@ def test_digits_type_hints():
                        type_hints={"x{}".format(i): 'continuous'
                                    for i in range(64)})
     assert data_clean.shape[1] == 65
+
+
+def test_easy_preprocessor_transform():
+    titanic = load_titanic()
+    titanic_clean = clean(titanic)
+    X, y = titanic_clean.drop("survived", axis=1), titanic_clean.survived
+    X_train, X_val, y_train, y_val = train_test_split(X, y, stratify=y,
+                                                      random_state=42)
+    pipe = make_pipeline(EasyPreprocessor(), LogisticRegression(C=0.1))
+    pipe.fit(X_train, y_train)
+    pipe.predict(X_train)
+    pipe.predict(X_val)

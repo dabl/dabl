@@ -10,10 +10,10 @@ Right now, this library is still a prototype. API might change, and you shouldn'
 ## Try it out
 
 ```
-   pip install dabl
+pip install dabl
 ```
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/amueller/dabl/master)
+or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/amueller/dabl/master)
 
 ## Current scope and upcoming features
 This library is very much still under development. Current code focuses mostly on exploratory visualization and preprocessing.

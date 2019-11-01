@@ -349,7 +349,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         if target_col is not None:
             y = X[target_col]
             X = X.drop(target_col, axis=1)
-        types = detect_types(X, near_constant_threshold=0.95)
+        types = detect_types(X)
         self.feature_names_ = X.columns
         self.types_ = types
 

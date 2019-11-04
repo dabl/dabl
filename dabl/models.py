@@ -289,7 +289,38 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
 
 
 class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
-    def __init__(self, n_jobs=None, force_exhaust_budget=False, verbose=0):
+    """Automatic model selection using successive halving.
+
+    This model uses successive halving on a portfolio of complex models
+    (HistGradientBoosting, RandomForest, SVC, LogisticRegression)
+    to pick the best model family and hyper-parameters.
+
+    AnyClassifier internally applies EasyPreprocessor, so no preprocessing
+    is necessary.
+
+    Parameters
+    ----------
+    n_jobs : int, default=None
+        Number of processes to spawn for parallelizing the search.
+
+    force_exhaust_budget : bool, default=True
+        Whether to ensure at least one model is trained on the full
+        dataset in successive halving.
+        See the documentation of successive halving for details.
+
+    verbose : integer, default=0
+        Verbosity. Higher means more output.
+
+    Attributes
+    ----------
+    search_ : SuccessiveHalving instance
+        Fitted GridSuccessiveHalving instance for inspection.
+
+    est_ : sklearn estimator
+        Best estimator (pipeline) found during search.
+
+    """
+    def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget

@@ -12,7 +12,11 @@ import numpy as np
 from sklearn.base import is_classifier, clone
 from sklearn.model_selection._split import check_cv
 from sklearn.base import BaseEstimator, MetaEstimatorMixin
-from sklearn.metrics.scorer import _check_multimetric_scoring
+try:
+    from sklearn.metrics._scorer import _check_multimetric_scoring
+except ImportError:
+    from sklearn.metrics.scorer import _check_multimetric_scoring
+
 from sklearn.model_selection._validation import _fit_and_score
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.exceptions import NotFittedError

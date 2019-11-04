@@ -30,8 +30,8 @@ source activate testenv
 
 if [[ "$SKLEARN_VERSION" == "dev" ]]
 then
-    dev_url=sklearn-nightly.scdn8.secure.raxcdn.com
-    pip install --pre --upgrade --timeout=60 -f $dev_url scikit-learn
+    pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+
 else
     conda install --yes scikit-learn=$SKLEARN_VERSION
 fi

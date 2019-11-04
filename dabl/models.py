@@ -9,11 +9,18 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn.metrics.scorer import _check_multimetric_scoring
+try:
+    from sklearn.metrics._scorer import _check_multimetric_scoring
+except ImportError:
+    from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _fit_and_score
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.utils.testing import set_random_state
+try:
+    from sklearn.utils._testing import set_random_state
+except ImportError:
+    from sklearn.utils.testing import set_random_state
+
 from sklearn.dummy import DummyClassifier
 
 from .preprocessing import EasyPreprocessor, clean, detect_types

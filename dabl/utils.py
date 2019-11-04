@@ -18,7 +18,7 @@ def data_df_from_bunch(data_bunch):
     df = pd.DataFrame(data, columns=feature_names)
     try:
         df['target'] = data_bunch.target_names[data_bunch.target]
-    except AttributeError:
+    except (TypeError, AttributeError):
         df['target'] = data_bunch.target
     return df
 

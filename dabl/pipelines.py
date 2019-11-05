@@ -83,7 +83,7 @@ def get_any_classifiers():
 
         HistGradientBoostingClassifier(
             l2_regularization=1e-05, learning_rate=0.1, loss='auto',
-            max_bins=256, max_depth=16, max_iter=400, max_leaf_nodes=64,
+            max_bins=255, max_depth=16, max_iter=400, max_leaf_nodes=64,
             min_samples_leaf=10, n_iter_no_change=None, random_state=58027,
             scoring=None, tol=1e-07, validation_fraction=0.1, verbose=0),
 
@@ -113,13 +113,13 @@ def get_any_classifiers():
 
         HistGradientBoostingClassifier(
             l2_regularization=10.0, learning_rate=0.1, loss='auto',
-            max_bins=256, max_depth=16, max_iter=100, max_leaf_nodes=128,
+            max_bins=255, max_depth=16, max_iter=100, max_leaf_nodes=128,
             min_samples_leaf=8, n_iter_no_change=None, random_state=10427,
             scoring=None, tol=1e-07, validation_fraction=0.2, verbose=0),
 
         HistGradientBoostingClassifier(
             l2_regularization=10.0, learning_rate=1.0, loss='auto',
-            max_bins=256, max_depth=12, max_iter=250, max_leaf_nodes=32,
+            max_bins=255, max_depth=12, max_iter=250, max_leaf_nodes=32,
             min_samples_leaf=42, n_iter_no_change=None, random_state=2499,
             scoring=None, tol=1e-07, validation_fraction=0.2, verbose=0),
 
@@ -155,13 +155,13 @@ def get_any_classifiers():
 
         HistGradientBoostingClassifier(
             l2_regularization=100.0, learning_rate=0.1, loss='auto',
-            max_bins=256, max_depth=14, max_iter=500, max_leaf_nodes=16,
+            max_bins=255, max_depth=14, max_iter=500, max_leaf_nodes=16,
             min_samples_leaf=9, n_iter_no_change=None, random_state=15154,
             scoring=None, tol=1e-07, validation_fraction=0.2, verbose=0),
 
         HistGradientBoostingClassifier(
             l2_regularization=10.0, learning_rate=0.1, loss='auto',
-            max_bins=256, max_depth=20, max_iter=400, max_leaf_nodes=64,
+            max_bins=255, max_depth=20, max_iter=400, max_leaf_nodes=64,
             min_samples_leaf=5, n_iter_no_change=None, random_state=18316,
             scoring=None, tol=1e-07, validation_fraction=0.2, verbose=0),
 
@@ -177,7 +177,7 @@ def get_any_classifiers():
             min_samples_leaf=48, n_iter_no_change=None, random_state=2136,
             scoring=None, tol=1e-07, validation_fraction=0.2, verbose=0),
 
-        SVC(C=1000, cache_size=200, class_weight=None, coef0=0.0,
+        SVC(C=1, cache_size=200, class_weight=None, coef0=0.0,
             decision_function_shape='ovr', degree=3, gamma=0.03162277660168379,
             kernel='rbf', max_iter=-1, probability=True, random_state=1,
             shrinking=True, tol=0.001, verbose=False),

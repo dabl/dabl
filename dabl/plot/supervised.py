@@ -447,8 +447,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
 
 
 def plot(X, target_col, type_hints=None, scatter_alpha='auto',
-                    scatter_size='auto', verbose=10, plot_pairwise=True,
-                    **kwargs):
+         scatter_size='auto', verbose=10, plot_pairwise=True,
+         **kwargs):
     """Exploration plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the

@@ -121,10 +121,6 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
             inner_estimator.feature_importances_, feature_names)
         plt.ylabel("Imputity Decrease")
 
-    else:
-        raise ValueError("Don't know how to explain estimator {} "
-                         "yet.".format(inner_estimator))
-
     if X_val is not None:
         # feature names might change during preprocessing
         # but we don't want partial dependence plots for one-hot features

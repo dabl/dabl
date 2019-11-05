@@ -25,13 +25,22 @@ popd
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n testenv --yes python=$PYTHON_VERSION pip pytest matplotlib seaborn\
-      numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION pandas scikit-learn=0.21.*
-
+      numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION pandas pip
 source activate testenv
+
+if [[ "$SKLEARN_VERSION" == "dev" ]]
+then
+    pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+
+else
+    conda install --yes scikit-learn=$SKLEARN_VERSION
+fi
+
 
 
 
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "import sklearn; print('sklearn %s' % sklearn.__version__)"
 python setup.py develop

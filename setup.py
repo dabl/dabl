@@ -1,11 +1,17 @@
-from __future__ import print_function
+import io
 from setuptools import setup, find_packages
 
+
+with io.open('README.md', encoding='utf_8') as fp:
+    readme = fp.read()
 
 setup(name='dabl',
       version='0.1.1',
       description='Data Analysis Baseline Library',
       author='Andreas Mueller',
+      url='https://github.com/amueller/dabl',
+      long_description=readme,
+      long_description_content_type='text/markdown; charset=UTF-8',
       packages=find_packages(),
       install_requires=["numpy", "scipy", "scikit-learn", "pandas",
                         "matplotlib", "seaborn"],

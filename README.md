@@ -4,6 +4,8 @@ The data analysis baseline library.
 - "Mr Sanchez, are you a data scientist?"
 - "I dabl, Mr president."
 
+Find more information on the [website](https://amueller.github.io/dabl).
+
 ## State of the library
 Right now, this library is still a prototype. API might change, and you shouldn't rely on it in any critical settings.
 

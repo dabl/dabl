@@ -41,6 +41,6 @@ def test_explain_titanic_val(model):
     pipe = make_pipeline(EasyPreprocessor(), model)
     pipe.fit(X_train, y_train)
     # without validation set
-    explain(pipe, feature_names=pipe[0].get_feature_names())
+    explain(pipe, feature_names=X.columns)
     # with validation set
-    explain(pipe, X_val, y_val, feature_names=pipe[0].get_feature_names())
+    explain(pipe, X_val, y_val, feature_names=X.columns)

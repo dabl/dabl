@@ -143,7 +143,7 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                 if n_classes <= 2:
                     plot = plot_partial_dependence(
                         estimator, X_val, features=features,
-                        feature_names=feature_names, n_cols=n_cols)
+                        feature_names=np.array(feature_names), n_cols=n_cols)
                     plot.figure_.suptitle("Partial Dependence")
                     for ax in plot.axes_.ravel():
                         ax.set_ylabel('')

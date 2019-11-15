@@ -23,8 +23,7 @@ def classification_metrics(estimator, X_val, y_val):
     try:
         from sklearn.metrics import plot_roc_curve
         if len(estimator.classes_) == 2:
-            plot_roc_curve(estimator, X_val, y_val,
-                           pos_label=estimator.classes_[1])
+            plot_roc_curve(estimator, X_val, y_val)
         elif len(estimator.classes_) > 2:
             plot_multiclass_roc_curve(estimator, X_val, y_val)
     except ImportError:

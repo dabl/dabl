@@ -3,7 +3,11 @@
 
 import numpy as np
 from scipy.sparse import issparse
-from sklearn.utils import safe_indexing
+try:
+    from sklearn.utils import _safe_indexing as safe_indexing
+except ImportError:
+    from sklearn.utils import safe_indexing
+
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_consistent_length
 from sklearn.model_selection._split import _approximate_mode
@@ -148,7 +152,6 @@ def resample(*arrays, **options):
             indices.extend(indices_i)
 
         indices = random_state.permutation(indices)
-
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]

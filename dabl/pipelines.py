@@ -38,7 +38,10 @@ def get_fast_classifiers(n_classes):
         DecisionTreeClassifier(class_weight="balanced",
                                min_impurity_decrease=.01),
         LogisticRegression(C=.1, solver='lbfgs', multi_class='auto',
-                           class_weight='balanced')
+                           class_weight='balanced', max_iter=1000),
+        # FIXME Add warm starting here?
+        LogisticRegression(C=1, solver='lbfgs', multi_class='auto',
+                           class_weight='balanced', max_iter=1000)
     ]
 
 
@@ -67,6 +70,8 @@ def get_any_classifiers():
         RandomForestClassifier(max_features=None, n_estimators=100),
         RandomForestClassifier(max_features='sqrt', n_estimators=100),
         RandomForestClassifier(max_features='log2', n_estimators=100),
+        SVC(C=1, gamma=0.03, kernel='rbf'),
+        SVC(C=1, gamma='scale', kernel='rbf'),
         HistGradientBoostingClassifier(),
 
         HistGradientBoostingClassifier(
@@ -176,11 +181,6 @@ def get_any_classifiers():
             max_bins=16, max_depth=None, max_iter=400, max_leaf_nodes=128,
             min_samples_leaf=48, n_iter_no_change=None, random_state=2136,
             scoring=None, tol=1e-07, validation_fraction=0.2, verbose=0),
-
-        SVC(C=1, cache_size=200, class_weight=None, coef0=0.0,
-            decision_function_shape='ovr', degree=3, gamma=0.03162277660168379,
-            kernel='rbf', max_iter=-1, probability=True, random_state=1,
-            shrinking=True, tol=0.001, verbose=False),
         ]
 
     return sklearn_ests

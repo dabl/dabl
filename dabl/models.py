@@ -2,6 +2,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+import sklearn
+
 from sklearn.metrics import make_scorer, average_precision_score
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.preprocessing import LabelEncoder
@@ -53,6 +55,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         with warnings.catch_warnings():
             # fix when requiring sklearn 0.22
             # check_is_fitted will not have arguments any more
+            warnings.filterwarnings('ignore', category=FutureWarning)
             warnings.filterwarnings('ignore', category=DeprecationWarning)
             check_is_fitted(self, 'est_')
 
@@ -154,8 +157,10 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
             print("\nBest model:\n{}\nBest Scores:\n{}".format(
                   nice_repr(best_est), _format_scores(self.current_best_)))
         if self.refit:
-            self.est_ = make_pipeline(EasyPreprocessor(), best_est)
-            self.est_.fit(X, y)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', UserWarning)
+                self.est_ = make_pipeline(EasyPreprocessor(), best_est)
+                self.est_.fit(X, y)
         return self
 
 
@@ -347,6 +352,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         with warnings.catch_warnings():
             # fix when requiring sklearn 0.22
             # check_is_fitted will not have arguments any more
+            warnings.filterwarnings('ignore', category=FutureWarning)
             warnings.filterwarnings('ignore', category=DeprecationWarning)
             check_is_fitted(self, 'est_')
 
@@ -394,12 +400,14 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         estimators = self._get_estimators()
         param_grid = [{'classifier': [est]} for est in estimators]
         gs = GridSuccessiveHalving(
+            ratio=ratio,
             estimator=pipe, param_grid=param_grid,
             force_exhaust_budget=self.force_exhaust_budget,
-            verbose=self.verbose, cv=5, error_score='raise',
-            scoring=self.scoring_, refit='recall_macro')
+            verbose=self.verbose, cv=cv, error_score='raise',
+            scoring=self.scoring_, refit='recall_macro', n_jobs=self.n_jobs)
         self.search_ = gs
-        gs.fit(X, y)
+        with sklearn.config_context(print_changed_only=True):
+            gs.fit(X, y)
         self.est_ = gs.best_estimator_
 
         print("best classifier: ", gs.best_params_['classifier'])

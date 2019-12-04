@@ -388,6 +388,8 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         types = detect_types(X)
         self.feature_names_ = X.columns
         self.types_ = types
+        cv = 5
+        ratio = 3
 
         y, self.scoring_ = self._preprocess_target(y)
         self.log_ = []

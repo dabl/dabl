@@ -130,3 +130,9 @@ def test_plot_target_low_card_int():
     data = load_digits()
     df = data_df_from_bunch(data)
     plot(df[::10], target_col='target')
+
+
+def test_plot_X_y():
+    X, y = make_blobs()
+    X = pd.DataFrame(X)
+    plot(X, y)

@@ -12,8 +12,6 @@ from dabl import SimpleClassifier, EasyPreprocessor, explain, clean
 
 def test_explain_smoke_titanic():
     titanic = load_titanic()
-    sc = SimpleClassifier().fit(titanic, target_col='survived')
-    explain(sc)
     titanic_clean = clean(titanic)
     sc = SimpleClassifier().fit(titanic_clean, target_col='survived')
     explain(sc)

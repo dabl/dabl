@@ -35,9 +35,10 @@ def test_basic(X, y, refit):
 
 
 def test_simple_classifier_titanic():
-    titanic = load_titanic()[::10]
+    titanic = load_titanic()
     ec = SimpleClassifier()
     ec.fit(titanic, target_col='survived')
+    ec.predict(titanic.drop('survived', axis=1))
 
 
 def test_any_classifier_titanic(monkeypatch):

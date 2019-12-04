@@ -30,7 +30,7 @@ within several seconds with an accuracy of 0.98.
 The real strength of ``dabl`` is in providing simple interfaces for data exploration.
 Here are some examples of visualizations produced simply by calling ``plot(data, 'target_col')``:
 
-.. figure:: ../auto_examples/images/plot/sphx_glr_ames_003.png
+.. figure:: auto_examples/plot/images/sphx_glr_plot_ames_003.png
     :target: ../auto_examples/plot/plot_ames.html
     :align: center
     :scale: 50
@@ -60,24 +60,3 @@ Here are some examples of visualizations produced simply by calling ``plot(data,
    :caption: Examples
 
    auto_examples/index
-
-`Getting started <quick_start.html>`_
--------------------------------------
-
-A quick guide on how to use dabl tools in practice.
-
-`User Guide <user_guide.html>`_
--------------------------------
-
-A full guide to the main concepts and ideas of the dabl.
-
-`API Documentation <api.html>`_
--------------------------------
-
-A documentation of all the dabl classes and functions.
-
-`Examples <auto_examples/index.html>`_
---------------------------------------
-
-Some examples to give you a taste how much you can achieve with little code
-with some help from dabl!

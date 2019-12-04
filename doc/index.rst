@@ -48,11 +48,19 @@ Here are some examples of visualizations produced simply by calling ``plot(X, y)
 .. figure:: auto_examples/plot/images/sphx_glr_plot_human_activity_003.png
     :target: auto_examples/plot/plot_human_activity.html
     :align: center
-    :scale: 30
+    :scale: 60
  
     Interesting pairplots are automatically found, such as here for the
     human activity classification dataset.
 
+.. figure:: auto_examples/plot/images/sphx_glr_plot_mfeat_factors_005.png
+    :target: auto_examples/plot/plot_mfeat_factors.html
+    :align: center
+    :scale: 60
+ 
+    Often Linear Discriminant Analysis can find interesting linear projections
+    of the data.  Here on the mfeat-factors dataset most of the 10 classes can
+    be well spearated using a 2d projection.
   
 .. toctree::
    :maxdepth: 2

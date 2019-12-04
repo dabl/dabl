@@ -1,6 +1,6 @@
 import pytest
 
-from sklearn.datasets import load_iris, make_blobs, load_boston
+from sklearn.datasets import load_iris, make_blobs, load_boston, load_digits
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 
@@ -53,6 +53,15 @@ def test_regression_boston():
     data = data_df_from_bunch(boston)
     er = SimpleRegressor()
     er.fit(data, target_col='target')
+
+
+def test_simplie_classifier_digits():
+    # regression test for doing clean in fit
+    # which means predict can't work
+    digits = load_digits()
+    X, y = digits.data[::10], digits.target[::10]
+    sc = SimpleClassifier().fit(X, y)
+    assert sc.score(X, y) > .8
 
 
 @pytest.mark.parametrize('model', [LinearSVC(), LogisticRegression()])

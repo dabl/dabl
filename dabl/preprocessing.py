@@ -9,7 +9,7 @@ import numpy as np
 import warnings
 from warnings import warn
 
-_FLOAT_REGEX = "^[+-]?[0-9]*\.?[0-9]*$"
+_FLOAT_REGEX = r"^[+-]?[0-9]*\.?[0-9]*$"
 
 
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
@@ -560,6 +560,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         with warnings.catch_warnings():
             # fix when requiring sklearn 0.22
             # check_is_fitted will not have arguments any more
+            warnings.filterwarnings('ignore', category=FutureWarning)
             warnings.filterwarnings('ignore', category=DeprecationWarning)
             check_is_fitted(self, ['ct_'])
         return self.ct_.transform(X)

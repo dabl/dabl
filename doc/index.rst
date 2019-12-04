@@ -10,9 +10,18 @@ Development at `github.com/amueller/dabl <https://github.com/amueller/dabl>`_.
 
 Examples
 --------
+A minimum example of using dabl for classification is:
 
+    >>>> import dabl
+    >>>> from sklearn.model_selection import train_test_split
+    >>>> from sklearn.datasets import load_digits
+    >>>> X, y = load_digits(return_X_y=True)
+    >>>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+    >>>> sc = dabl.SimpleClassifier().fit(X_train, y_train)
+    >>>> print("Accuracy score", sc.score(X_test, y_test))
 
-
+This will return increasingly better results immediately and should conclude
+within several seconds with an accuracy of 0.98.
 
 .. toctree::
    :maxdepth: 2

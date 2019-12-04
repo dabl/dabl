@@ -61,7 +61,7 @@ def test_plots_smoke(continuous_features, categorical_features, task):
     else:
         assert column_types[-1] == 'continuous'
 
-    plot(X_clean, 'target')
+    plot(X_clean, target_col='target')
     plt.close("all")
 
 
@@ -92,10 +92,10 @@ def test_float_classification_target():
     data['target'] = y.astype(np.float)
     types = detect_types(data)
     assert types.categorical['target']
-    plot(data, 'target')
+    plot(data, target_col='target')
     # same with "actual float" - we need to specify classification for that :-/
     data['target'] = y.astype(np.float) + .2
-    plot(data, 'target', type_hints={'target': 'categorical'})
+    plot(data, target_col='target', type_hints={'target': 'categorical'})
     plt.close("all")
 
 

@@ -4,10 +4,15 @@ Welcome to dabl, the Data Analysis Baseline Library
 This project tries to help make supervised machine learning more accessible for
 beginners, and reduce boiler plate for common tasks.
 
-WARNING: This is a prototype and in a pre-alpha state.
-Don't rely on dabl for critical applications for now.
+This library is in very active development, so it's not recommended for production use.
 
 Development at `github.com/amueller/dabl <https://github.com/amueller/dabl>`_.
+
+Examples
+--------
+
+
+
 
 .. toctree::
    :maxdepth: 2

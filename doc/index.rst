@@ -18,6 +18,7 @@ A minimum example of using dabl for classification is:
     >>> X, y = load_digits(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
     >>> sc = dabl.SimpleClassifier().fit(X_train, y_train)
+    Running ...
     >>> print("Accuracy score", sc.score(X_test, y_test))
 
 This will return increasingly better results immediately and should conclude

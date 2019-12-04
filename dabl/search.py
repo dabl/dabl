@@ -15,6 +15,20 @@ from ._resample import resample
 __all__ = ['GridSuccessiveHalving', 'RandomSuccessiveHalving']
 
 
+def _r_min_samples(is_classif, cv, X, y, groups=None):
+    cv = check_cv(cv, y,
+                  classifier=is_classif)
+    n_splits = cv.get_n_splits(X, y, groups)
+
+    # please see https://gph.is/1KjihQe for a justification
+    magic_factor = 2
+    r_min = n_splits * magic_factor
+    if is_classif:
+        n_classes = np.unique(y).shape[0]
+        r_min *= n_classes
+    return r_min
+
+
 def _refit_callable(results):
     # Custom refit callable to return the index of the best candidate. We want
     # the best candidate out of the last iteration. By default BaseSearchCV
@@ -99,16 +113,8 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
         self.r_min_ = self.r_min
         if self.r_min_ == 'auto':
             if self.budget_on == 'n_samples':
-                cv = check_cv(self.cv, y,
-                              classifier=is_classifier(self.estimator))
-                n_splits = cv.get_n_splits(X, y, groups)
-
-                # please see https://gph.is/1KjihQe for a justification
-                magic_factor = 2
-                self.r_min_ = n_splits * magic_factor
-                if is_classifier(self.estimator):
-                    n_classes = np.unique(y).shape[0]
-                    self.r_min_ *= n_classes
+                self.r_min_ = _r_min_samples(is_classifier(self.estimator),
+                                             self.cv, X, y, groups)
             else:
                 self.r_min_ = 1
 

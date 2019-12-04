@@ -29,7 +29,7 @@ from .preprocessing import EasyPreprocessor, clean, detect_types
 from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
 from .utils import nice_repr, _validate_Xyt
-from .search import GridSuccessiveHalving
+from .search import GridSuccessiveHalving, _r_min_samples
 
 
 def _format_scores(scores):
@@ -390,6 +390,9 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         self.types_ = types
         cv = 5
         ratio = 3
+        r_min = _r_min_samples(is_classif=True, cv=cv, X=X, y=y)
+        max_iter_sh = 1 + np.floor(np.log(X.shape[0] // r_min, ratio))
+        print("AnyClassifier think max sh iter is ", max_iter_sh)
 
         y, self.scoring_ = self._preprocess_target(y)
         self.log_ = []

@@ -20,6 +20,8 @@ A minimum example of using dabl for classification is:
     >>> sc = dabl.SimpleClassifier().fit(X_train, y_train)
     Running ...
     >>> print("Accuracy score", sc.score(X_test, y_test))
+    Accuracy score 0.98
+
 
 This will return increasingly better results immediately and should conclude
 within several seconds with an accuracy of 0.98.

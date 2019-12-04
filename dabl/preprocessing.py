@@ -22,9 +22,12 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         for col in X.columns:
             floats = X[col].str.match(_FLOAT_REGEX)
             # FIXME sparse
-            encoders[col] = OneHotEncoder(sparse=False,
-                                          handle_unknown='ignore').fit(
-                X.loc[~floats, [col]])
+            if (~floats).any():
+                encoders[col] = OneHotEncoder(sparse=False,
+                                              handle_unknown='ignore').fit(
+                    X.loc[~floats, [col]])
+            else:
+                encoders[col] = None
         self.encoders_ = encoders
         self.columns_ = X.columns
         return self
@@ -39,11 +42,21 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             new_col[nofloats] = np.NaN
             new_col = new_col.astype(np.float)
             enc = self.encoders_[col]
+            if enc is None:
+                if nofloats.any():
+                    warnings.warn(
+                        "Found non-floats {} in float column. It's "
+                        "recommended"
+                        " to call 'clean' on the whole dataset before "
+                        "splitting into training and test set.".format(
+                            X.loc[nofloats, col].unique()))
+                new_col = new_col.rename("{}_dabl_continuous".format(col))
+                result.append(new_col)
+                continue
             cats = pd.DataFrame(0, index=X.index,
                                 columns=enc.get_feature_names([str(col)]))
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
-            # FIXME use types to distinguish outputs instead?
             cats["{}_dabl_continuous".format(col)] = new_col
             result.append(cats)
         return pd.concat(result, axis=1)
@@ -325,7 +338,7 @@ def _apply_type_hints(X, type_hints):
     return X
 
 
-def select_cont(X):
+def _select_cont(X):
     return X.columns.str.endswith("_dabl_continuous")
 
 
@@ -488,7 +501,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         pipe_dirty_float = make_pipeline(
             DirtyFloatCleaner(),
             make_column_transformer(
-                (pipe_continuous, select_cont), remainder="passthrough"))
+                (pipe_continuous, _select_cont), remainder="passthrough"))
         # construct column transformer
         transformer_cols = []
         if types['continuous'].any():

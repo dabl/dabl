@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -446,7 +448,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
         axes.ravel()[j].set_axis_off()
 
 
-def plot(X, target_col, type_hints=None, scatter_alpha='auto',
+def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
          scatter_size='auto', verbose=10, plot_pairwise=True,
          **kwargs):
     """Exploration plots for classification and regression.
@@ -458,10 +460,13 @@ def plot(X, target_col, type_hints=None, scatter_alpha='auto',
 
     Parameters
     ----------
-    X : dataframe
-        Input data including features and target
-    target_col : str or int
-        Identifier of the target column in X
+    X : DataFrame
+        Input features. If target_col is specified, X also includes the
+        target.
+    y : Series or numpy array, optional.
+        Target. You need to specify either y or target_col.
+    target_col : string or int, optional
+        Column name of target if included in X.
     type_hints : dict or None
         If dict, provide type information for columns.
         Keys are column names, values are types as provided by detect_types.
@@ -482,6 +487,24 @@ def plot(X, target_col, type_hints=None, scatter_alpha='auto',
     plot_classification_continuous
     plot_classification_categorical
     """
+    if ((y is None and target_col is None)
+            or (y is not None) and (target_col is not None)):
+        raise ValueError(
+            "Need to specify exactly one of y and target_col.")
+    if isinstance(y, str):
+        warnings.warn("The second positional argument of plot is a Series 'y'."
+                      " If passing a column name, use a keyword.",
+                      FutureWarning)
+        target_col = y
+        y = None
+    if target_col is None:
+        if not isinstance(y, pd.Series):
+            y = pd.Series(y)
+        if y.name is None:
+            y = y.rename('target')
+        target_col = y.name
+        X = pd.concat([X, y], axis=1)
+
     X, types = clean(X, type_hints=type_hints, return_types=True)
     # recompute types after cleaning:
     types = _check_X_target_col(X, target_col, types=types)

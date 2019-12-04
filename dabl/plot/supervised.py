@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -489,6 +491,12 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
             or (y is not None) and (target_col is not None)):
         raise ValueError(
             "Need to specify exactly one of y and target_col.")
+    if isinstance(y, str):
+        warnings.warn("The second positional argument of plot is a Series 'y'."
+                      " If passing a column name, use a keyword.",
+                      FutureWarning)
+        target_col = y
+        y = None
     if target_col is None:
         if not isinstance(y, pd.Series):
             y = pd.Series(y)

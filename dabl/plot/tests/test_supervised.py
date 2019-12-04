@@ -61,7 +61,7 @@ def test_plots_smoke(continuous_features, categorical_features, task):
     else:
         assert column_types[-1] == 'continuous'
 
-    plot(X_clean, 'target')
+    plot(X_clean, target_col='target')
     plt.close("all")
 
 
@@ -73,8 +73,8 @@ def test_type_hints(add, feature_type, target_type):
     X = pd.DataFrame(np.random.randint(4, size=100)) + add
     X['target'] = np.random.uniform(size=100)
     plot(X, type_hints={0: feature_type,
-                                   'target': target_type},
-                    target_col='target')
+                        'target': target_type},
+         target_col='target')
     # get title of figure
     text = plt.gcf()._suptitle.get_text()
     assert feature_type.capitalize() in text
@@ -92,10 +92,10 @@ def test_float_classification_target():
     data['target'] = y.astype(np.float)
     types = detect_types(data)
     assert types.categorical['target']
-    plot(data, 'target')
+    plot(data, target_col='target')
     # same with "actual float" - we need to specify classification for that :-/
     data['target'] = y.astype(np.float) + .2
-    plot(data, 'target', type_hints={'target': 'categorical'})
+    plot(data, target_col='target', type_hints={'target': 'categorical'})
     plt.close("all")
 
 
@@ -130,3 +130,9 @@ def test_plot_target_low_card_int():
     data = load_digits()
     df = data_df_from_bunch(data)
     plot(df[::10], target_col='target')
+
+
+def test_plot_X_y():
+    X, y = make_blobs()
+    X = pd.DataFrame(X)
+    plot(X, y)

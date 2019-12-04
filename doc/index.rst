@@ -23,6 +23,19 @@ A minimum example of using dabl for classification is:
 This will return increasingly better results immediately and should conclude
 within several seconds with an accuracy of 0.98.
 
+
+The real strength of ``dabl`` is in providing simple interfaces for data exploration.
+Here are some examples of visualizations produced simply by calling ``plot(data, 'target_col')``:
+
+.. figure:: ../auto_examples/images/plot/sphx_glr_ames_003.png
+    :target: ../auto_examples/plot/plot_ames.html
+    :align: center
+    :scale: 50
+ 
+    Impact of categorical variables in the ames housing regression dataset.
+
+  
+
 .. toctree::
    :maxdepth: 2
    :hidden:

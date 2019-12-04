@@ -28,7 +28,7 @@ within several seconds with an accuracy of 0.98.
 
 
 The real strength of ``dabl`` is in providing simple interfaces for data exploration.
-Here are some examples of visualizations produced simply by calling ``plot(data, 'target_col')``:
+Here are some examples of visualizations produced simply by calling ``plot(X, y)``:
 
 .. figure:: auto_examples/plot/images/sphx_glr_plot_ames_003.png
     :target: ../auto_examples/plot/plot_ames.html

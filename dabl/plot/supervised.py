@@ -241,8 +241,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                              scatter_alpha, scatter_size)
 
 
-def _plot_pca_classification(n_components, features_imp, target, scatter_alpha='auto',
-                             scatter_size='auto'):
+def _plot_pca_classification(n_components, features_imp, target,
+                             scatter_alpha='auto', scatter_size='auto'):
     pca = PCA(n_components=n_components)
     features_scaled = scale(features_imp)
     features_pca = pca.fit_transform(features_scaled)

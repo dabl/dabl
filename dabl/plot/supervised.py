@@ -28,7 +28,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
 def plot_regression_continuous(X, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
                                drop_outliers=True, **kwargs):
-    """Exploration plots for continuous features in regression.
+    """Plots for continuous features in regression.
 
     Creates plots of all the continuous features vs the target.
     Relevant features are determined using F statistics.
@@ -90,7 +90,7 @@ def plot_regression_continuous(X, target_col, types=None,
 
 
 def plot_regression_categorical(X, target_col, types=None, **kwargs):
-    """Exploration plots for categorical features in regression.
+    """Plots for categorical features in regression.
 
     Creates box plots of target distribution for important categorical
     features. Relevant features are identified using mutual information.
@@ -153,7 +153,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    drop_outliers=True, plot_pairwise=True,
                                    top_k_interactions=10,
                                    **kwargs):
-    """Exploration plots for continuous features in classification.
+    """Plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
     Creates univariate distribution plots for these, as well as scatterplots
@@ -352,7 +352,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
 def plot_classification_categorical(X, target_col, types=None, kind='auto',
                                     hue_order=None, **kwargs):
-    """Exploration plots for categorical features in classification.
+    """Plots for categorical features in classification.
 
     Creates plots of categorical variable distributions for each target class.
     Relevant features are identified via mutual information.
@@ -451,7 +451,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
 def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
          scatter_size='auto', verbose=10, plot_pairwise=True,
          **kwargs):
-    """Exploration plots for classification and regression.
+    """Automatic plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
     target distribution. Then calls the relevant plotting functions

@@ -63,6 +63,13 @@ def get_fast_regressors():
 
 
 def get_any_classifiers():
+    """Return a portfolio of classifiers.
+
+    Returns
+    -------
+    classifiers : list of sklearn estimators
+        List of classification models.
+    """
     sklearn_ests = [
         LogisticRegression(C=1, solver='lbfgs', multi_class='multinomial'),
         LogisticRegression(C=10, solver='lbfgs', multi_class='multinomial'),

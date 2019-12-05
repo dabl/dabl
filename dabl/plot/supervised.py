@@ -286,12 +286,16 @@ def _plot_lda_classification(features, target, top_k_interactions,
     fig.suptitle("Discriminating LDA directions")
 
 
-def _plot_top_pairs(features, target, scatter_alpha, scatter_size,
-                    feature_names, how_many=4):
+def _plot_top_pairs(features, target, scatter_alpha='auto',
+                    scatter_size='auto',
+                    feature_names=None, how_many=4):
     top_pairs = _find_scatter_plots_classification(
         features, target, how_many=how_many)
     # we're always creating a row of 4 cause
     # pca needs an extra one
+    if feature_names is None:
+        feature_names = ["feature {}".format(i)
+                         for i in range(features.shape[1])]
     fig, axes = _make_subplots(4, row_height=4)
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):

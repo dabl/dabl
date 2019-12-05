@@ -558,6 +558,10 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         melted['class'] = melted['class'].astype('category')
         sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")
+        if len(counts) >= 50:
+            print("Not plotting anything for 50 classes or more."
+                  "Current visualizations are quite useless for"
+                  " this many classes. Try slicing the data.")
         plot_classification_continuous(
             X, target_col, types=types, hue_order=counts.index,
             scatter_alpha=scatter_alpha, scatter_size=scatter_size,

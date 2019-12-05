@@ -2,6 +2,7 @@
 Ames Housing Dataset Visualization
 ====================================
 """
+# sphinx_gallery_thumbnail_number = 3
 from dabl import plot
 from dabl.datasets import load_ames
 import matplotlib.pyplot as plt

@@ -2,6 +2,7 @@
 Wine Classification Dataset Visualization
 ==========================================
 """
+# sphinx_gallery_thumbnail_number = 4
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_wine
 from dabl import plot

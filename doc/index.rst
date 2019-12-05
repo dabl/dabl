@@ -28,17 +28,40 @@ within several seconds with an accuracy of 0.98.
 
 
 The real strength of ``dabl`` is in providing simple interfaces for data exploration.
-Here are some examples of visualizations produced simply by calling ``plot(data, 'target_col')``:
+Here are some examples of visualizations produced simply by calling ``plot(X, y)``:
 
-.. figure:: ../auto_examples/images/plot/sphx_glr_ames_003.png
-    :target: ../auto_examples/plot/plot_ames.html
+.. figure:: auto_examples/plot/images/sphx_glr_plot_ames_003.png
+    :target: auto_examples/plot/plot_ames.html
     :align: center
-    :scale: 50
+    :scale: 30
  
     Impact of categorical variables in the ames housing regression dataset.
 
   
+.. figure:: auto_examples/plot/images/sphx_glr_plot_splice_002.png
+    :target: auto_examples/plot/plot_splice.html
+    :align: center
+    :scale: 30
+ 
+    Mosaic plot of the categorical variables in the splice classification task.
 
+.. figure:: auto_examples/plot/images/sphx_glr_plot_human_activity_003.png
+    :target: auto_examples/plot/plot_human_activity.html
+    :align: center
+    :scale: 60
+ 
+    Interesting pairplots are automatically found, such as here for the
+    human activity classification dataset.
+
+.. figure:: auto_examples/plot/images/sphx_glr_plot_mfeat_factors_005.png
+    :target: auto_examples/plot/plot_mfeat_factors.html
+    :align: center
+    :scale: 60
+ 
+    Often Linear Discriminant Analysis can find interesting linear projections
+    of the data.  Here on the mfeat-factors dataset most of the 10 classes can
+    be well spearated using a 2d projection.
+  
 .. toctree::
    :maxdepth: 2
    :hidden:
@@ -60,24 +83,3 @@ Here are some examples of visualizations produced simply by calling ``plot(data,
    :caption: Examples
 
    auto_examples/index
-
-`Getting started <quick_start.html>`_
--------------------------------------
-
-A quick guide on how to use dabl tools in practice.
-
-`User Guide <user_guide.html>`_
--------------------------------
-
-A full guide to the main concepts and ideas of the dabl.
-
-`API Documentation <api.html>`_
--------------------------------
-
-A documentation of all the dabl classes and functions.
-
-`Examples <auto_examples/index.html>`_
---------------------------------------
-
-Some examples to give you a taste how much you can achieve with little code
-with some help from dabl!

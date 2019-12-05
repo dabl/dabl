@@ -213,67 +213,17 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         plt.suptitle("Continuous features pairplot", y=1.02)
     else:
         # univariate plots
-        show_top = _get_n_top(features, "continuous")
-        f, p = f_classif(features_imp, target)
-        top_k = np.argsort(f)[-show_top:][::-1]
-        # FIXME this will fail if a feature is always
-        # NaN for a particular class
-        best_features = features.iloc[:, top_k].copy()
-
-        if drop_outliers:
-            for col in best_features.columns:
-                inliers = _find_inliers(best_features.loc[:, col])
-                best_features[~inliers] = np.NaN
-
-        best_features[target_col] = target
-
-        if univariate_plot == 'kde':
-            df = best_features.melt(target_col)
-            rows, cols = find_pretty_grid(show_top)
-
-            g = sns.FacetGrid(df, col='variable', hue=target_col,
-                              col_wrap=cols,
-                              sharey=False, sharex=False, hue_order=hue_order)
-            g = g.map(sns.kdeplot, "value", shade=True)
-            g.axes[0].legend()
-            plt.suptitle("Continuous features by target", y=1.02)
-        elif univariate_plot == 'histogram':
-            # row_height = 3 if target.nunique() < 5 else 5
-            n_classes = target.nunique()
-            row_height = n_classes * 1 if n_classes < 10 else n_classes * .5
-            fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
-            for i, (ind, ax) in enumerate(zip(top_k, axes.ravel())):
-                class_hists(best_features, best_features.columns[i],
-                            target_col, ax=ax, legend=i == 0)
-                ax.set_title("F={:.2E}".format(f[ind]))
-            for j in range(i + 1, axes.size):
-                # turn off axis if we didn't fill last row
-                axes.ravel()[j].set_axis_off()
-        else:
-            raise ValueError("Unknown value for univariate_plot: ",
-                             univariate_plot)
-
+        f = _plot_univariate_classification(features, features_imp, target,
+                                            drop_outliers, target_col,
+                                            univariate_plot, hue_order)
         # FIXME remove "variable = " from title, add f score
-
         # pairwise plots
         if not plot_pairwise:
             return
         top_k = np.argsort(f)[-top_k_interactions:][::-1]
-        top_pairs = _find_scatter_plots_classification(
-            features_imp[:, top_k], target, how_many=4)
-        fig, axes = plt.subplots(1, len(top_pairs),
-                                 figsize=(len(top_pairs) * 4, 4),
-                                 constrained_layout=True)
-        for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
-                                   top_pairs.score, axes.ravel()):
-            i = top_k[x]
-            j = top_k[y]
-            discrete_scatter(features_imp[:, i], features_imp[:, j],
-                             c=target, ax=ax, alpha=scatter_alpha,
-                             s=scatter_size)
-            ax.set_xlabel(features.columns[i])
-            ax.set_ylabel(features.columns[j])
-            ax.set_title("{:.3f}".format(score))
+        fig, axes = _plot_top_pairs(features_imp[:, top_k], target,
+                                    scatter_alpha, scatter_size,
+                                    feature_names=features.columns, how_many=4)
         fig.suptitle("Top feature interactions")
     if not plot_pairwise:
         return
@@ -284,27 +234,23 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                        features.shape[1])
     if n_components < 2:
         return
+    features_scaled = _plot_pca_classification(
+        n_components, features_imp, target, scatter_alpha, scatter_size)
+    # LDA
+    _plot_lda_classification(features_scaled, target, top_k_interactions,
+                             scatter_alpha, scatter_size)
+
+
+def _plot_pca_classification(n_components, features_imp, target, scatter_alpha,
+                             scatter_size):
     pca = PCA(n_components=n_components)
     features_scaled = scale(features_imp)
     features_pca = pca.fit_transform(features_scaled)
-    top_pairs = _find_scatter_plots_classification(
-        features_pca, target, how_many=3)
-    # copy and paste from above. Refactor?
-    fig, axes = plt.subplots(1, len(top_pairs) + 1,
-                             figsize=((len(top_pairs) + 1) * 4, 4),
-                             constrained_layout=True)
-    if len(top_pairs) <= 1:
-        # we don't want ravel to fail, this is awkward!
-        axes = np.array([axes])
-    for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
-                               top_pairs.score, axes.ravel()):
-
-        discrete_scatter(features_pca[:, x], features_pca[:, y],
-                         c=target, ax=ax, alpha=scatter_alpha,
-                         s=scatter_size)
-        ax.set_xlabel("PCA {}".format(x))
-        ax.set_ylabel("PCA {}".format(y))
-        ax.set_title("{:.3f}".format(score))
+    feature_names = ['PCA {}'.format(i) for i in range(n_components)]
+    fig, axes = _plot_top_pairs(features_pca, target, scatter_alpha,
+                                scatter_size,
+                                feature_names=feature_names,
+                                how_many=3)
     ax = axes.ravel()[-1]
     ax.plot(pca.explained_variance_ratio_, label='variance')
     ax.plot(np.cumsum(pca.explained_variance_ratio_),
@@ -312,14 +258,19 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     ax.set_title("Scree plot (PCA explained variance)")
     ax.legend()
     fig.suptitle("Discriminating PCA directions")
-    # LDA
+    return features_scaled
 
-    lda = LinearDiscriminantAnalysis(
-        n_components=min(n_components, target.nunique() - 1))
-    features_lda = lda.fit_transform(features_scaled, target)
+
+def _plot_lda_classification(features, target, top_k_interactions,
+                             scatter_alpha, scatter_size):
+    # assume features are scaled
+    n_components = min(top_k_interactions, features.shape[0],
+                       features.shape[1], target.nunique() - 1)
+    lda = LinearDiscriminantAnalysis(n_components=n_components)
+    features_lda = lda.fit_transform(features, target)
     # we should probably do macro-average recall here as everywhere else?
     print("Linear Discriminant Analysis training set score: {:.3f}".format(
-          recall_score(target, lda.predict(features_scaled), average='macro')))
+          recall_score(target, lda.predict(features), average='macro')))
     if features_lda.shape[1] < 2:
         # Do a single plot and exit
         plt.figure()
@@ -328,26 +279,79 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         class_hists(single_lda, 'feature', 'target', legend=True)
         plt.title("Linear Discriminant")
         return
+    feature_names = ['LDA {}'.format(i) for i in range(n_components)]
+
+    fig, _ = _plot_top_pairs(features_lda, target, scatter_alpha, scatter_size,
+                             feature_names=feature_names)
+    fig.suptitle("Discriminating LDA directions")
+
+
+def _plot_top_pairs(features, target, scatter_alpha='auto',
+                    scatter_size='auto',
+                    feature_names=None, how_many=4):
     top_pairs = _find_scatter_plots_classification(
-        features_lda, target, how_many=4)
-    # copy and paste from above. Refactor?
-    fig, axes = plt.subplots(1, len(top_pairs),
-                             figsize=(len(top_pairs) * 4, 4),
-                             constrained_layout=True)
-    if len(top_pairs) <= 1:
-        # we don't want ravel to fail, this is awkward!
-        axes = np.array([axes])
+        features, target, how_many=how_many)
+    # we're always creating a row of 4 cause
+    # pca needs an extra one
+    if feature_names is None:
+        feature_names = ["feature {}".format(i)
+                         for i in range(features.shape[1])]
+    fig, axes = _make_subplots(4, row_height=4)
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
-
-        discrete_scatter(features_lda[:, x], features_lda[:, y],
+        discrete_scatter(features[:, x], features[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
                          s=scatter_size)
-        ax.set_xlabel("LDA {}".format(x))
-        ax.set_ylabel("LDA {}".format(y))
+        ax.set_xlabel(feature_names[x])
+        ax.set_ylabel(feature_names[y])
         ax.set_title("{:.3f}".format(score))
-    fig.suptitle("Discriminating LDA directions")
-    # TODO fancy manifolds?
+    return fig, axes
+
+
+def _plot_univariate_classification(features, features_imp, target,
+                                    drop_outliers,
+                                    target_col, univariate_plot, hue_order):
+    # univariate plots
+    show_top = _get_n_top(features, "continuous")
+    f, p = f_classif(features_imp, target)
+    top_k = np.argsort(f)[-show_top:][::-1]
+    # FIXME this will fail if a feature is always
+    # NaN for a particular class
+    best_features = features.iloc[:, top_k].copy()
+
+    if drop_outliers:
+        for col in best_features.columns:
+            inliers = _find_inliers(best_features.loc[:, col])
+            best_features[~inliers] = np.NaN
+
+    best_features[target_col] = target
+
+    if univariate_plot == 'kde':
+        df = best_features.melt(target_col)
+        rows, cols = find_pretty_grid(show_top)
+
+        g = sns.FacetGrid(df, col='variable', hue=target_col,
+                          col_wrap=cols,
+                          sharey=False, sharex=False, hue_order=hue_order)
+        g = g.map(sns.kdeplot, "value", shade=True)
+        g.axes[0].legend()
+        plt.suptitle("Continuous features by target", y=1.02)
+    elif univariate_plot == 'histogram':
+        # row_height = 3 if target.nunique() < 5 else 5
+        n_classes = target.nunique()
+        row_height = n_classes * 1 if n_classes < 10 else n_classes * .5
+        fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
+        for i, (ind, ax) in enumerate(zip(top_k, axes.ravel())):
+            class_hists(best_features, best_features.columns[i],
+                        target_col, ax=ax, legend=i == 0)
+            ax.set_title("F={:.2E}".format(f[ind]))
+        for j in range(i + 1, axes.size):
+            # turn off axis if we didn't fill last row
+            axes.ravel()[j].set_axis_off()
+    else:
+        raise ValueError("Unknown value for univariate_plot: ",
+                         univariate_plot)
+    return f
 
 
 def plot_classification_categorical(X, target_col, types=None, kind='auto',

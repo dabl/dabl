@@ -241,8 +241,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                              scatter_alpha, scatter_size)
 
 
-def _plot_pca_classification(n_components, features_imp, target, scatter_alpha,
-                             scatter_size):
+def _plot_pca_classification(n_components, features_imp, target,
+                             scatter_alpha='auto', scatter_size='auto'):
     pca = PCA(n_components=n_components)
     features_scaled = scale(features_imp)
     features_pca = pca.fit_transform(features_scaled)
@@ -250,7 +250,7 @@ def _plot_pca_classification(n_components, features_imp, target, scatter_alpha,
     fig, axes = _plot_top_pairs(features_pca, target, scatter_alpha,
                                 scatter_size,
                                 feature_names=feature_names,
-                                how_many=3)
+                                how_many=3, additional_axes=1)
     ax = axes.ravel()[-1]
     ax.plot(pca.explained_variance_ratio_, label='variance')
     ax.plot(np.cumsum(pca.explained_variance_ratio_),
@@ -262,7 +262,7 @@ def _plot_pca_classification(n_components, features_imp, target, scatter_alpha,
 
 
 def _plot_lda_classification(features, target, top_k_interactions,
-                             scatter_alpha, scatter_size):
+                             scatter_alpha='auto', scatter_size='auto'):
     # assume features are scaled
     n_components = min(top_k_interactions, features.shape[0],
                        features.shape[1], target.nunique() - 1)
@@ -288,15 +288,13 @@ def _plot_lda_classification(features, target, top_k_interactions,
 
 def _plot_top_pairs(features, target, scatter_alpha='auto',
                     scatter_size='auto',
-                    feature_names=None, how_many=4):
+                    feature_names=None, how_many=4, additional_axes=0):
     top_pairs = _find_scatter_plots_classification(
         features, target, how_many=how_many)
-    # we're always creating a row of 4 cause
-    # pca needs an extra one
     if feature_names is None:
         feature_names = ["feature {}".format(i)
                          for i in range(features.shape[1])]
-    fig, axes = _make_subplots(4, row_height=4)
+    fig, axes = _make_subplots(len(top_pairs) + additional_axes, row_height=4)
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
         discrete_scatter(features[:, x], features[:, y],
@@ -558,6 +556,10 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         melted['class'] = melted['class'].astype('category')
         sns.barplot(y='class', x='count', data=melted)
         plt.title("Target distribution")
+        if len(counts) >= 50:
+            print("Not plotting anything for 50 classes or more."
+                  "Current visualizations are quite useless for"
+                  " this many classes. Try slicing the data.")
         plot_classification_continuous(
             X, target_col, types=types, hue_order=counts.index,
             scatter_alpha=scatter_alpha, scatter_size=scatter_size,

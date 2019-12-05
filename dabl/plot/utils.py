@@ -400,7 +400,8 @@ def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
         ax = plt.gca()
     if legend == "first":
         legend = (ax.get_geometry()[2] == 1)
-    for i in np.unique(c):
+    unique_c = np.unique(c)
+    for i in unique_c:
         mask = c == i
         ax.scatter(x[mask], y[mask], label=i, s=s, alpha=alpha, **kwargs)
     if clip_outliers:
@@ -412,7 +413,10 @@ def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
         ax.set_ylim(max(y_low, ylims[0]), min(y_high, ylims[1]))
 
     if legend:
-        legend = ax.legend()
+        props = {}
+        if len(unique_c) > 15:
+            props['size'] = 6
+        legend = ax.legend(prop=props)
         for handle in legend.legendHandles:
             handle.set_alpha(1)
             handle.set_sizes((100,))

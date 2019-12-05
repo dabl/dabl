@@ -241,8 +241,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                              scatter_alpha, scatter_size)
 
 
-def _plot_pca_classification(n_components, features_imp, target, scatter_alpha,
-                             scatter_size):
+def _plot_pca_classification(n_components, features_imp, target, scatter_alpha='auto',
+                             scatter_size='auto'):
     pca = PCA(n_components=n_components)
     features_scaled = scale(features_imp)
     features_pca = pca.fit_transform(features_scaled)
@@ -262,7 +262,7 @@ def _plot_pca_classification(n_components, features_imp, target, scatter_alpha,
 
 
 def _plot_lda_classification(features, target, top_k_interactions,
-                             scatter_alpha, scatter_size):
+                             scatter_alpha='auto', scatter_size='auto'):
     # assume features are scaled
     n_components = min(top_k_interactions, features.shape[0],
                        features.shape[1], target.nunique() - 1)

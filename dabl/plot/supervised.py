@@ -250,7 +250,7 @@ def _plot_pca_classification(n_components, features_imp, target,
     fig, axes = _plot_top_pairs(features_pca, target, scatter_alpha,
                                 scatter_size,
                                 feature_names=feature_names,
-                                how_many=3)
+                                how_many=3, additional_axes=1)
     ax = axes.ravel()[-1]
     ax.plot(pca.explained_variance_ratio_, label='variance')
     ax.plot(np.cumsum(pca.explained_variance_ratio_),
@@ -288,15 +288,13 @@ def _plot_lda_classification(features, target, top_k_interactions,
 
 def _plot_top_pairs(features, target, scatter_alpha='auto',
                     scatter_size='auto',
-                    feature_names=None, how_many=4):
+                    feature_names=None, how_many=4, additional_axes=0):
     top_pairs = _find_scatter_plots_classification(
         features, target, how_many=how_many)
-    # we're always creating a row of 4 cause
-    # pca needs an extra one
     if feature_names is None:
         feature_names = ["feature {}".format(i)
                          for i in range(features.shape[1])]
-    fig, axes = _make_subplots(4, row_height=4)
+    fig, axes = _make_subplots(len(top_pairs) + additional_axes, row_height=4)
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
         discrete_scatter(features[:, x], features[:, y],

@@ -115,7 +115,7 @@ exclude_patterns = ['_build', '_templates']
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'default'
 
 # Custom style
 html_style = 'css/project-template.css'
@@ -313,4 +313,3 @@ sphinx_gallery_conf = {
 def setup(app):
     # a copy button to copy snippet of code from the documentation
     app.add_javascript('js/copybutton.js')
-    app.add_stylesheet("basic.css")

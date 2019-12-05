@@ -296,7 +296,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
 
 
 class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
-    """Automatic model selection using successive halving.
+    """Classifier with automatic model selection.
 
     This model uses successive halving on a portfolio of complex models
     (HistGradientBoosting, RandomForest, SVC, LogisticRegression)

@@ -14,63 +14,36 @@ High-level API
 
    clean
    detect_types
+   explain
    plot
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
-   SimpleClassifier
+   AnyClassifier
    EasyPreprocessor
-
-
-Supervised Models
-=================
-
-.. autosummary::
-    :toctree: generated/
-    :template: class.rst
-
    SimpleClassifier
+   SimpleRegressor
 
-Preprocessing
-=============
 
-.. currentmodule:: dabl.preprocessing
-
-.. autosummary::
-    :toctree: generated/
-    :template: class.rst
-
-    EasyPreprocessor
-
-.. autosummary::
-    :toctree: generated/
-    :template: function.rst
-
-    detect_types
-    clean
-
-Plotting
+Full API
 =========
 
-.. currentmodule:: dabl.plot
-.. autosummary::
-    :toctree: generated/
-    :template: function.rst
+Datasets
+--------
 
-    class_hists
-    discrete_scatter
-    find_pretty_grid
-    mosaic_plot
-    plot
-    plot_classification_categorical
-    plot_classification_continuous
-    plot_regression_categorical
-    plot_regression_continuous
+.. currentmodule:: dabl.datasets
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   load_adult
+   load_ames
+   load_titanic
 
 Model Search
-=============
+------------
 
 .. currentmodule:: dabl.search
 .. autosummary::
@@ -81,24 +54,34 @@ Model Search
    RandomSuccessiveHalving
 
 
+Plotting
+--------
+
+.. currentmodule:: dabl.plot
+.. autosummary::
+    :toctree: generated/
+    :template: function.rst
+
+    class_hists
+    discrete_scatter
+    find_pretty_grid
+    mosaic_plot
+    plot_classification_categorical
+    plot_classification_continuous
+    plot_coefficients
+    plot_regression_categorical
+    plot_regression_continuous
+
+
 Portfolios
-==========
+-----------
+Built-in lists of classifiers and regressors to search.
 
 .. currentmodule:: dabl.pipelines
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
+   get_any_classifiers
    get_fast_classifiers
-
-
-Datasets
-==========
-
-.. currentmodule:: dabl.datasets
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   load_ames
-   load_titanic
+   get_fast_regressors

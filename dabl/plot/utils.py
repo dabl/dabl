@@ -22,7 +22,7 @@ from ..preprocessing import detect_types
 
 
 def find_pretty_grid(n_plots, max_cols=5):
-    """Determine a good grid shape for n_plots subplots.
+    """Determine a good grid shape for subplots.
 
     Tries to find a way to arange n_plots many subplots on a grid in a way
     that fills as many grid-cells as possible, while keeping the number

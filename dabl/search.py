@@ -260,11 +260,11 @@ class BaseSuccessiveHalving(CustomBaseSearchCV):
 
 
 class GridSuccessiveHalving(BaseSuccessiveHalving):
-    """Search over specified parameter values with successive halving.
+    """Grid-search with successive halving.
 
-    The search strategy starts evaluating all the candidates with a small
-    amount a resource and iteratively selects the best candidates, using more
-    and more resources.
+    The search strategy for hyper-parameter optimization starts evaluating all
+    the candidates with a small amount a resource and iteratively selects the
+    best candidates, using more and more resources.
 
     Read more in the :ref:`User guide<successive_halving_user_guide>`.
 
@@ -556,11 +556,11 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
 
 
 class RandomSuccessiveHalving(BaseSuccessiveHalving):
-    """Randomized search on hyper parameters.
+    """Randomized search with successive halving.
 
-    The search strategy starts evaluating all the candidates with a small
-    amount a resource and iteratively selects the best candidates, using more
-    and more resources.
+    The search strategy for hyper-parameter optimization starts evaluating all
+    the candidates with a small amount a resource and iteratively selects the
+    best candidates, using more and more resources.
 
     Read more in the :ref:`User guide<successive_halving_user_guide>`.
 

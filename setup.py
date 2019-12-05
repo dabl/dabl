@@ -16,4 +16,9 @@ setup(name='dabl',
       install_requires=["numpy", "scipy", "scikit-learn", "pandas",
                         "matplotlib", "seaborn"],
       author_email='t3kcit+githubspam@gmail.com',
+      package_data={'': ['titanic.csv',
+                         'ames_housing.pkl.bz2',
+                         'adult.csv.gz'
+                         ]},
+      include_package_data=True,
       )

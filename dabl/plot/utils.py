@@ -371,8 +371,6 @@ def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
     """Scatter plot for categories.
 
     Creates a scatter plot for x and y grouped by c.
-    Contrary to plt.scatter this allows creating legends and using
-    discrete colormaps.
 
     Parameters
     ----------

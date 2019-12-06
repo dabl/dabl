@@ -10,7 +10,7 @@ from sklearn.metrics import log_loss
 
 import scipy
 from sklearn.utils.fixes import logsumexp
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 
 
 def class_entropy(X, y, col1, col2, n_bins=40):
@@ -42,6 +42,19 @@ def _find_scatter_plots_classification_entropy(X, target, how_many=3,
     scores = pd.DataFrame(scores, columns=['feature0', 'feature1', 'score'])
     top = scores.sort_values(by='score').iloc[-how_many:][::-1]
     return top
+
+
+def _find_scatter_plots_classification_gb(X, y, max_depth=3, learning_rate=1,
+                                          how_many=3):
+    y = LabelEncoder().fit_transform(y)
+    gb = MGradientBoostingClassifierPairs(
+        n_iter=how_many, learning_rate=learning_rate, max_depth=max_depth)
+    gb.fit(X, y)
+
+    res = pd.DataFrame(gb.feature_pairs, columns=['feature0', 'feature1'])
+    res['score'] = gb.scores
+    res
+    return res
 
 
 class BinaryCrossEntropy:
@@ -84,6 +97,7 @@ class BaseGradientBoostingPairs(BaseEstimator):
 
         self.predictors = list()
         self.feature_pairs = []
+        self.scores = []
         for m in range(self.n_iter):  # Gradient Descent
             negative_gradient = -self.loss.compute_gradients(y, y_pred_train)
             these_predictors = []
@@ -94,15 +108,13 @@ class BaseGradientBoostingPairs(BaseEstimator):
                     continue
                 this_X = X[:, [i, j]]
                 new_predictor = DecisionTreeRegressor(max_depth=self.max_depth)
-                new_predictor.fit(this_X,
-                                  y=self.learning_rate * negative_gradient)
+                new_predictor.fit(this_X, y=self.learning_rate * negative_gradient)
                 these_predictors.append(new_predictor)
-                this_proba = self.loss.raw_predictions_to_proba(
-                    y_pred_train + new_predictor.predict(this_X))
+                this_proba = self.loss.raw_predictions_to_proba(y_pred_train + new_predictor.predict(this_X))
                 these_scores.append(log_loss(y, this_proba))
                 these_pairs.append((i, j))
             best_idx = np.argmin(these_scores)
-            print("best score:", these_scores[best_idx])
+            self.scores.append(these_scores[best_idx])
             new_predictor = these_predictors[best_idx]
             self.feature_pairs.append(these_pairs[best_idx])
             this_X = X[:, these_pairs[best_idx]]

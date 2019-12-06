@@ -288,9 +288,11 @@ def _plot_lda_classification(features, target, top_k_interactions,
 
 def _plot_top_pairs(features, target, scatter_alpha='auto',
                     scatter_size='auto',
-                    feature_names=None, how_many=4, additional_axes=0):
-    top_pairs = _find_scatter_plots_classification(
-        features, target, how_many=how_many)
+                    feature_names=None, how_many=4, additional_axes=0,
+                    selection_func=None, **kwargs):
+    if selection_func is None:
+        selection_func = _find_scatter_plots_classification
+    top_pairs = selection_func(features, target, how_many=how_many, **kwargs)
     if feature_names is None:
         feature_names = ["feature {}".format(i)
                          for i in range(features.shape[1])]

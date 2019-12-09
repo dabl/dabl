@@ -6,7 +6,7 @@ from scipy.special import expit as sigmoid
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.tree import DecisionTreeRegressor
 
-from sklearn.metrics import log_loss
+from sklearn.metrics import log_loss, confusion_matrix
 
 import scipy
 from sklearn.utils.fixes import logsumexp
@@ -44,16 +44,18 @@ def _find_scatter_plots_classification_entropy(X, target, how_many=3,
     return top
 
 
-def _find_scatter_plots_classification_gb(X, y, max_depth=3, learning_rate=1,
+def _find_scatter_plots_classification_gb(X, y, max_depth=3,
+                                          max_leaf_nodes=None,
+                                          learning_rate=1,
                                           how_many=3):
     y = LabelEncoder().fit_transform(y)
     gb = MGradientBoostingClassifierPairs(
-        n_iter=how_many, learning_rate=learning_rate, max_depth=max_depth)
+        n_iter=how_many, learning_rate=learning_rate, max_depth=max_depth,
+        max_leaf_nodes=max_leaf_nodes)
     gb.fit(X, y)
 
     res = pd.DataFrame(gb.feature_pairs, columns=['feature0', 'feature1'])
-    res['score'] = gb.scores
-    res
+    res['score'] = -np.array(gb.scores)
     return res
 
 
@@ -71,7 +73,7 @@ class BinaryCrossEntropy:
 
 class MultinomialCrossEntropy:
     def initial_scores(self, y):
-        ret = np.exp(np.bincount(y) / y.sum())
+        ret = np.log(np.bincount(y) / y.sum())
         return np.repeat(ret.reshape(1, -1), y.shape[0], axis=0)
 
     def compute_gradients(self, y_true, y_scores_pred):
@@ -86,11 +88,13 @@ class MultinomialCrossEntropy:
 
 
 class BaseGradientBoostingPairs(BaseEstimator):
-    def __init__(self, n_iter, learning_rate, loss, max_depth=3):
+    def __init__(self, n_iter, learning_rate, loss, max_depth=3,
+                 max_leaf_nodes=None):
         self.loss = loss
         self.learning_rate = learning_rate
         self.n_iter = n_iter
         self.max_depth = max_depth
+        self.max_leaf_nodes = max_leaf_nodes
 
     def fit(self, X, y):
         y_pred_train = self.loss.initial_scores(y)
@@ -107,13 +111,16 @@ class BaseGradientBoostingPairs(BaseEstimator):
                 if (i, j) in self.feature_pairs:
                     continue
                 this_X = X[:, [i, j]]
-                new_predictor = DecisionTreeRegressor(max_depth=self.max_depth)
+                new_predictor = DecisionTreeRegressor(
+                    max_depth=self.max_depth,
+                    max_leaf_nodes=self.max_leaf_nodes)
                 new_predictor.fit(this_X, y=self.learning_rate * negative_gradient)
                 these_predictors.append(new_predictor)
                 this_proba = self.loss.raw_predictions_to_proba(y_pred_train + new_predictor.predict(this_X))
                 these_scores.append(log_loss(y, this_proba))
                 these_pairs.append((i, j))
             best_idx = np.argmin(these_scores)
+            print(these_scores[best_idx])
             self.scores.append(these_scores[best_idx])
             new_predictor = these_predictors[best_idx]
             self.feature_pairs.append(these_pairs[best_idx])
@@ -121,6 +128,7 @@ class BaseGradientBoostingPairs(BaseEstimator):
             y_pred_train += new_predictor.predict(this_X)
 
             self.predictors.append(new_predictor)  # save for predict()
+            print(confusion_matrix(y, self.predict(X)))
 
     def predict(self, X):
         return sum(predictor.predict(X[:, pair])
@@ -131,9 +139,10 @@ class BaseGradientBoostingPairs(BaseEstimator):
 class MGradientBoostingClassifierPairs(BaseGradientBoostingPairs,
                                        ClassifierMixin):
 
-    def __init__(self, n_iter=100, learning_rate=.1, max_depth=3):
+    def __init__(self, n_iter=100, learning_rate=.1, max_depth=3,
+                 max_leaf_nodes=None):
         super().__init__(n_iter, learning_rate, loss=MultinomialCrossEntropy(),
-                         max_depth=max_depth)
+                         max_depth=max_depth, max_leaf_nodes=max_leaf_nodes)
 
     def predict(self, X):
         raw_predictions = super().predict(X)

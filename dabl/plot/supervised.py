@@ -292,6 +292,7 @@ def _plot_top_pairs(features, target, scatter_alpha='auto',
                     selection_func=None, **kwargs):
     if selection_func is None:
         selection_func = _find_scatter_plots_classification
+
     top_pairs = selection_func(features, target, how_many=how_many, **kwargs)
     if feature_names is None:
         feature_names = ["feature {}".format(i)

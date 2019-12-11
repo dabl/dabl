@@ -111,29 +111,43 @@ class BaseGradientBoostingPairs(BaseEstimator):
                 if (i, j) in self.feature_pairs:
                     continue
                 this_X = X[:, [i, j]]
-                new_predictor = DecisionTreeRegressor(
-                    max_depth=self.max_depth,
-                    max_leaf_nodes=self.max_leaf_nodes)
-                new_predictor.fit(this_X, y=self.learning_rate * negative_gradient)
-                these_predictors.append(new_predictor)
-                this_proba = self.loss.raw_predictions_to_proba(y_pred_train + new_predictor.predict(this_X))
+                new_predictors = []
+                predictions = []
+                for k in range(negative_gradient.shape[1]):
+                    new_predictor = DecisionTreeRegressor(
+                        max_depth=self.max_depth,
+                        max_leaf_nodes=self.max_leaf_nodes)
+                    new_predictor.fit(this_X, y=self.learning_rate * negative_gradient[:, k])
+                    new_predictors.append(new_predictor)
+                    predictions.append(new_predictor.predict(this_X))
+                these_predictors.append(new_predictors)
+                predictions = np.c_[predictions].T
+                this_proba = self.loss.raw_predictions_to_proba(y_pred_train + predictions)
                 these_scores.append(log_loss(y, this_proba))
                 these_pairs.append((i, j))
             best_idx = np.argmin(these_scores)
             print(these_scores[best_idx])
             self.scores.append(these_scores[best_idx])
-            new_predictor = these_predictors[best_idx]
+            best_predictors = these_predictors[best_idx]
             self.feature_pairs.append(these_pairs[best_idx])
             this_X = X[:, these_pairs[best_idx]]
-            y_pred_train += new_predictor.predict(this_X)
+            predictions = []
+            for predictor in best_predictors:
+                predictions.append(predictor.predict(this_X))
+            predictions = np.c_[predictions].T
 
-            self.predictors.append(new_predictor)  # save for predict()
+            y_pred_train += predictions
+
+            self.predictors.append(best_predictors)
             print(confusion_matrix(y, self.predict(X)))
 
     def predict(self, X):
-        return sum(predictor.predict(X[:, pair])
-                   for predictor, pair in zip(self.predictors,
-                                              self.feature_pairs))
+        predictions = np.zeros((len(X), len(self.predictors[0])))
+        for i, (predictors, pair) in enumerate(zip(self.predictors,
+                                                   self.feature_pairs)):
+            for j, predictor in enumerate(predictors):
+                predictions[:, j] += predictor.predict(X[:, pair])
+        return predictions
 
 
 class MGradientBoostingClassifierPairs(BaseGradientBoostingPairs,

@@ -56,13 +56,16 @@ def test_regression_boston():
     er.fit(data, target_col='target')
 
 
-def test_simplie_classifier_digits():
+@pytest.mark.parametrize('Model', [AnyClassifier, SimpleClassifier])
+def test_classifier_digits(monkeypatch, Model):
+    monkeypatch.setattr(AnyClassifier, '_get_estimators',
+                        mock_get_estimators_logreg)
     # regression test for doing clean in fit
     # which means predict can't work
     digits = load_digits()
     X, y = digits.data[::10], digits.target[::10]
-    sc = SimpleClassifier().fit(X, y)
-    assert sc.score(X, y) > .8
+    clf = Model().fit(X, y)
+    assert clf.score(X, y) > .8
 
 
 @pytest.mark.parametrize('model', [LinearSVC(), LogisticRegression()])

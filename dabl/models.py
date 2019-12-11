@@ -383,10 +383,10 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
                 or (y is not None) and (target_col is not None)):
             raise ValueError(
                 "Need to specify exactly one of y and target_col.")
-        X = clean(X)
-        if target_col is not None:
-            y = X[target_col]
-            X = X.drop(target_col, axis=1)
+        X, y = _validate_Xyt(X, y, target_col, do_clean=False)
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+
         types = detect_types(X)
         self.feature_names_ = X.columns
         self.types_ = types

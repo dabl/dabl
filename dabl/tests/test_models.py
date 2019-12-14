@@ -1,8 +1,10 @@
 import pytest
+import pandas as pd
 
 from sklearn.datasets import load_iris, make_blobs, load_boston, load_digits
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
+from sklearn.dummy import DummyClassifier
 
 from dabl.datasets import load_titanic
 from dabl.models import SimpleClassifier, SimpleRegressor, AnyClassifier
@@ -14,6 +16,10 @@ X_blobs, y_blobs = make_blobs(centers=2, random_state=0)
 
 def mock_get_estimators_logreg(self):
     return [LogisticRegression(C=0.001), LogisticRegression(C=0.01)]
+
+
+def mock_get_estimators_dummy(self):
+    return [DummyClassifier(strategy='prior')]
 
 
 @pytest.mark.parametrize("X, y, refit",
@@ -56,13 +62,16 @@ def test_regression_boston():
     er.fit(data, target_col='target')
 
 
-def test_simplie_classifier_digits():
+@pytest.mark.parametrize('Model', [AnyClassifier, SimpleClassifier])
+def test_classifier_digits(monkeypatch, Model):
+    monkeypatch.setattr(AnyClassifier, '_get_estimators',
+                        mock_get_estimators_logreg)
     # regression test for doing clean in fit
     # which means predict can't work
     digits = load_digits()
     X, y = digits.data[::10], digits.target[::10]
-    sc = SimpleClassifier().fit(X, y)
-    assert sc.score(X, y) > .8
+    clf = Model().fit(X, y)
+    assert clf.score(X, y) > .8
 
 
 @pytest.mark.parametrize('model', [LinearSVC(), LogisticRegression()])
@@ -78,3 +87,47 @@ def test_delegation_simple(monkeypatch, model):
     assert (hasattr(sc, 'decision_function')
             == hasattr(model, 'decision_function'))
     assert hasattr(sc, 'predict_proba') == hasattr(model, 'predict_proba')
+
+
+def get_columns_by_name(ct, name):
+    selected_cols = []
+    for n, t, cols in ct.transformers_:
+        if n == name:
+            selected_cols = cols
+    if getattr(selected_cols, 'dtype', None) == 'bool':
+        selected_cols = selected_cols.index[selected_cols]
+    return selected_cols
+
+
+@pytest.mark.parametrize(
+    "type_hints",
+    [{'a': 'continuous', 'b': 'categorical', 'c': 'useless'},
+     {'a': 'useless', 'b': 'continuous', 'c': 'categorical'},
+     ])
+@pytest.mark.parametrize('Model', [AnyClassifier, SimpleClassifier])
+def test_model_type_hints(monkeypatch, type_hints, Model):
+    type_hints = {'a': 'continuous', 'b': 'categorical', 'c': 'useless'}
+    X = pd.DataFrame({'a': [0, 1, 0, 1, 0, 0, 1, 0, 1, 1] * 2,
+                      'b': [0.1, 0.2, 0.3, 0.1, 0.1, 0.2,
+                            0.2, 0.1, 0.1, 0.3] * 2,
+                      'c': ['a', 'b', 'a', 'b', 'a', 'a',
+                            'b', 'b', 'a', 'b'] * 2,
+                      'target': [1, 2, 2, 1, 1, 2, 1, 2, 1, 2] * 2})
+
+    monkeypatch.setattr(Model, '_get_estimators',
+                        mock_get_estimators_dummy)
+
+    sc = Model(type_hints=type_hints)
+    sc.fit(X, target_col='target')
+
+    ct = sc.est_[0].ct_
+
+    for col_name in type_hints:
+        if type_hints[col_name] == 'useless':
+            # if a column was annotated as useless it's not used
+            assert len(get_columns_by_name(ct, type_hints[col_name])) == 0
+        else:
+            # if a column was annotated as continuous,
+            # it's in the continuous part
+            # same for categorical
+            assert col_name in get_columns_by_name(ct, type_hints[col_name])

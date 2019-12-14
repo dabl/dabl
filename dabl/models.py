@@ -25,7 +25,7 @@ except ImportError:
 
 from sklearn.dummy import DummyClassifier
 
-from .preprocessing import EasyPreprocessor, clean, detect_types
+from .preprocessing import EasyPreprocessor, detect_types
 from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
 from .utils import nice_repr, _validate_Xyt
@@ -112,7 +112,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         X, y = _validate_Xyt(X, y, target_col, do_clean=False)
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
-        types = detect_types(X)
+        types = detect_types(X, type_hints=self.type_hints)
         self.feature_names_ = X.columns
         self.types_ = types
 
@@ -161,7 +161,8 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         if self.refit:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', UserWarning)
-                self.est_ = make_pipeline(EasyPreprocessor(), best_est)
+                self.est_ = make_pipeline(EasyPreprocessor(types=types),
+                                          best_est)
                 self.est_.fit(X, y)
         return self
 
@@ -180,16 +181,23 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
     verbose : integer, default=1
         Verbosity (higher is more output)
 
+    type_hints : dict or None
+            If dict, provide type information for columns.
+            Keys are column names, values are types as provided by
+            detect_types.
+
     Attributes
     ----------
     est_ : sklearn estimator
         Best estimator found.
 
     """
-    def __init__(self, refit=True, random_state=None, verbose=1):
+    def __init__(self, refit=True, random_state=None, verbose=1,
+                 type_hints=None):
         self.verbose = verbose
         self.random_state = random_state
         self.refit = refit
+        self.type_hints = type_hints
 
     def _get_estimators(self):
         return get_fast_classifiers(n_classes=len(self.classes_))
@@ -218,7 +226,7 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
             raise ValueError("Unknown target type: {}".format(target_type))
         return y, scoring
 
-    def fit(self, X, y=None, target_col=None):
+    def fit(self, X, y=None, *, target_col=None):
         """Fit classifier.
 
         Requires to either specify the target as separate 1d array or Series y
@@ -253,11 +261,18 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
 
     verbose : integer, default=1
         Verbosity (higher is more output)
+
+    type_hints : dict or None
+            If dict, provide type information for columns.
+            Keys are column names, values are types as provided by
+            detect_types.
     """
-    def __init__(self, refit=True, random_state=None, verbose=1):
+    def __init__(self, refit=True, random_state=None, verbose=1,
+                 type_hints=None):
         self.verbose = verbose
         self.refit = refit
         self.random_state = random_state
+        self.type_hints = type_hints
 
     def _get_estimators(self):
         return get_fast_regressors()
@@ -272,7 +287,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
         scoring = ('r2', 'neg_mean_squared_error')
         return y, scoring
 
-    def fit(self, X, y=None, target_col=None):
+    def fit(self, X, y=None, *, target_col=None):
         """Fit regressor.
 
         Requires to either specify the target as separate 1d array or Series y
@@ -289,6 +304,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
             Target class labels. You need to specify either y or target_col.
         target_col : string or int, optional
             Column name of target if included in X.
+
         """
         self._rank_scoring = "r2"
 
@@ -318,6 +334,11 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
     verbose : integer, default=0
         Verbosity. Higher means more output.
 
+    type_hints : dict or None
+            If dict, provide type information for columns.
+            Keys are column names, values are types as provided by
+            detect_types.
+
     Attributes
     ----------
     search_ : SuccessiveHalving instance
@@ -327,10 +348,12 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         Best estimator (pipeline) found during search.
 
     """
-    def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0):
+    def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0,
+                 type_hints=None):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget
+        self.type_hints = type_hints
 
     def _get_estimators(self):
         return get_any_classifiers()
@@ -360,7 +383,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
         return self.est_.predict(X)
 
-    def fit(self, X, y=None, target_col=None):
+    def fit(self, X, y=None, *, target_col=None):
         """Fit estimator.
 
         Requiers to either specify the target as separate 1d array or Series y
@@ -383,11 +406,11 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
                 or (y is not None) and (target_col is not None)):
             raise ValueError(
                 "Need to specify exactly one of y and target_col.")
-        X = clean(X)
-        if target_col is not None:
-            y = X[target_col]
-            X = X.drop(target_col, axis=1)
-        types = detect_types(X)
+        X, y = _validate_Xyt(X, y, target_col, do_clean=False)
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X)
+
+        types = detect_types(X, type_hints=self.type_hints)
         self.feature_names_ = X.columns
         self.types_ = types
         cv = 5

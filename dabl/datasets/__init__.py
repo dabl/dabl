@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from os.path import dirname, join
 
 
@@ -41,3 +42,21 @@ def load_adult():
 def data_path(filename):
     module_path = dirname(__file__)
     return join(module_path, filename)
+
+
+def make_multiclass_strawman():
+    X = np.random.normal(0, .1, size=[500, 6])
+    y = np.arange(500) // 100
+
+    X[100:200, 0] += 2
+    X[200:300, 1] += 2
+
+    X[300:400, 0] += 2
+    X[300:400, 1] += 2
+
+    X[400: 500, 2] += 1
+
+    X[:, 3] = X[:, 0]
+    X[:, 4] = X[:, 1]
+    X[:, 5] = X[:, 1]
+    return X, y

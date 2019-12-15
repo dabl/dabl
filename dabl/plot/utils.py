@@ -10,12 +10,7 @@ from matplotlib.patches import Rectangle
 from seaborn.utils import despine
 
 
-# from sklearn.dummy import DummyClassifier
-# from sklearn.metrics import recall_score
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_curve
-
-from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit
 
 
 from ..preprocessing import detect_types
@@ -340,30 +335,6 @@ def _short_tick_names(ax):
                         for t in ax.get_yticklabels()])
     ax.set_xlabel(_shortname(ax.get_xlabel(), maxlen=20))
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=20))
-
-
-def _find_scatter_plots_classification(X, target, how_many=3):
-    # input is continuous
-    # look at all pairs of features, find most promising ones
-    # dummy = DummyClassifier(strategy='prior').fit(X, target)
-    # baseline_score = recall_score(target, dummy.predict(X), average='macro')
-    scores = []
-    # converting to int here might save some time
-    _, target = np.unique(target, return_inverse=True)
-    # limit to 2000 training points for speed?
-    train_size = min(2000, int(.9 * X.shape[0]))
-    cv = StratifiedShuffleSplit(n_splits=3, train_size=train_size)
-    for i, j in itertools.combinations(np.arange(X.shape[1]), 2):
-        this_X = X[:, [i, j]]
-        # assume this tree is simple enough so not be able to overfit in 2d
-        # so we don't bother with train/test split
-        tree = DecisionTreeClassifier(max_leaf_nodes=8)
-        scores.append((i, j, np.mean(cross_val_score(
-            tree, this_X, target, cv=cv, scoring='recall_macro'))))
-
-    scores = pd.DataFrame(scores, columns=['feature0', 'feature1', 'score'])
-    top = scores.sort_values(by='score').iloc[-how_many:][::-1]
-    return top
 
 
 def discrete_scatter(x, y, c, legend='first', clip_outliers=True,

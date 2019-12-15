@@ -3,10 +3,18 @@ import itertools
 import pandas as pd
 import numpy as np
 from scipy.special import expit as sigmoid
+
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.tree import DecisionTreeRegressor
 
 from sklearn.metrics import log_loss, confusion_matrix
+
+from sklearn.tree import DecisionTreeClassifier
+
+from sklearn.model_selection import (
+    cross_val_score, StratifiedShuffleSplit, cross_val_predict)
+from sklearn.cluster import SpectralCoclustering
+
 
 import scipy
 from sklearn.utils.fixes import logsumexp
@@ -117,12 +125,14 @@ class BaseGradientBoostingPairs(BaseEstimator):
                     new_predictor = DecisionTreeRegressor(
                         max_depth=self.max_depth,
                         max_leaf_nodes=self.max_leaf_nodes)
-                    new_predictor.fit(this_X, y=self.learning_rate * negative_gradient[:, k])
+                    new_predictor.fit(
+                        this_X, y=self.learning_rate * negative_gradient[:, k])
                     new_predictors.append(new_predictor)
                     predictions.append(new_predictor.predict(this_X))
                 these_predictors.append(new_predictors)
                 predictions = np.c_[predictions].T
-                this_proba = self.loss.raw_predictions_to_proba(y_pred_train + predictions)
+                this_proba = self.loss.raw_predictions_to_proba(
+                    y_pred_train + predictions)
                 these_scores.append(log_loss(y, this_proba))
                 these_pairs.append((i, j))
             best_idx = np.argmin(these_scores)
@@ -166,3 +176,59 @@ class MGradientBoostingClassifierPairs(BaseGradientBoostingPairs,
 
     def decision_function(self, X):
         return super().predict(X)
+
+
+def _find_scatter_plots_classification(X, target, how_many=3):
+    # input is continuous
+    # look at all pairs of features, find most promising ones
+    # dummy = DummyClassifier(strategy='prior').fit(X, target)
+    # baseline_score = recall_score(target, dummy.predict(X), average='macro')
+    scores = []
+    # converting to int here might save some time
+    _, target = np.unique(target, return_inverse=True)
+    # limit to 2000 training points for speed?
+    train_size = min(2000, int(.9 * X.shape[0]))
+    cv = StratifiedShuffleSplit(n_splits=3, train_size=train_size)
+    for i, j in itertools.combinations(np.arange(X.shape[1]), 2):
+        this_X = X[:, [i, j]]
+        # assume this tree is simple enough so not be able to overfit in 2d
+        # so we don't bother with train/test split
+        tree = DecisionTreeClassifier(max_leaf_nodes=8)
+        scores.append((i, j, np.mean(cross_val_score(
+            tree, this_X, target, cv=cv, scoring='recall_macro'))))
+
+    scores = pd.DataFrame(scores, columns=['feature0', 'feature1', 'score'])
+    top = scores.sort_values(by='score').iloc[-how_many:][::-1]
+    return top
+
+
+def hierarchical_cm(X, y):
+    classes = np.unique(y)
+    n_classes = len(classes)
+    if n_classes < 2:
+        print("n_classes < 2")
+        return []
+    res = _find_scatter_plots_classification(X, y, how_many=1)
+    feature0, feature1 = res.iloc[0, :-1].astype('int')
+    X_this = X[:, [feature0, feature1]]
+
+    preds = cross_val_predict(DecisionTreeClassifier(max_depth=5), X_this, y)
+    cm = confusion_matrix(y, preds, normalize='true')
+    children = [(classes, feature0, feature1, cm)]
+    if n_classes < 3:
+        # only have two classes, no need to split any more
+        return children
+    # FIXME: remove perfect classification
+    cm_smooth = cm + np.diag(np.repeat(0.001, cm.shape[0]))
+    scc = SpectralCoclustering(n_clusters=3).fit(cm_smooth)
+    cluster_sizes = np.bincount(scc.column_labels_)
+    for i, s in enumerate(cluster_sizes):
+        if s < 2:
+            continue
+        cluster_classes = classes[scc.row_labels_ == i]
+        mask = y.isin(cluster_classes)
+        X_new = X[mask]
+        y_new = y[mask]
+        res = hierarchical_cm(X_new, y_new)
+        children.extend(res)
+    return children

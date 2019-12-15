@@ -19,10 +19,12 @@ from sklearn.metrics import recall_score
 from ..preprocessing import detect_types, clean, guess_ordinal
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
-                    find_pretty_grid, _find_scatter_plots_classification,
+                    find_pretty_grid,
                     class_hists, discrete_scatter, mosaic_plot,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
+from .quality_measures import (
+    _find_scatter_plots_classification, hierarchical_cm)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -306,6 +308,24 @@ def _plot_top_pairs(features, target, scatter_alpha='auto',
         ax.set_xlabel(feature_names[x])
         ax.set_ylabel(feature_names[y])
         ax.set_title("{:.3f}".format(score))
+    return fig, axes
+
+
+def _plot_pairs_hierarchical(features, target, feature_names=None, how_many=3):
+    res = hierarchical_cm(features, target)
+    top_pairs = pd.DataFrame(
+        res, columns=['classes', 'feature0', 'feature1', 'confusion_matrix'])
+    if feature_names is None:
+        feature_names = ["feature {}".format(i)
+                         for i in range(features.shape[1])]
+    fig, axes = _make_subplots(how_many, row_height=4)
+    for x, y, classes, ax in zip(top_pairs.feature0, top_pairs.feature1,
+                                 top_pairs.classes, axes.ravel()):
+        mask = target.isin(classes)
+        discrete_scatter(features[mask, x], features[mask, y], c=target[mask],
+                         ax=ax)
+        ax.set_xlabel(feature_names[x])
+        ax.set_ylabel(feature_names[y])
     return fig, axes
 
 

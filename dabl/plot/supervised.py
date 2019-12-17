@@ -9,7 +9,8 @@ import pandas as pd
 from sklearn.feature_selection import (f_regression,
                                        mutual_info_regression,
                                        mutual_info_classif,
-                                       f_classif)
+                                       f_classif,
+                                       SelectKBest)
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
@@ -24,7 +25,8 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
 from .quality_measures import (
-    _find_scatter_plots_classification, hierarchical_cm)
+    _find_scatter_plots_classification, hierarchical_cm,
+    _find_scatter_plots_classification_gb)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -241,6 +243,25 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     # LDA
     _plot_lda_classification(features_scaled, target, top_k_interactions,
                              scatter_alpha, scatter_size)
+
+
+def scatter_plots_classification(features, targets, selection_type='tree',
+                                 top_k_interactions=20, how_many=4, **kwargs):
+    features = np.asarray(features)
+    if features.shape[1] > top_k_interactions:
+        features = SelectKBest(k=top_k_interactions).fit_transform(
+            features, targets)
+    if selection_type == 'tree':
+        _plot_top_pairs(features, targets, how_many=how_many, **kwargs)
+    elif selection_type == 'gradient-boosting':
+        _plot_top_pairs(features, targets,
+                        selection_func=_find_scatter_plots_classification_gb,
+                        how_many=how_many,
+                        **kwargs)
+    elif selection_type == 'hierarchical':
+        a, b, res = _plot_pairs_hierarchical(features, pd.Series(targets),
+                                             how_many=how_many,
+                                             **kwargs)
 
 
 def _plot_pca_classification(n_components, features_imp, target,

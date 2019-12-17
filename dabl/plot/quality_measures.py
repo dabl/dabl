@@ -56,11 +56,11 @@ def _find_scatter_plots_classification_entropy(X, target, how_many=3,
 def _find_scatter_plots_classification_gb(X, y, max_depth=3,
                                           max_leaf_nodes=None,
                                           learning_rate=1,
-                                          how_many=3):
+                                          how_many=3, verbose=0):
     y = LabelEncoder().fit_transform(y)
     gb = MGradientBoostingClassifierPairs(
         n_iter=how_many, learning_rate=learning_rate, max_depth=max_depth,
-        max_leaf_nodes=max_leaf_nodes)
+        max_leaf_nodes=max_leaf_nodes, verbose=verbose)
     gb.fit(X, y)
 
     res = pd.DataFrame(gb.feature_pairs, columns=['feature0', 'feature1'])
@@ -98,12 +98,13 @@ class MultinomialCrossEntropy:
 
 class BaseGradientBoostingPairs(BaseEstimator):
     def __init__(self, n_iter, learning_rate, loss, max_depth=3,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None, verbose=0):
         self.loss = loss
         self.learning_rate = learning_rate
         self.n_iter = n_iter
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
+        self.verbose = verbose
 
     def fit(self, X, y):
         y_pred_train = self.loss.initial_scores(y)
@@ -137,7 +138,8 @@ class BaseGradientBoostingPairs(BaseEstimator):
                 these_scores.append(log_loss(y, this_proba))
                 these_pairs.append((i, j))
             best_idx = np.argmin(these_scores)
-            print(these_scores[best_idx])
+            if self.verbose:
+                print(these_scores[best_idx])
             self.scores.append(these_scores[best_idx])
             best_predictors = these_predictors[best_idx]
             self.feature_pairs.append(these_pairs[best_idx])
@@ -153,7 +155,8 @@ class BaseGradientBoostingPairs(BaseEstimator):
             if np.mean(y == self.predict(X)) > 0.99:
                 # stop once we overfitted
                 break
-            print(confusion_matrix(y, self.predict(X)))
+            if self.verbose:
+                print(confusion_matrix(y, self.predict(X)))
 
     def predict(self, X):
         predictions = np.zeros((len(X), len(self.predictors[0])))
@@ -168,9 +171,10 @@ class MGradientBoostingClassifierPairs(BaseGradientBoostingPairs,
                                        ClassifierMixin):
 
     def __init__(self, n_iter=100, learning_rate=.1, max_depth=3,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None, verbose=0):
         super().__init__(n_iter, learning_rate, loss=MultinomialCrossEntropy(),
-                         max_depth=max_depth, max_leaf_nodes=max_leaf_nodes)
+                         max_depth=max_depth, max_leaf_nodes=max_leaf_nodes,
+                         verbose=verbose)
 
     def predict(self, X):
         raw_predictions = super().predict(X)

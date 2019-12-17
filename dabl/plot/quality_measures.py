@@ -211,12 +211,13 @@ def _find_scatter_plots_classification(X, target, how_many=3):
 
 
 def decompose_confusion_matrix(cm):
+    # test this soo much!
     n, connected_components = csgraph.connected_components(cm)
     components_sizes = np.bincount(connected_components)
     if np.sum(components_sizes >= 2) >= 2:
         # we have at least two components of size at least two
         return connected_components
-    if components_sizes.max() == 2:
+    if components_sizes.max() <= 2:
         # can't really split any more
         return connected_components
     # split largest connected component in two
@@ -225,7 +226,9 @@ def decompose_confusion_matrix(cm):
     cm_sub = cm[:, component_mask][component_mask, :]
     sc = SpectralClustering(n_clusters=2, affinity='precomputed')
     relabels = sc.fit_predict(cm_sub + cm_sub.T)
-    return relabels
+    connected_components[component_mask] = (
+        relabels + np.max(connected_components) + 1)
+    return np.unique(connected_components, return_inverse=True)[1]
 
 
 def hierarchical_cm(X, y, verbose=0):

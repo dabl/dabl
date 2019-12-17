@@ -311,22 +311,22 @@ def _plot_top_pairs(features, target, scatter_alpha='auto',
     return fig, axes
 
 
-def _plot_pairs_hierarchical(features, target, feature_names=None, how_many=3):
-    res = hierarchical_cm(features, target)
+def _plot_pairs_hierarchical(features, target, feature_names=None, how_many=3, verbose=0):
+    res = hierarchical_cm(features, target, verbose=verbose)
     top_pairs = pd.DataFrame(
         res, columns=['classes', 'feature0', 'feature1', 'confusion_matrix'])
     if feature_names is None:
         feature_names = ["feature {}".format(i)
                          for i in range(features.shape[1])]
-    fig, axes = _make_subplots(how_many, row_height=4)
+    fig, axes = _make_subplots(min(how_many, top_pairs.shape[0]), row_height=4)
     for x, y, classes, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                  top_pairs.classes, axes.ravel()):
         mask = target.isin(classes)
         discrete_scatter(features[mask, x], features[mask, y], c=target[mask],
-                         ax=ax)
+                         ax=ax, legend=True, unique_c=target.unique())
         ax.set_xlabel(feature_names[x])
         ax.set_ylabel(feature_names[y])
-    return fig, axes
+    return fig, axes, res
 
 
 def _plot_univariate_classification(features, features_imp, target,

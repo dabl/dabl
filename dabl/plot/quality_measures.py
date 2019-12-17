@@ -3,6 +3,7 @@ import itertools
 import pandas as pd
 import numpy as np
 from scipy.special import expit as sigmoid
+from scipy.sparse import csgraph
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.tree import DecisionTreeRegressor
@@ -13,7 +14,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.model_selection import (
     cross_val_score, StratifiedShuffleSplit, cross_val_predict)
-from sklearn.cluster import SpectralCoclustering
+from sklearn.cluster import SpectralClustering
 
 
 import scipy
@@ -149,6 +150,9 @@ class BaseGradientBoostingPairs(BaseEstimator):
             y_pred_train += predictions
 
             self.predictors.append(best_predictors)
+            if np.mean(y == self.predict(X)) > 0.99:
+                # stop once we overfitted
+                break
             print(confusion_matrix(y, self.predict(X)))
 
     def predict(self, X):
@@ -202,7 +206,25 @@ def _find_scatter_plots_classification(X, target, how_many=3):
     return top
 
 
-def hierarchical_cm(X, y):
+def decompose_confusion_matrix(cm):
+    n, connected_components = csgraph.connected_components(cm)
+    components_sizes = np.bincount(connected_components)
+    if np.sum(components_sizes >= 2) >= 2:
+        # we have at least two components of size at least two
+        return connected_components
+    if components_sizes.max() == 2:
+        # can't really split any more
+        return connected_components
+    # split largest connected component in two
+    largest_component = np.argmax(components_sizes)
+    component_mask = connected_components == largest_component
+    cm_sub = cm[:, component_mask][component_mask, :]
+    sc = SpectralClustering(n_clusters=2, affinity='precomputed')
+    relabels = sc.fit_predict(cm_sub + cm_sub.T)
+    return relabels
+
+
+def hierarchical_cm(X, y, verbose=0):
     classes = np.unique(y)
     n_classes = len(classes)
     if n_classes < 2:
@@ -214,18 +236,18 @@ def hierarchical_cm(X, y):
 
     preds = cross_val_predict(DecisionTreeClassifier(max_depth=5), X_this, y)
     cm = confusion_matrix(y, preds, normalize='true')
+    if verbose > 0:
+        print(cm)
     children = [(classes, feature0, feature1, cm)]
     if n_classes < 3:
         # only have two classes, no need to split any more
         return children
-    # FIXME: remove perfect classification
-    cm_smooth = cm + np.diag(np.repeat(0.001, cm.shape[0]))
-    scc = SpectralCoclustering(n_clusters=3).fit(cm_smooth)
-    cluster_sizes = np.bincount(scc.column_labels_)
+    labels = decompose_confusion_matrix(cm)
+    cluster_sizes = np.bincount(labels)
     for i, s in enumerate(cluster_sizes):
         if s < 2:
             continue
-        cluster_classes = classes[scc.row_labels_ == i]
+        cluster_classes = classes[labels == i]
         mask = y.isin(cluster_classes)
         X_new = X[mask]
         y_new = y[mask]

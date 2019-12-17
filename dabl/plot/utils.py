@@ -337,7 +337,7 @@ def _short_tick_names(ax):
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=20))
 
 
-def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
+def discrete_scatter(x, y, c, unique_c=None, legend='first', clip_outliers=True,
                      alpha='auto', s='auto', ax=None, **kwargs):
     """Scatter plot for categories.
 
@@ -369,7 +369,8 @@ def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
         ax = plt.gca()
     if legend == "first":
         legend = (ax.get_geometry()[2] == 1)
-    unique_c = np.unique(c)
+    if unique_c is None:
+        unique_c = np.unique(c)
     for i in unique_c:
         mask = c == i
         ax.scatter(x[mask], y[mask], label=i, s=s, alpha=alpha, **kwargs)

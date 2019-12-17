@@ -9,7 +9,8 @@ import pandas as pd
 from sklearn.feature_selection import (f_regression,
                                        mutual_info_regression,
                                        mutual_info_classif,
-                                       f_classif)
+                                       f_classif,
+                                       SelectKBest)
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import scale
 from sklearn.decomposition import PCA
@@ -19,10 +20,13 @@ from sklearn.metrics import recall_score
 from ..preprocessing import detect_types, clean, guess_ordinal
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
-                    find_pretty_grid, _find_scatter_plots_classification,
+                    find_pretty_grid,
                     class_hists, discrete_scatter, mosaic_plot,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
+from .quality_measures import (
+    _find_scatter_plots_classification, hierarchical_cm,
+    _find_scatter_plots_classification_gb)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -241,6 +245,25 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                              scatter_alpha, scatter_size)
 
 
+def scatter_plots_classification(features, targets, selection_type='tree',
+                                 top_k_interactions=20, how_many=4, **kwargs):
+    features = np.asarray(features)
+    if features.shape[1] > top_k_interactions:
+        features = SelectKBest(k=top_k_interactions).fit_transform(
+            features, targets)
+    if selection_type == 'tree':
+        _plot_top_pairs(features, targets, how_many=how_many, **kwargs)
+    elif selection_type == 'gradient-boosting':
+        _plot_top_pairs(features, targets,
+                        selection_func=_find_scatter_plots_classification_gb,
+                        how_many=how_many,
+                        **kwargs)
+    elif selection_type == 'hierarchical':
+        a, b, res = _plot_pairs_hierarchical(features, pd.Series(targets),
+                                             how_many=how_many,
+                                             **kwargs)
+
+
 def _plot_pca_classification(n_components, features_imp, target,
                              scatter_alpha='auto', scatter_size='auto'):
     pca = PCA(n_components=n_components)
@@ -288,9 +311,12 @@ def _plot_lda_classification(features, target, top_k_interactions,
 
 def _plot_top_pairs(features, target, scatter_alpha='auto',
                     scatter_size='auto',
-                    feature_names=None, how_many=4, additional_axes=0):
-    top_pairs = _find_scatter_plots_classification(
-        features, target, how_many=how_many)
+                    feature_names=None, how_many=4, additional_axes=0,
+                    selection_func=None, **kwargs):
+    if selection_func is None:
+        selection_func = _find_scatter_plots_classification
+
+    top_pairs = selection_func(features, target, how_many=how_many, **kwargs)
     if feature_names is None:
         feature_names = ["feature {}".format(i)
                          for i in range(features.shape[1])]
@@ -304,6 +330,24 @@ def _plot_top_pairs(features, target, scatter_alpha='auto',
         ax.set_ylabel(feature_names[y])
         ax.set_title("{:.3f}".format(score))
     return fig, axes
+
+
+def _plot_pairs_hierarchical(features, target, feature_names=None, how_many=3, verbose=0):
+    res = hierarchical_cm(features, target, verbose=verbose)
+    top_pairs = pd.DataFrame(
+        res, columns=['classes', 'feature0', 'feature1', 'confusion_matrix'])
+    if feature_names is None:
+        feature_names = ["feature {}".format(i)
+                         for i in range(features.shape[1])]
+    fig, axes = _make_subplots(min(how_many, top_pairs.shape[0]), row_height=4)
+    for x, y, classes, ax in zip(top_pairs.feature0, top_pairs.feature1,
+                                 top_pairs.classes, axes.ravel()):
+        mask = target.isin(classes)
+        discrete_scatter(features[mask, x], features[mask, y], c=target[mask],
+                         ax=ax, legend=True, unique_c=target.unique())
+        ax.set_xlabel(feature_names[x])
+        ax.set_ylabel(feature_names[y])
+    return fig, axes, res
 
 
 def _plot_univariate_classification(features, features_imp, target,
@@ -523,7 +567,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
 
     if types.continuous[target_col]:
         print("Target looks like regression")
-        # FIXME are might be overwriting the original dataframe here?
+        # FIXME we might be overwriting the original dataframe here?
         X[target_col] = X[target_col].astype(np.float)
         # regression
         # make sure we include the target column in X

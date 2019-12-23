@@ -366,13 +366,12 @@ def _find_scatter_plots_classification(X, target, how_many=3):
     return top
 
 
-def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
+def discrete_scatter(x, y, c, unique_c=None, legend='first', clip_outliers=True,
                      alpha='auto', s='auto', ax=None, **kwargs):
     """Scatter plot for categories.
 
     Creates a scatter plot for x and y grouped by c.
-    Contrary to plt.scatter this allows creating legends and using
-    discrete colormaps.
+
 
     Parameters
     ----------
@@ -400,7 +399,8 @@ def discrete_scatter(x, y, c, legend='first', clip_outliers=True,
         ax = plt.gca()
     if legend == "first":
         legend = (ax.get_geometry()[2] == 1)
-    unique_c = np.unique(c)
+    if unique_c is None:
+    	unique_c = np.unique(c)
     for i in unique_c:
         mask = c == i
         ax.scatter(x[mask], y[mask], label=i, s=s, alpha=alpha, **kwargs)

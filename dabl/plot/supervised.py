@@ -523,7 +523,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
 
     if types.continuous[target_col]:
         print("Target looks like regression")
-        # FIXME are might be overwriting the original dataframe here?
+        # FIXME we might be overwriting the original dataframe here?
         X[target_col] = X[target_col].astype(np.float)
         # regression
         # make sure we include the target column in X

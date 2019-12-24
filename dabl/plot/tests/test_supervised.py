@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 
 import itertools
 
-from sklearn.datasets import make_regression, make_blobs, load_digits
+from sklearn.datasets import (make_regression, make_blobs, load_digits,
+                              fetch_openml)
 from sklearn.preprocessing import KBinsDiscretizer
 from dabl.preprocessing import clean, detect_types
 from dabl.plot.supervised import (
@@ -136,3 +137,62 @@ def test_plot_X_y():
     X, y = make_blobs()
     X = pd.DataFrame(X)
     plot(X, y)
+
+
+def test_plot_classification_continuous():
+    data = fetch_openml('MiceProtein')
+    df = data_df_from_bunch(data)
+    # only univariate plots
+    figures = plot_classification_continuous(df, target_col='target',
+                                             plot_pairwise=False)
+    assert len(figures) == 1
+    # top 10 axes
+    assert len(figures[0].get_axes()) == 10
+    # six is the minimum number of features for histograms
+    # (last column is target)
+    figures = plot_classification_continuous(df.iloc[:, -7:],
+                                             target_col='target',
+                                             plot_pairwise=False)
+    assert len(figures) == 1
+    assert len(figures[0].get_axes()) == 6
+
+    # for 5 features, do full pairplot
+    figures = plot_classification_continuous(df.iloc[:, -6:],
+                                             target_col='target',
+                                             plot_pairwise=False)
+    assert len(figures) == 1
+    # diagonal has twin axes
+    assert len(figures[0].get_axes()) == 5 * 5 + 5
+
+    # also do pairwise plots
+    figures = plot_classification_continuous(df, target_col='target',
+                                             random_state=42)
+    # univariate, pairwise, pca, lda
+    assert len(figures) == 4
+    # univariate
+    axes = figures[0].get_axes()
+    assert len(axes) == 10
+    # known result
+    assert axes[0].get_xlabel() == "SOD1_N"
+    # bar plot never has ylabel
+    assert axes[0].get_ylabel() == ""
+    # pairwise
+    axes = figures[1].get_axes()
+    assert len(axes) == 4
+    # known result
+    assert axes[0].get_xlabel() == "SOD1_N"
+    assert axes[0].get_ylabel() == 'S6_N'
+
+    # PCA
+    axes = figures[2].get_axes()
+    assert len(axes) == 4
+    # known result
+    assert axes[0].get_xlabel() == "PCA 1"
+    assert axes[0].get_ylabel() == 'PCA 5'
+
+    # LDA
+    axes = figures[3].get_axes()
+    assert len(axes) == 4
+    # known result
+    assert axes[0].get_xlabel() == "LDA 0"
+    assert axes[0].get_ylabel() == 'LDA 1'

@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import seaborn as sns
 import pandas as pd
 
@@ -151,7 +152,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                    scatter_alpha='auto', scatter_size="auto",
                                    univariate_plot='histogram',
                                    drop_outliers=True, plot_pairwise=True,
-                                   top_k_interactions=10,
+                                   top_k_interactions=10, random_state=None,
                                    **kwargs):
     """Plots for continuous features in classification.
 
@@ -189,6 +190,9 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         (ranked by univariate f scores).
         Runtime is quadratic in this, but higher numbers might find more
         interesting interactions.
+    random_state : int, None or numpy RandomState
+        Random state used for subsampling for determining pairwise features
+        to show.
 
     Notes
     -----
@@ -205,44 +209,55 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
     features_imp = SimpleImputer().fit_transform(features)
     target = X[target_col]
-
+    figures = []
     if features.shape[1] <= 5:
         pairplot(X, target_col=target_col, columns=features.columns,
                  scatter_alpha=scatter_alpha,
                  scatter_size=scatter_size)
         plt.suptitle("Continuous features pairplot", y=1.02)
+        fig = plt.gcf()
     else:
         # univariate plots
         f = _plot_univariate_classification(features, features_imp, target,
                                             drop_outliers, target_col,
                                             univariate_plot, hue_order)
+        figures.append(plt.gcf())
+
         # FIXME remove "variable = " from title, add f score
         # pairwise plots
         if not plot_pairwise:
-            return
+            return figures
         top_k = np.argsort(f)[-top_k_interactions:][::-1]
         fig, axes = _plot_top_pairs(features_imp[:, top_k], target,
                                     scatter_alpha, scatter_size,
-                                    feature_names=features.columns, how_many=4)
+                                    feature_names=features.columns[top_k],
+                                    how_many=4, random_state=random_state)
         fig.suptitle("Top feature interactions")
+    figures.append(fig)
     if not plot_pairwise:
-        return
+        return figures
     # get some PCA directions
     # we're using all features here, not only most informative
     # should we use only those?
     n_components = min(top_k_interactions, features.shape[0],
                        features.shape[1])
     if n_components < 2:
-        return
+        return figures
     features_scaled = _plot_pca_classification(
-        n_components, features_imp, target, scatter_alpha, scatter_size)
+        n_components, features_imp, target, scatter_alpha, scatter_size,
+        random_state=random_state)
+    figures.append(plt.gcf())
     # LDA
     _plot_lda_classification(features_scaled, target, top_k_interactions,
-                             scatter_alpha, scatter_size)
+                             scatter_alpha, scatter_size,
+                             random_state=random_state)
+    figures.append(plt.gcf())
+    return figures
 
 
 def _plot_pca_classification(n_components, features_imp, target,
-                             scatter_alpha='auto', scatter_size='auto'):
+                             scatter_alpha='auto', scatter_size='auto',
+                             random_state=None):
     pca = PCA(n_components=n_components)
     features_scaled = scale(features_imp)
     features_pca = pca.fit_transform(features_scaled)
@@ -250,7 +265,8 @@ def _plot_pca_classification(n_components, features_imp, target,
     fig, axes = _plot_top_pairs(features_pca, target, scatter_alpha,
                                 scatter_size,
                                 feature_names=feature_names,
-                                how_many=3, additional_axes=1)
+                                how_many=3, additional_axes=1,
+                                random_state=random_state)
     ax = axes.ravel()[-1]
     ax.plot(pca.explained_variance_ratio_, label='variance')
     ax.plot(np.cumsum(pca.explained_variance_ratio_),
@@ -262,7 +278,8 @@ def _plot_pca_classification(n_components, features_imp, target,
 
 
 def _plot_lda_classification(features, target, top_k_interactions,
-                             scatter_alpha='auto', scatter_size='auto'):
+                             scatter_alpha='auto', scatter_size='auto',
+                             random_state=None):
     # assume features are scaled
     n_components = min(top_k_interactions, features.shape[0],
                        features.shape[1], target.nunique() - 1)
@@ -282,15 +299,17 @@ def _plot_lda_classification(features, target, top_k_interactions,
     feature_names = ['LDA {}'.format(i) for i in range(n_components)]
 
     fig, _ = _plot_top_pairs(features_lda, target, scatter_alpha, scatter_size,
-                             feature_names=feature_names)
+                             feature_names=feature_names,
+                             random_state=random_state)
     fig.suptitle("Discriminating LDA directions")
 
 
 def _plot_top_pairs(features, target, scatter_alpha='auto',
                     scatter_size='auto',
-                    feature_names=None, how_many=4, additional_axes=0):
+                    feature_names=None, how_many=4, additional_axes=0,
+                    random_state=None):
     top_pairs = _find_scatter_plots_classification(
-        features, target, how_many=how_many)
+        features, target, how_many=how_many, random_state=random_state)
     if feature_names is None:
         feature_names = ["feature {}".format(i)
                          for i in range(features.shape[1])]
@@ -437,8 +456,12 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
             # absolute counts
             # FIXME show f value
             # FIXME shorten titles?
-            sns.countplot(y=col, data=X_new, ax=ax, hue=target_col,
-                          hue_order=hue_order)
+            props = {}
+            if X[target_col].nunique() > 15:
+                props['font.size'] = 6
+            with mpl.rc_context(props):
+                sns.countplot(y=col, data=X_new, ax=ax, hue=target_col,
+                              hue_order=hue_order)
             if i > 0:
                 ax.legend(())
         else:

@@ -34,4 +34,8 @@ def test_plot_coefficients(n_features, n_top_features):
 
 def test_pairplot_iris():
     data = data_df_from_bunch(load_iris())
-    pairplot(data, target_col='target')
+    axes = pairplot(data, target_col='target')
+    # the diagonal axes are duplicated
+    # so we can have sharex / sharey
+    assert axes.shape == (4, 4)
+    assert len(plt.gcf().get_axes()) == 4 * 4 + 4

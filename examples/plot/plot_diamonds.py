@@ -1,7 +1,7 @@
 """
-Diamonds
+Diamonds Dataset Visualization
 ==========================================
-Regression on the classical diamond dataset
+Regression on the classical diamond dataset.
 """
 # sphinx_gallery_thumbnail_number = 2
 import matplotlib.pyplot as plt

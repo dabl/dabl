@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import seaborn as sns
 import pandas as pd
 
@@ -437,8 +438,12 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
             # absolute counts
             # FIXME show f value
             # FIXME shorten titles?
-            sns.countplot(y=col, data=X_new, ax=ax, hue=target_col,
-                          hue_order=hue_order)
+            props = {}
+            if X[target_col].nunique() > 15:
+                props['font.size'] = 6
+            with mpl.rc_context(props):
+                sns.countplot(y=col, data=X_new, ax=ax, hue=target_col,
+                              hue_order=hue_order)
             if i > 0:
                 ax.legend(())
         else:

@@ -206,40 +206,48 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
     features_imp = SimpleImputer().fit_transform(features)
     target = X[target_col]
-
+    figures = []
     if features.shape[1] <= 5:
         pairplot(X, target_col=target_col, columns=features.columns,
                  scatter_alpha=scatter_alpha,
                  scatter_size=scatter_size)
         plt.suptitle("Continuous features pairplot", y=1.02)
+        fig = plt.gcf()
     else:
         # univariate plots
         f = _plot_univariate_classification(features, features_imp, target,
                                             drop_outliers, target_col,
                                             univariate_plot, hue_order)
+        figures.append(plt.gcf())
+
         # FIXME remove "variable = " from title, add f score
         # pairwise plots
         if not plot_pairwise:
-            return
+            return figures
         top_k = np.argsort(f)[-top_k_interactions:][::-1]
         fig, axes = _plot_top_pairs(features_imp[:, top_k], target,
                                     scatter_alpha, scatter_size,
-                                    feature_names=features.columns, how_many=4)
+                                    feature_names=features.columns[top_k],
+                                    how_many=4)
         fig.suptitle("Top feature interactions")
+    figures.append(fig)
     if not plot_pairwise:
-        return
+        return figures
     # get some PCA directions
     # we're using all features here, not only most informative
     # should we use only those?
     n_components = min(top_k_interactions, features.shape[0],
                        features.shape[1])
     if n_components < 2:
-        return
+        return figures
     features_scaled = _plot_pca_classification(
         n_components, features_imp, target, scatter_alpha, scatter_size)
+    figures.append(plt.gcf())
     # LDA
     _plot_lda_classification(features_scaled, target, top_k_interactions,
                              scatter_alpha, scatter_size)
+    figures.append(plt.gcf())
+    return figures
 
 
 def _plot_pca_classification(n_components, features_imp, target,

@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 
 import itertools
 
-from sklearn.datasets import make_regression, make_blobs, load_digits
+from sklearn.datasets import (make_regression, make_blobs, load_digits,
+                              fetch_openml)
 from sklearn.preprocessing import KBinsDiscretizer
 from dabl.preprocessing import clean, detect_types
 from dabl.plot.supervised import (
@@ -136,3 +137,28 @@ def test_plot_X_y():
     X, y = make_blobs()
     X = pd.DataFrame(X)
     plot(X, y)
+
+
+def test_plot_classification_continuous():
+    data = fetch_openml('MiceProtein', as_frame=True)
+    # only univariate plots
+    figures = plot_classification_continuous(data.frame, target_col='class',
+                                             plot_pairwise=False)
+    assert len(figures) == 1
+    # top 10 axes
+    assert len(figures[0].get_axes()) == 10
+    # six is the minimum number of features for histograms
+    # (last column is target)
+    figures = plot_classification_continuous(data.frame.iloc[:, -7:],
+                                             target_col='class',
+                                             plot_pairwise=False)
+    assert len(figures) == 1
+    assert len(figures[0].get_axes()) == 6
+
+    # for 5 features, do full pairplot
+    figures = plot_classification_continuous(data.frame.iloc[:, -6:],
+                                             target_col='class',
+                                             plot_pairwise=False)
+    assert len(figures) == 1
+    # diagonal has twin axes
+    assert len(figures[0].get_axes()) == 5 * 5 + 5

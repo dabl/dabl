@@ -533,6 +533,7 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
     if n_features > 1:
         axes[0, 0].set_yticks(axes[0, 1].get_yticks())
         axes[0, 0].set_ylim(axes[0, 1].get_ylim())
+    return axes
 
 
 def _inlier_range(series):

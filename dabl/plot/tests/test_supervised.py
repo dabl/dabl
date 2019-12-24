@@ -140,31 +140,32 @@ def test_plot_X_y():
 
 
 def test_plot_classification_continuous():
-    data = fetch_openml('MiceProtein', as_frame=True)
+    data = fetch_openml('MiceProtein')
+    df = data_df_from_bunch(data)
     # only univariate plots
-    figures = plot_classification_continuous(data.frame, target_col='class',
+    figures = plot_classification_continuous(df, target_col='target',
                                              plot_pairwise=False)
     assert len(figures) == 1
     # top 10 axes
     assert len(figures[0].get_axes()) == 10
     # six is the minimum number of features for histograms
     # (last column is target)
-    figures = plot_classification_continuous(data.frame.iloc[:, -7:],
-                                             target_col='class',
+    figures = plot_classification_continuous(df.iloc[:, -7:],
+                                             target_col='target',
                                              plot_pairwise=False)
     assert len(figures) == 1
     assert len(figures[0].get_axes()) == 6
 
     # for 5 features, do full pairplot
-    figures = plot_classification_continuous(data.frame.iloc[:, -6:],
-                                             target_col='class',
+    figures = plot_classification_continuous(df.iloc[:, -6:],
+                                             target_col='target',
                                              plot_pairwise=False)
     assert len(figures) == 1
     # diagonal has twin axes
     assert len(figures[0].get_axes()) == 5 * 5 + 5
 
     # also do pairwise plots
-    figures = plot_classification_continuous(data.frame, target_col='class',
+    figures = plot_classification_continuous(df, target_col='target',
                                              random_state=42)
     # univariate, pairwise, pca, lda
     assert len(figures) == 4

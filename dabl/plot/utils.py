@@ -342,7 +342,8 @@ def _short_tick_names(ax):
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=20))
 
 
-def _find_scatter_plots_classification(X, target, how_many=3):
+def _find_scatter_plots_classification(X, target, how_many=3,
+                                       random_state=None):
     # input is continuous
     # look at all pairs of features, find most promising ones
     # dummy = DummyClassifier(strategy='prior').fit(X, target)
@@ -352,7 +353,8 @@ def _find_scatter_plots_classification(X, target, how_many=3):
     _, target = np.unique(target, return_inverse=True)
     # limit to 2000 training points for speed?
     train_size = min(2000, int(.9 * X.shape[0]))
-    cv = StratifiedShuffleSplit(n_splits=3, train_size=train_size)
+    cv = StratifiedShuffleSplit(n_splits=3, train_size=train_size,
+                                random_state=random_state)
     for i, j in itertools.combinations(np.arange(X.shape[1]), 2):
         this_X = X[:, [i, j]]
         # assume this tree is simple enough so not be able to overfit in 2d

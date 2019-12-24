@@ -162,3 +162,36 @@ def test_plot_classification_continuous():
     assert len(figures) == 1
     # diagonal has twin axes
     assert len(figures[0].get_axes()) == 5 * 5 + 5
+
+    # also do pairwise plots
+    figures = plot_classification_continuous(data.frame, target_col='class',
+                                             random_state=42)
+    # univariate, pairwise, pca, lda
+    assert len(figures) == 4
+    # univariate
+    axes = figures[0].get_axes()
+    assert len(axes) == 10
+    # known result
+    assert axes[0].get_xlabel() == "SOD1_N"
+    # bar plot never has ylabel
+    assert axes[0].get_ylabel() == ""
+    # pairwise
+    axes = figures[1].get_axes()
+    assert len(axes) == 4
+    # known result
+    assert axes[0].get_xlabel() == "SOD1_N"
+    assert axes[0].get_ylabel() == 'S6_N'
+
+    # PCA
+    axes = figures[2].get_axes()
+    assert len(axes) == 4
+    # known result
+    assert axes[0].get_xlabel() == "PCA 1"
+    assert axes[0].get_ylabel() == 'PCA 5'
+
+    # LDA
+    axes = figures[3].get_axes()
+    assert len(axes) == 4
+    # known result
+    assert axes[0].get_xlabel() == "LDA 0"
+    assert axes[0].get_ylabel() == 'LDA 1'

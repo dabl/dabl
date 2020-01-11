@@ -1,5 +1,6 @@
 import pytest
 import pandas as pd
+import numpy as np
 
 from sklearn.datasets import load_iris, make_blobs, load_boston, load_digits
 from sklearn.svm import LinearSVC
@@ -131,3 +132,17 @@ def test_model_type_hints(monkeypatch, type_hints, Model):
             # it's in the continuous part
             # same for categorical
             assert col_name in get_columns_by_name(ct, type_hints[col_name])
+
+
+@pytest.mark.parametrize('X, y',
+                         [(pd.DataFrame(np.random.random(10).reshape(-1, 1)),
+                           pd.Series(np.random.random(10))),
+                          (pd.DataFrame(np.random.random(10).reshape(-1, 1)),
+                           pd.DataFrame(np.random.random(10).reshape(-1, 1)))])
+def test_evaluate_score_ndim(X, y):
+    """Test fit() works for both y.ndim == 1 and y.ndim == 2. Two test cases
+    are listed in @pytest.mark.parametrize()
+    """
+    sr = SimpleRegressor(random_state=0)
+    print(f"Data ndim: X: {X.shape}, y: {y.shape}")
+    sr.fit(X, y)

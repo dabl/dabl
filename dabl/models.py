@@ -65,7 +65,10 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         res = []
         for X_train, X_test, y_train, y_test in data_preproc:
             X = np.vstack([X_train, X_test])
-            y = np.hstack([y_train, y_test])
+            if y_train.ndim < 2 and y_test.ndim < 2:
+                y = np.hstack([y_train, y_test])
+            else:
+                y = np.vstack([y_train, y_test])
             train = np.arange(len(X_train))
             test = np.arange(len(X_train), len(X_test) + len(X_train))
             with warnings.catch_warnings():

@@ -313,7 +313,8 @@ def _make_subplots(n_plots, max_cols=5, row_height=3):
 def _check_X_target_col(X, target_col, types=None, type_hints=None, task=None):
     if types is None:
         types = detect_types(X, type_hints=type_hints)
-    if not isinstance(target_col, str) and len(target_col) > 1:
+    if (not isinstance(target_col, str) and hasattr(target_col, '__len__') and
+            len(target_col) > 1):
         raise ValueError("target_col should be a column in X, "
                          "got {}".format(target_col))
     if target_col not in X.columns:

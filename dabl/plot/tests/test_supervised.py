@@ -139,6 +139,12 @@ def test_plot_X_y():
     plot(X, y)
 
 
+def test_plot_lda_binary():
+    X, y = make_blobs(centers=2)
+    X = pd.DataFrame(X)
+    plot(X, y, univariate_plot='kde')
+
+
 def test_plot_classification_continuous():
     data = fetch_openml('MiceProtein')
     df = data_df_from_bunch(data)

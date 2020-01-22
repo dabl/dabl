@@ -88,6 +88,10 @@ def test_delegation_simple(monkeypatch, model):
     assert (hasattr(sc, 'decision_function')
             == hasattr(model, 'decision_function'))
     assert hasattr(sc, 'predict_proba') == hasattr(model, 'predict_proba')
+    if hasattr(sc, 'predict_proba'):
+        assert sc.predict_proba(X_blobs).shape == (X_blobs.shape[0], 2)
+    if hasattr(sc, 'decision_function'):
+        assert sc.decision_function(X_blobs).shape == (X_blobs.shape[0],)
 
 
 def get_columns_by_name(ct, name):

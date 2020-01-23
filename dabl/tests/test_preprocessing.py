@@ -160,23 +160,41 @@ def test_detect_string_floats():
     rng = np.random.RandomState(0)
     cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
     dirty = pd.Series(cont_clean)
+    # not strings, but actually numbers!
+    dirty2 = pd.Series(rng.uniform(size=100))
+    # FIXME this wouldn't work with using straight floats
+    dirty3 = pd.Series(cont_clean)
+    too_dirty = pd.Series(rng.uniform(size=100))
+
     # FIXME hardcoded frequency of tolerated missing
     # FIXME add test with integers
     # FIXME whitespace?
     dirty[::12] = "missing"
+    dirty2[::12] = "missing"
+    dirty3[::20] = [("missing", "but weird")] * 5
+    too_dirty[::2] = rng.choice(list(string.ascii_letters), size=50)
     # only dirty:
     res = detect_types(pd.DataFrame(dirty))
     assert len(res) == 1
     assert res.dirty_float[0]
 
-    # dirty and clean
-    X = pd.DataFrame({'a': cont_clean, 'b': dirty})
+    # dirty and clean and weird stuff
+    X = pd.DataFrame({'cont': cont_clean, 'dirty': dirty,
+                      'dirty2': dirty2, 'dirty3': dirty3,
+                      'too_dirty': too_dirty})
     res = detect_types(X)
-    assert len(res) == 2
-    assert res.continuous['a']
-    assert ~res.continuous['b']
-    assert ~res.dirty_float['a']
-    assert res.dirty_float['b']
+    assert len(res) == 5
+    assert res.continuous['cont']
+    assert ~res.continuous['dirty']
+    assert ~res.continuous['dirty2']
+    assert ~res.continuous['dirty3']
+    assert ~res.dirty_float['cont']
+    assert res.dirty_float['dirty']
+    assert res.dirty_float['dirty2']
+    assert res.dirty_float['dirty3']
+    assert ~res.dirty_float['too_dirty']
+    assert ~res.free_string['dirty3']
+    assert res.free_string['too_dirty']
 
 
 def test_transform_dirty_float():

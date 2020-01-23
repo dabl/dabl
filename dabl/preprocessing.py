@@ -110,7 +110,7 @@ def _find_string_floats(X, dirty_float_threshold):
                 # missing values are not counted as float
                 # because they could be categorical as well
                 is_float.loc[non_str, col] = ~column_float.isna()
-            except ValueError as v:
+            except ValueError:
                 # FIXME of some are not float-able we assume
                 # they all are not
                 # it's unclear whether iteration manually is worth is

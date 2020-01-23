@@ -11,7 +11,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
 from dabl.preprocessing import (detect_types, EasyPreprocessor,
-                                DirtyFloatCleaner, clean)
+                                DirtyFloatCleaner, clean, _FLOAT_REGEX)
 from dabl.utils import data_df_from_bunch
 from dabl.datasets import load_titanic
 
@@ -35,6 +35,12 @@ def make_dirty_float():
     dirty[::12] = "missing"
     dirty.iloc[3, 0] = "garbage"
     return dirty
+
+
+def test_float_regex():
+    some_strings = pd.Series("0.2 3 3. .3 -4 - .0.".split())
+    res = [True] * 5 + [False] * 2
+    assert (some_strings.str.match(_FLOAT_REGEX) == res).all()
 
 
 def test_duplicate_columns():

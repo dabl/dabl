@@ -9,7 +9,7 @@ import numpy as np
 import warnings
 from warnings import warn
 
-_FLOAT_REGEX = r"^[+-]?[0-9]*\.?[0-9]*$"
+_FLOAT_REGEX = r"^[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))$"
 
 
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):

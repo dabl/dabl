@@ -91,7 +91,8 @@ def guess_ordinal(values):
 
 def _find_string_floats(X, dirty_float_threshold):
     is_float = X.apply(lambda x: x.str.match(_FLOAT_REGEX))
-    clean_float_string = is_float.all()
+    non_string = is_float.isna()
+    clean_float_string = is_float.all() & ~non_string.any()
     # remove 5 most common string values before checking if the rest is float
     # FIXME 5 hardcoded!!
     dirty_float = pd.Series(0, index=X.columns, dtype=bool)
@@ -100,6 +101,17 @@ def _find_string_floats(X, dirty_float_threshold):
             # already know it's clean
             continue
         column = X[col]
+        non_str = non_string[col]
+        if non_str.any():
+            # some non-strings in this column
+            try:
+                column[non_str].astype(np.float)
+                is_float[non_str] = True
+            except ValueError:
+                # FIXME of some are not float-able we assume
+                # they all are not
+                # it's unclear whether iteration manually is worth is
+                is_float[non_str] = False
         common_values = column.value_counts()[:5].index
         is_common = column.isin(common_values)
         if is_float[col][~is_common].mean() > dirty_float_threshold:
@@ -240,6 +252,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         if warn_for:
             warn("Suspiciously looks like an index: {}, but unsure,"
                  " so keeping it for now".format(warn_for), UserWarning)
+
     categorical = dtypes == 'category'
     objects = (kinds == "O") & ~categorical  # FIXME string?
     dates = kinds == "M"

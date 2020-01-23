@@ -8,7 +8,7 @@ import itertools
 from sklearn.datasets import (make_regression, make_blobs, load_digits,
                               fetch_openml)
 from sklearn.preprocessing import KBinsDiscretizer
-from dabl.preprocessing import clean, detect_types
+from dabl.preprocessing import clean, detect_types, guess_ordinal
 from dabl.plot.supervised import (
     plot, plot_classification_categorical,
     plot_classification_continuous, plot_regression_categorical,
@@ -144,6 +144,18 @@ def test_plot_int_column_name():
     X = pd.DataFrame(X)
     X[3] = y
     plot(X, target_col=3)
+
+
+def test_negative_ordinal():
+    # check that a low card int with negative values is plotted correctly
+    data = pd.DataFrame([np.random.randint(0, 10, size=1000) - 5,
+                         np.random.randint(0, 2, size=1000)]).T
+    # ensure first column is low_card_int
+    assert (detect_types(data).T.idxmax()
+            == ['low_card_int', 'categorical']).all()
+    assert guess_ordinal(data[0])
+    # smoke test
+    plot(data, target_col=1)
 
 
 def test_plot_classification_continuous():

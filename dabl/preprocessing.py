@@ -105,8 +105,10 @@ def _find_string_floats(X, dirty_float_threshold):
         if non_str.any():
             # some non-strings in this column
             try:
-                column[non_str].astype(np.float)
-                is_float[non_str] = True
+                column_float = column[non_str].astype(np.float)
+                # missing values are not counted as float
+                # because they could be categorical as well
+                is_float[non_str] = ~column_float.isna()
             except ValueError:
                 # FIXME of some are not float-able we assume
                 # they all are not

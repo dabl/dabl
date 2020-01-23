@@ -162,7 +162,7 @@ def test_detect_string_floats():
     dirty = pd.Series(cont_clean)
     # not strings, but actually numbers!
     dirty2 = pd.Series(rng.uniform(size=100))
-    # FIXME this wouldn't work with using strait floats
+    # FIXME this wouldn't work with using straight floats
     dirty3 = pd.Series(cont_clean)
     too_dirty = pd.Series(rng.uniform(size=100))
 

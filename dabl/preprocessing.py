@@ -101,6 +101,7 @@ def _find_string_floats(X, dirty_float_threshold):
     # FIXME 5 hardcoded!!
     dirty_float = pd.Series(0, index=X.columns, dtype=bool)
     for col in X.columns:
+
         if clean_float_string[col]:
             # already know it's clean
             continue
@@ -112,15 +113,15 @@ def _find_string_floats(X, dirty_float_threshold):
                 column_float = column[non_str].astype(np.float)
                 # missing values are not counted as float
                 # because they could be categorical as well
-                is_float[non_str] = ~column_float.isna()
+                is_float.loc[non_str, col] = ~column_float.isna()
             except ValueError:
                 # FIXME of some are not float-able we assume
                 # they all are not
                 # it's unclear whether iteration manually is worth is
-                is_float[non_str] = False
+                is_float.loc[non_str, col] = False
         common_values = column.value_counts()[:5].index
         is_common = column.isin(common_values)
-        if is_float[col][~is_common].mean() > dirty_float_threshold:
+        if is_float.loc[~is_common, col].mean() > dirty_float_threshold:
             dirty_float[col] = 1
 
     return clean_float_string, dirty_float

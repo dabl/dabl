@@ -78,6 +78,10 @@ def guess_ordinal(values):
     # we compute second derivatives on the histogram. If they look smoother
     # than the shuffled histograms, we assume order is meaningful
     # why second derivatives? Why absolute norms? Why 1.5? good questions!
+    if values.min() < 0:
+        # we assume that negative numbers imply an ordering, not categories
+        # probably needs testing
+        return True
     counts = np.bincount(values)
 
     def norm(x):

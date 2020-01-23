@@ -214,7 +214,11 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         pairplot(X, target_col=target_col, columns=features.columns,
                  scatter_alpha=scatter_alpha,
                  scatter_size=scatter_size)
-        plt.suptitle("Continuous features pairplot", y=1.02)
+        title = "Continuous features"
+        if features.shape[1] > 1:
+            title = title + " pairplot"
+        plt.suptitle(title, y=1.02)
+
         fig = plt.gcf()
     else:
         # univariate plots
@@ -533,6 +537,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
     X, types = clean(X, type_hints=type_hints, return_types=True)
     types = _check_X_target_col(X, target_col, types=types)
     # low_cardinality integers plot better as categorical
+    # FIXME the logic should be down in the plotting functions maybe
+    # or at least passed on so we can do better.
     if types.low_card_int.any():
         for col in types.index[types.low_card_int]:
             # kinda hacky for now

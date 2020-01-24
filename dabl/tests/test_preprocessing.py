@@ -73,6 +73,12 @@ def test_detect_constant():
     assert res.useless.sum() == 4
 
 
+def test_convert_cat_to_string():
+    X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3]})
+    X_clean = clean(X)
+    assert len(X_clean.a.cat.categories) == 3
+
+
 def test_detect_types():
     def random_str(length=7):
         return "".join([random.choice(string.ascii_letters)

@@ -409,8 +409,19 @@ def clean(X, type_hints=None, return_types=False, verbose=0):
     # though if we have actual string columns that are free strings... hum
     for col in types.index[types.categorical]:
         # ensure categories are strings, otherwise imputation might fail
-        X[col] = X[col].astype('category', copy=False).cat.rename_categories(
-            lambda x: str(x))
+        col_as_cat = X[col].astype('category', copy=False)
+        if col_as_cat.cat.categories.astype("str").is_unique:
+            # the world is good: converting to string keeps categories unique
+            X[col] = col_as_cat.cat.rename_categories(
+                lambda x: str(x))
+        else:
+            # we can't have nice things and need to convert to string
+            # before making categories (again)
+            warn("Duplicate categories of different types in column "
+                 "{} considered equal {}".format(
+                    col, col_as_cat.cat.categories))
+            X[col] = X[col].astype(str).astype('category', copy=False)
+
     if return_types:
         return X, types
     return X

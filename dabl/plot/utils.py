@@ -444,6 +444,12 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
         Axes to plot into
     legend : boolean
         Whether to create a legend.
+
+    Examples
+    --------
+    >>> from dabl.datasets import load_adult
+    >>> data = load_adult()
+    >>> class_hists(data, "age", "gender", legend=True)
     """
     col_data = data[column].dropna()
 

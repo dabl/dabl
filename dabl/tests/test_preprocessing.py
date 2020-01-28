@@ -75,9 +75,15 @@ def test_detect_constant():
 
 
 def test_convert_cat_to_string():
-    X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3]})
+    X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3, 'a']})
     X_clean = clean(X)
-    assert len(X_clean.a.cat.categories) == 3
+    assert len(X_clean.a.cat.categories) == 4
+
+
+def test_continuous_castable():
+    X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3]})
+    types = detect_types(X)
+    assert types.continuous['a']
 
 
 def test_detect_types():

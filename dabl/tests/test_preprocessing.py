@@ -11,7 +11,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
 from dabl.preprocessing import (detect_types, EasyPreprocessor,
-                                DirtyFloatCleaner, clean, _FLOAT_REGEX)
+                                DirtyFloatCleaner, clean, _FLOAT_REGEX,
+                                _float_matching)
 from dabl.utils import data_df_from_bunch
 from dabl.datasets import load_titanic
 
@@ -201,6 +202,13 @@ def test_detect_string_floats():
     assert ~res.dirty_float['too_dirty']
     assert ~res.free_string['dirty3']
     assert res.free_string['too_dirty']
+
+    assert _float_matching(X.cont).all()
+    is_float = X.dirty != 'missing'
+    assert (_float_matching(X.dirty) == is_float).all()
+    assert (_float_matching(X.dirty2) == is_float).all()
+    assert (_float_matching(X.dirty3) == (X.dirty3.map(type) == str)).all()
+    res = clean(X)
 
 
 def test_transform_dirty_float():

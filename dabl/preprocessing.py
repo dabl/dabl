@@ -12,6 +12,39 @@ from warnings import warn
 _FLOAT_REGEX = r"^[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))$"
 
 
+def _float_matching(col, return_safe_col=False):
+    is_floaty = col.str.match(_FLOAT_REGEX)
+    # things that weren't strings
+    not_strings = is_floaty.isna()
+    if not not_strings.any():
+        if return_safe_col:
+            return is_floaty, col
+        else:
+            return is_floaty
+    rest = col[not_strings]
+    try:
+        # if we can convert them all to float we're done
+        rest.astype(np.float)
+        is_floaty[not_strings] = True
+        if return_safe_col:
+            return is_floaty.astype(bool), col
+        else:
+            return is_floaty.astype(bool)
+    except ValueError as e:
+        print(e)
+    warn("Mixed types in column {}".format(col.name))
+    # make everything string
+    rest = rest.astype(str)
+    rest_is_floaty = _float_matching(rest)
+    is_floaty[not_strings] = rest_is_floaty
+    if return_safe_col:
+        col = col.copy()
+        col[not_strings] = rest
+        return is_floaty.astype(bool), col
+    else:
+        return is_floaty.astype(bool)
+
+
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
     # should this error if the inputs are not string?
     def fit(self, X, y=None):
@@ -20,12 +53,12 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             raise TypeError("X is not a dataframe. Convert or call `clean`.")
         encoders = {}
         for col in X.columns:
-            floats = X[col].str.match(_FLOAT_REGEX)
+            floats, X_col = _float_matching(X[col], return_safe_col=True)
             # FIXME sparse
             if (~floats).any():
                 encoders[col] = OneHotEncoder(sparse=False,
                                               handle_unknown='ignore').fit(
-                    X.loc[~floats, [col]])
+                    pd.DataFrame(X_col[~floats]))
             else:
                 encoders[col] = None
         self.encoders_ = encoders
@@ -37,8 +70,9 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             raise ValueError("Given the same columns")
         result = []
         for col in self.columns_:
-            nofloats = ~X[col].str.match(_FLOAT_REGEX)
-            new_col = X[col].copy()
+            floats, X_col = _float_matching(X[col], return_safe_col=True)
+            nofloats = ~floats
+            new_col = X_col.copy()
             new_col[nofloats] = np.NaN
             new_col = new_col.astype(np.float)
             enc = self.encoders_[col]
@@ -56,7 +90,8 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             cats = pd.DataFrame(0, index=X.index,
                                 columns=enc.get_feature_names([str(col)]))
             if nofloats.any():
-                cats.loc[nofloats, :] = enc.transform(X.loc[nofloats, [col]])
+                cats.loc[nofloats, :] = enc.transform(pd.DataFrame(
+                    X_col[nofloats]))
             cats["{}_dabl_continuous".format(col)] = new_col
             result.append(cats)
         return pd.concat(result, axis=1)
@@ -94,31 +129,16 @@ def guess_ordinal(values):
 
 
 def _find_string_floats(X, dirty_float_threshold):
-    is_float = X.apply(lambda x: x.str.match(_FLOAT_REGEX))
-    non_string = is_float.isna()
-    clean_float_string = is_float.all() & ~non_string.any()
+    is_float = X.apply(_float_matching)
+    clean_float_string = is_float.all()
     # remove 5 most common string values before checking if the rest is float
     # FIXME 5 hardcoded!!
     dirty_float = pd.Series(0, index=X.columns, dtype=bool)
     for col in X.columns:
-
         if clean_float_string[col]:
             # already know it's clean
             continue
         column = X[col]
-        non_str = non_string[col]
-        if non_str.any():
-            # some non-strings in this column
-            try:
-                column_float = column[non_str].astype(np.float)
-                # missing values are not counted as float
-                # because they could be categorical as well
-                is_float.loc[non_str, col] = ~column_float.isna()
-            except ValueError:
-                # FIXME of some are not float-able we assume
-                # they all are not
-                # it's unclear whether iteration manually is worth is
-                is_float.loc[non_str, col] = False
         common_values = column.value_counts()[:5].index
         is_common = column.isin(common_values)
         if is_float.loc[~is_common, col].mean() > dirty_float_threshold:

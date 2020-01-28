@@ -42,7 +42,7 @@ quickly from the call to head,
 but in larger datasets this might be a bit tricky.
 For example we can see that there are several dirty columns with "?" in it.
 This is probably a marker for a missing value and we could go back and fix our
-parsing of the CSV, but let's try an continue with what dabl is doing
+parsing of the CSV, but let's try and continue with what dabl is doing
 automatically for now.  In dabl, we can also get a best guess of the column
 types in a convenient format:
 

@@ -2,3 +2,6 @@ version 0.1.5:
 More robust detection of dirty floats, more robust parsing of categorical variables.
 Ensure data is parsed consistently between predict and fit by not calling 'clean' in fit.
 Allow passing columns with integer names as target in 'plot'.
+
+version 0.1.6
+More fixed to dirty floats with heterogeneous dtypes.

@@ -16,33 +16,33 @@ def _float_matching(col, return_safe_col=False):
     is_floaty = col.str.match(_FLOAT_REGEX)
     # things that weren't strings
     not_strings = is_floaty.isna()
-    if not not_strings.any():
-        if return_safe_col:
-            return is_floaty, col
-        else:
-            return is_floaty
-    rest = col[not_strings]
-    try:
-        # if we can convert them all to float we're done
-        rest.astype(np.float)
-        is_floaty[not_strings] = True
-        if return_safe_col:
-            return is_floaty.astype(bool), col
-        else:
-            return is_floaty.astype(bool)
-    except ValueError as e:
-        print(e)
-    warn("Mixed types in column {}".format(col.name))
-    # make everything string
-    rest = rest.astype(str)
-    rest_is_floaty = _float_matching(rest)
-    is_floaty[not_strings] = rest_is_floaty
+    if not_strings.any():
+        rest = col[not_strings]
+        all_castable = False
+        try:
+            # if we can convert them all to float we're done
+            rest.astype(np.float)
+            is_floaty[not_strings] = True
+            all_castable = True
+        except ValueError:
+            pass
+        if not all_castable:
+            warn("Mixed types in column {}".format(col.name))
+            # make everything string
+            rest = rest.astype(str)
+            rest_is_floaty = _float_matching(rest)
+            is_floaty[not_strings] = rest_is_floaty
+            if return_safe_col:
+                col = col.copy()
+                col[not_strings] = rest
+
+    if not is_floaty.dtype == bool:
+        is_floaty = is_floaty.astype(bool)
+
     if return_safe_col:
-        col = col.copy()
-        col[not_strings] = rest
-        return is_floaty.astype(bool), col
+        return is_floaty, col
     else:
-        return is_floaty.astype(bool)
+        return is_floaty
 
 
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):

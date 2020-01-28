@@ -140,7 +140,7 @@ def _find_string_floats(X, dirty_float_threshold):
             continue
         column = X[col]
         common_values = column.value_counts()[:5].index
-        is_common = column.isin(common_values)
+        is_common = column.isin(common_values) | column.isna()
         if is_float.loc[~is_common, col].mean() > dirty_float_threshold:
             dirty_float[col] = 1
 

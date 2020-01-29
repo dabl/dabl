@@ -457,6 +457,11 @@ def auto_swarm_scatter(X, col1, col2, target_col, swarm_threshold=20,
 
     swarm_threshold : integer
         Maximum number of unique values in a column to add noise.
+
+    jitter_noise : string, default='auto'
+        What kind of noise to add, 'pca', 'random' or 'auto'.
+        'auto' will select 'pca' if there's at least two more features
+        present in X and 'random' otherwise.
     """
     do_swarm, uniques = dict(), dict()
     for col in [col1, col2]:

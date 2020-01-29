@@ -4,7 +4,7 @@ from .plot.supervised import plot
 from .explain import explain
 from . import datasets
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 __all__ = ['EasyPreprocessor', 'SimpleClassifier', 'AnyClassifier',
            'SimpleRegressor',

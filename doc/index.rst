@@ -60,7 +60,7 @@ Here are some examples of visualizations produced simply by calling ``plot(X, y)
  
     Often Linear Discriminant Analysis can find interesting linear projections
     of the data.  Here on the mfeat-factors dataset most of the 10 classes can
-    be well spearated using a 2d projection.
+    be well separated using a 2d projection.
   
 .. toctree::
    :maxdepth: 2

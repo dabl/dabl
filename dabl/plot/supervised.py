@@ -213,7 +213,7 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     if features.shape[1] <= 5:
         pairplot(X, target_col=target_col, columns=features.columns,
                  scatter_alpha=scatter_alpha,
-                 scatter_size=scatter_size)
+                 scatter_size=scatter_size, auto_swarm=auto_swarm)
         title = "Continuous features"
         if features.shape[1] > 1:
             title = title + " pairplot"

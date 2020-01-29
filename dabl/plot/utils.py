@@ -562,7 +562,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
 
 
 def pairplot(data, target_col, columns=None, scatter_alpha='auto',
-             scatter_size='auto'):
+             scatter_size='auto', auto_swarm=False):
     """Pairplot (scattermatrix)
 
     Because there's already too many implementations of this.
@@ -594,10 +594,15 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
         if i == j:
             class_hists(data, columns[i], target_col, ax=ax.twinx())
         else:
-            discrete_scatter(data[columns[j]], data[columns[i]],
-                             c=data[target_col], legend=legend, ax=ax,
-                             alpha=scatter_alpha,
-                             s=scatter_size)
+            if auto_swarm:
+                auto_swarm_scatter(data, columns[j], columns[i],
+                                   target_col=target_col,
+                                   ax=ax, alpha=scatter_alpha, s=scatter_size)
+            else:
+                discrete_scatter(data[columns[j]], data[columns[i]],
+                                 c=data[target_col], legend=legend, ax=ax,
+                                 alpha=scatter_alpha,
+                                 s=scatter_size)
         if j == 0:
             ax.set_ylabel(columns[i])
         else:

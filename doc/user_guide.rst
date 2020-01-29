@@ -19,25 +19,26 @@ to provide as much insight into the data as possible, and enable interactive
 analysis.
 
 Many analyses start with the same rote tasks of cleaning and basic data
-visualization, and initial modelling.  dabl tries to make these steps as easy
+visualization, and initial modeling.  dabl tries to make these steps as easy
 as possible, so that you can spend your time thinking about the problem and
-creating more intesting custom analyses.
+creating more interesting custom analyses.
 
 There are two main packages that dabl takes inspiration from and that dabl
-builds upon: scikit-learn and auto-sklearn.  But the design philosophies and
-use-cases are quite different. Scikit-learn provides many essential building
-blocks, but is build on the idea to exactly what the user asks for. That
-requires specifying every step of the processing in detail.  dabl on the other
-hand has a best-guess philosophy, tries to do something sensible, and then
-provides tools for the user to inspect and evaluate the results to judge them.
-auto-sklearn on the other hand is completely automatic and black-box. It
-searches a vast space of models and constructs complex ensemles of high
-accuracy, taking a substantial amount of computation and time in the process.
-The goal of auto-sklearn is to build the best model possible given the data.
+builds upon: scikit-learn and auto-sklearn.  The design philosophies and
+use-cases are quite different, however.
 
-dabl on the other hand tries to enable quick iteration, and enable the user to
-quickly iterate and get a grasp on the properties of the data at hand and the
-fitted models.
+Scikit-learn provides many essential building blocks, but is built on the idea
+to do exactly what the user asks for.  That requires specifying every step of
+the processing in detail.  dabl on the other hand has a best-guess philosophy:
+it tries to do something sensible, and then provides tools for the user to
+inspect and evaluate the results to judge them.
+
+auto-sklearn is completely automatic and black-box.  It searches a vast space
+of models and constructs complex ensemles of high accuracy, taking a substantial
+amount of computation and time in the process.  The goal of auto-sklearn is to
+build the best model possible given the data.  dabl, conversely, tries to enable
+the user to quickly iterate and get a grasp on the properties of the data at hand
+and the fitted models.
 
 dabl is meant to support you in the following tasks, in order:
 
@@ -53,7 +54,7 @@ types of your data and apply appropriate conversions.  It also tries to detect
 potential data quality issues.
 The field of data cleaning is impossibly broad, and dabl's approaches are by no
 means sophisticated.  The goal of dabl is to get the data "clean enough" to
-create useful visualizations and models, and to allow the user to perform
+create useful visualizations and models, and to allow users to perform
 custom cleaning operations themselves.
 In particular if the detection of semantic types (continuous, categorical,
 ordinal, text, etc) fails, the user can provide ``type_hints``:
@@ -69,7 +70,7 @@ Linear Discriminant Analysis training set score: ...
 
 The next step in any task should be exploratory data analysis. dabl provides a
 high-level interface that summarizes several common high-level plots.  For low
-dimensional datasets, all features are shown, for high dimensional datasets,
+dimensional datasets, all features are shown; for high dimensional datasets,
 only the most informative features for the given task are shown.  This is
 clearly not guaranteed to surface all interesting aspects with the data, or to
 find all data quality issues.  However, it will give you a quick insight in to
@@ -129,21 +130,20 @@ Initial Model Building
 
 
 
-Fit an initial model. The SimpleClassifier first tries several baseline and
-instantaneous models, potentially on subsampled data, to get an idea of what a
-low baseline should be.
+The SimpleClassifier first tries several baseline and instantaneous models,
+potentially on subsampled data, to get an idea of what a low baseline should be.
 This again is a good place to surface data leakage, as well as find the main
 discriminative features in the dataset.  The ``SimpleClassifier`` allows
 specifying data in the scikit-learn-style ``fit(X, y)`` with a 1d y and
-features ``X``, or with ``X`` being a dataframe, and by specifying the target
-column inside of X as``target_col``.
+features ``X``, or with ``X`` being a dataframe and specifying the target
+column inside of X as ``target_col``.
 
 The SimpleClassifier also performs preprocessing such as missing value
-imputation and one-hot-encoding.  You can inspect the model using:
+imputation and one-hot encoding.  You can inspect the model using:
 
 >>> dabl.explain(ec) # doctest: +SKIP
 
-This can lead to additional insights and guide costom processing and
+This can lead to additional insights and guide custom processing and
 cleaning of the data.
 
 Enhanced Model Building
@@ -192,11 +192,11 @@ learning that strongly encourage iterative and interactive model building.
 Key ingedients to achieve this are:
 
 - Ready-made visualizations
-- model diagnostics
+- Model diagnostics
 - Efficient model search
 - Type detection
 - Automatic preprocessing
-- portfolios of well-performing pipelines
+- Portfolios of well-performing pipelines
 
 The current version of dabl only provides very simple implementations of these,
 but the goal is for dabl to contain more advanced solutions while providing a

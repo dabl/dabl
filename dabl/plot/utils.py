@@ -447,6 +447,12 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
         Whether to create a legend.
     scale_separately : boolean, default=True
         Whether to scale each class separately.
+
+    Examples
+    --------
+    >>> from dabl.datasets import load_adult
+    >>> data = load_adult()
+    >>> class_hists(data, "age", "gender", legend=True)
     """
     col_data = data[column].dropna()
 

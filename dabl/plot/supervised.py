@@ -534,7 +534,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         target_col = y.name
         X = pd.concat([X, y], axis=1)
 
-    X, types = clean(X, type_hints=type_hints, return_types=True)
+    X, types = clean(X, type_hints=type_hints, return_types=True,
+                     target_col=target_col)
     types = _check_X_target_col(X, target_col, types=types)
     # low_cardinality integers plot better as categorical
     # FIXME the logic should be down in the plotting functions maybe

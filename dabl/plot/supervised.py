@@ -23,7 +23,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     find_pretty_grid, _find_scatter_plots_classification,
                     class_hists, discrete_scatter, mosaic_plot,
                     _find_inliers, pairplot, _get_scatter_alpha,
-                    _get_scatter_size)
+                    _get_scatter_size, auto_swarm_scatter)
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -63,7 +63,7 @@ def plot_regression_continuous(X, target_col, types=None,
     target = X[target_col]
     # HACK we should drop them per column before feeding them into f_regression
     # FIXME
-    features_imp = SimpleImputer().fit_transform(features)
+    features_imp = SimpleImputer(strategy='median').fit_transform(features)
     f, p = f_regression(features_imp, target)
     top_k = np.argsort(f)[-show_top:][::-1]
     # we could do better lol
@@ -200,14 +200,14 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     """
 
     types = _check_X_target_col(X, target_col, types, task='classification')
-
+    auto_swarm = kwargs.get('auto_swarm', False)
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
     if features.shape[1] == 0:
         return
 
-    features_imp = SimpleImputer().fit_transform(features)
+    features_imp = SimpleImputer(strategy='median').fit_transform(features)
     target = X[target_col]
     figures = []
     if features.shape[1] <= 5:
@@ -235,7 +235,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
         fig, axes = _plot_top_pairs(features_imp[:, top_k], target,
                                     scatter_alpha, scatter_size,
                                     feature_names=features.columns[top_k],
-                                    how_many=4, random_state=random_state)
+                                    how_many=4, random_state=random_state,
+                                    auto_swarm=auto_swarm)
         fig.suptitle("Top feature interactions")
     figures.append(fig)
     if not plot_pairwise:
@@ -311,7 +312,7 @@ def _plot_lda_classification(features, target, top_k_interactions,
 def _plot_top_pairs(features, target, scatter_alpha='auto',
                     scatter_size='auto',
                     feature_names=None, how_many=4, additional_axes=0,
-                    random_state=None):
+                    random_state=None, auto_swarm=False):
     top_pairs = _find_scatter_plots_classification(
         features, target, how_many=how_many, random_state=random_state)
     if feature_names is None:
@@ -320,9 +321,17 @@ def _plot_top_pairs(features, target, scatter_alpha='auto',
     fig, axes = _make_subplots(len(top_pairs) + additional_axes, row_height=4)
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
-        discrete_scatter(features[:, x], features[:, y],
-                         c=target, ax=ax, alpha=scatter_alpha,
-                         s=scatter_size)
+        if auto_swarm:
+            df = pd.DataFrame(features)
+            df['target'] = target
+            auto_swarm_scatter(df, x, y,
+                               target_col='target', ax=ax,
+                               alpha=scatter_alpha,
+                               s=scatter_size)
+        else:
+            discrete_scatter(features[:, x], features[:, y],
+                             c=target, ax=ax, alpha=scatter_alpha,
+                             s=scatter_size)
         ax.set_xlabel(feature_names[x])
         ax.set_ylabel(feature_names[y])
         ax.set_title("{:.3f}".format(score))

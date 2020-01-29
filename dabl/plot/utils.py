@@ -428,7 +428,8 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
 
 
 def auto_swarm_scatter(X, col1, col2, target_col, swarm_threshold=20,
-                       alpha='auto', s='auto', ax=None):
+                       alpha='auto', s='auto', ax=None, legend=False,
+                       jitter_noise='auto'):
     """Do a scatterplot with automatic addition of noise.
 
     Do a scatter plot for multiple classes. In addition to what
@@ -470,12 +471,14 @@ def auto_swarm_scatter(X, col1, col2, target_col, swarm_threshold=20,
         return discrete_scatter(X[col1], X[col2], X[target_col], ax=ax,
                                 alpha=alpha, s=s)
 
-    if X.shape[1] < 5:
+    if X.shape[1] < 5 or jitter_noise == 'random':
         noise = np.random.normal(scale=1/10, size=(X.shape[0], n_swarm))
-    else:
+    elif jitter_noise in ['auto', 'pca']:
         X_imp = SimpleImputer().fit_transform(X.drop(target_col, axis=1))
         noise = .9 * minmax_scale(PCA(n_components=n_swarm).fit_transform(
             scale(X_imp)))
+    else:
+        ValueError("Unknown value for jitter_noise: {}".format(jitter_noise))
 
     noise_index = 0
     results = dict()
@@ -487,7 +490,7 @@ def auto_swarm_scatter(X, col1, col2, target_col, swarm_threshold=20,
         else:
             results[col] = X[col]
     return discrete_scatter(results[col1], results[col2], X[target_col], ax=ax,
-                            alpha=alpha, s=s)
+                            alpha=alpha, s=s, legend=legend)
 
 
 def class_hists(data, column, target, bins="auto", ax=None, legend=False,
@@ -562,7 +565,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
 
 
 def pairplot(data, target_col, columns=None, scatter_alpha='auto',
-             scatter_size='auto', auto_swarm=False):
+             scatter_size='auto', auto_swarm=False, jitter_noise='auto'):
     """Pairplot (scattermatrix)
 
     Because there's already too many implementations of this.
@@ -597,7 +600,8 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
             if auto_swarm:
                 auto_swarm_scatter(data, columns[j], columns[i],
                                    target_col=target_col,
-                                   ax=ax, alpha=scatter_alpha, s=scatter_size)
+                                   ax=ax, alpha=scatter_alpha, s=scatter_size,
+                                   jitter_noise=jitter_noise)
             else:
                 discrete_scatter(data[columns[j]], data[columns[i]],
                                  c=data[target_col], legend=legend, ax=ax,

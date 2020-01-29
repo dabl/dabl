@@ -201,6 +201,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
 
     types = _check_X_target_col(X, target_col, types, task='classification')
     auto_swarm = kwargs.get('auto_swarm', False)
+    jitter_noise = kwargs.get('jitter_noise', 'auto')
+
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -213,7 +215,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     if features.shape[1] <= 5:
         pairplot(X, target_col=target_col, columns=features.columns,
                  scatter_alpha=scatter_alpha,
-                 scatter_size=scatter_size, auto_swarm=auto_swarm)
+                 scatter_size=scatter_size, auto_swarm=auto_swarm,
+                 jitter_noise=jitter_noise)
         title = "Continuous features"
         if features.shape[1] > 1:
             title = title + " pairplot"
@@ -236,7 +239,8 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                                     scatter_alpha, scatter_size,
                                     feature_names=features.columns[top_k],
                                     how_many=4, random_state=random_state,
-                                    auto_swarm=auto_swarm)
+                                    auto_swarm=auto_swarm,
+                                    jitter_noise=jitter_noise)
         fig.suptitle("Top feature interactions")
     figures.append(fig)
     if not plot_pairwise:
@@ -312,7 +316,7 @@ def _plot_lda_classification(features, target, top_k_interactions,
 def _plot_top_pairs(features, target, scatter_alpha='auto',
                     scatter_size='auto',
                     feature_names=None, how_many=4, additional_axes=0,
-                    random_state=None, auto_swarm=False):
+                    random_state=None, auto_swarm=False, jitter_noise='auto'):
     top_pairs = _find_scatter_plots_classification(
         features, target, how_many=how_many, random_state=random_state)
     if feature_names is None:

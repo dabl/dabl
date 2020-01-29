@@ -163,7 +163,8 @@ def _float_col_is_int(series):
 
 def detect_types(X, type_hints=None, max_int_cardinality='auto',
                  dirty_float_threshold=.9,
-                 near_constant_threshold=0.95, verbose=0):
+                 near_constant_threshold=0.95, target_col=None,
+                 verbose=0):
     """Detect types of dataframe columns.
 
     Columns are labeled as one of the following types:
@@ -196,6 +197,10 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         The fraction of floats required in a dirty continuous
         column before it's considered "useless" or categorical
         (after removing top 5 string values)
+
+    target_col : string, int or None
+        Specifies the target column in the data, if any.
+        Target columns are never dropped.
 
     verbose : int
         How verbose to be
@@ -300,6 +305,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     # also throw out near constant:
     near_constant = pd.Series(0, index=X.columns, dtype=bool)
     for col in X.columns:
+        if col == target_col:
+            continue
         count = X[col].count()
         if n_values[col] / count > .9:
             # save some computation
@@ -386,7 +393,8 @@ def _make_float(X):
     return X.astype(np.float, copy=False)
 
 
-def clean(X, type_hints=None, return_types=False, verbose=0):
+def clean(X, type_hints=None, return_types=False,
+          target_col=None, verbose=0):
     """Public clean interface
 
     Parameters
@@ -396,6 +404,9 @@ def clean(X, type_hints=None, return_types=False, verbose=0):
         Keys are column names, values are types as provided by detect_types.
     return_types : bool, default=False
         Whether to return the inferred types
+    target_col : string, int or None
+        If not None specifies a target column in the data.
+        Target columns are never dropped.
     verbose : int, default=0
         Verbosity control.
     """
@@ -406,7 +417,8 @@ def clean(X, type_hints=None, return_types=False, verbose=0):
     if not X.index.is_unique:
         warn("Index not unique, resetting index!", UserWarning)
         X = X.reset_index(drop=True)
-    types = detect_types(X, type_hints=type_hints, verbose=verbose)
+    types = detect_types(X, type_hints=type_hints, verbose=verbose,
+                         target_col=target_col)
     # drop useless columns
     X = X.loc[:, ~types.useless].copy()
     types = types[~types.useless]

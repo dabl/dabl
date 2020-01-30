@@ -472,6 +472,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
     >>> from dabl.datasets import load_adult
     >>> data = load_adult()
     >>> class_hists(data, "age", "gender", legend=True)
+    <matplotlib...
     """
     col_data = data[column].dropna()
 

@@ -6,7 +6,7 @@ beginners, and reduce boiler plate for common tasks.
 
 This library is in very active development, so it's not recommended for production use.
 
-Development at `github.com/amueller/dabl <https://github.com/amueller/dabl>`_.
+Development at `github.com/dabl/dabl <https://github.com/dabl/dabl>`_.
 
 Examples
 --------

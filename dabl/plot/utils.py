@@ -124,8 +124,8 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10,
            color=colors)
     feature_names = np.array(feature_names)
     ax.set_xticks(np.arange(0, len(interesting_coefficients)))
-    ax.set_xticklabels(feature_names[interesting_coefficients], rotation=60,
-                       ha="right")
+    ax.set_xticklabels(feature_names[interesting_coefficients], rotation=60, ha="right")
+    _short_tick_names(ax, ticklabel_length=20)
     ax.set_ylabel("Coefficient magnitude")
     ax.set_xlabel("Feature")
     ax.set_title(classname)
@@ -138,10 +138,12 @@ def heatmap(values, xlabel, ylabel, xticklabels, yticklabels, cmap=None,
         ax = plt.gca()
     img = ax.pcolor(values, cmap=cmap, vmin=vmin, vmax=vmax)
     img.update_scalarmappable()
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(_shortname(xlabel, maxlen=40))
+    ax.set_ylabel(_shortname(ylabel, maxlen=40))
     ax.set_xticks(np.arange(len(xticklabels)) + .5)
     ax.set_yticks(np.arange(len(yticklabels)) + .5)
+    xticklabels = [_shortname(label, maxlen=40) for label in xticklabels]
+    yticklabels = [_shortname(label, maxlen=40) for label in yticklabels]
     ax.set_xticklabels(xticklabels)
     ax.set_yticklabels(yticklabels)
     ax.set_aspect(1)
@@ -336,11 +338,28 @@ def _check_X_target_col(X, target_col, types=None, type_hints=None, task=None):
     return types
 
 
-def _short_tick_names(ax):
-    ax.set_yticklabels([_shortname(t.get_text(), maxlen=10)
-                        for t in ax.get_yticklabels()])
-    ax.set_xlabel(_shortname(ax.get_xlabel(), maxlen=20))
-    ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=20))
+def _short_tick_names(ax, label_length=20, ticklabel_length=10):
+    """Shorten axes labels and tick labels.
+
+    Uses _shortname to change labels as a side effect.
+
+    Parameters
+    ----------
+    ax : matplotlib axes
+        Axes on which to shorten labels.
+    label_length : int, default=20
+        Length of xlabel and ylabel
+    ticklabel_length : int, default=10
+        Length of each label in xticklabels and yticklabels
+    """
+    ax.set_xticklabels(
+        [_shortname(t.get_text(), maxlen=ticklabel_length) for t in ax.get_xticklabels()]
+    )
+    ax.set_yticklabels(
+        [_shortname(t.get_text(), maxlen=ticklabel_length) for t in ax.get_yticklabels()]
+    )
+    ax.set_xlabel(_shortname(ax.get_xlabel(), maxlen=label_length))
+    ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=label_length))
 
 
 def _find_scatter_plots_classification(X, target, how_many=3,
@@ -493,7 +512,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
     if legend:
         ax.legend()
     ax.set_yticks(())
-    ax.set_xlabel(column)
+    ax.set_xlabel(_shortname(column))
     return ax
 
 
@@ -540,7 +559,7 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
             ax.set_ylabel("")
             ax.set_yticklabels(())
         if i == n_features - 1:
-            ax.set_xlabel(columns[j])
+            ax.set_xlabel(_shortname(columns[j]))
         else:
             ax.set_xlabel("")
             ax.set_xticklabels(())

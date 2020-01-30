@@ -426,7 +426,8 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
             handle.set_sizes((100,))
 
 
-def class_hists(data, column, target, bins="auto", ax=None, legend=False):
+def class_hists(data, column, target, bins="auto", ax=None, legend=False,
+                scale_separately=True):
     """Grouped univariate histograms.
 
     Parameters
@@ -442,8 +443,16 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
         We always show at least 5 bins for now.
     ax : matplotlib axes
         Axes to plot into
-    legend : boolean
+    legend : boolean, default=False
         Whether to create a legend.
+    scale_separately : boolean, default=True
+        Whether to scale each class separately.
+
+    Examples
+    --------
+    >>> from dabl.datasets import load_adult
+    >>> data = load_adult()
+    >>> class_hists(data, "age", "gender", legend=True)
     """
     col_data = data[column].dropna()
 
@@ -465,6 +474,9 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False):
         ordinal = True
         # ordinal data, count distinct values
         counts = data.groupby(target)[column].value_counts().unstack(target)
+    if scale_separately:
+        # normalize by maximum
+        counts = counts / counts.max()
     bottom = counts.max().max() * 1.1
     for i, name in enumerate(counts.columns):
         if ordinal:

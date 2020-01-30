@@ -252,15 +252,17 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
                        features.shape[1])
     if n_components < 2:
         return figures
-    features_scaled = _plot_pca_classification(
-        n_components, features_imp, target, scatter_alpha, scatter_size,
-        random_state=random_state)
-    figures.append(plt.gcf())
+    if kwargs.get("include_pca", True):
+        features_scaled = _plot_pca_classification(
+            n_components, features_imp, target, scatter_alpha, scatter_size,
+            random_state=random_state)
+        figures.append(plt.gcf())
     # LDA
-    _plot_lda_classification(features_scaled, target, top_k_interactions,
-                             scatter_alpha, scatter_size,
-                             random_state=random_state)
-    figures.append(plt.gcf())
+    if kwargs.get("include_lda", True):
+        _plot_lda_classification(features_scaled, target, top_k_interactions,
+                                 scatter_alpha, scatter_size,
+                                 random_state=random_state)
+        figures.append(plt.gcf())
     return figures
 
 

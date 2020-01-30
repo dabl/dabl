@@ -80,6 +80,7 @@ def test_target_col_not_dropped():
     types = detect_types(X)
     assert types.useless[0]
     types = detect_types(X, target_col=0)
+    print(types)
     assert types.categorical[0]
 
 

@@ -11,7 +11,7 @@ then USERNAME="dabl-ci";
 else USERNAME=$CIRCLE_PROJECT_USERNAME;
 fi
 
-DOC_REPO="dabl"
+DOC_REPO="dabl.github.io"
 GENERATED_DOC_DIR=$1
 
 if [[ -z "$GENERATED_DOC_DIR" ]]; then
@@ -35,7 +35,7 @@ MSG="Pushing the docs to $dir/ for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"
 
 cd $HOME
 if [ ! -d $DOC_REPO ];
-then git clone --depth 1  --branch gh-pages --no-checkout "git@github.com:amueller/"$DOC_REPO".git";
+then git clone --depth 1  --branch master --no-checkout "git@github.com:dabl/"$DOC_REPO".git";
 fi
 cd $DOC_REPO
 
@@ -49,8 +49,8 @@ then
 	touch $dir/index.html
 	git add $dir
 fi
-git checkout gh-pages
-git reset --hard origin/gh-pages
+git checkout master
+git reset --hard origin/master
 if [ -d $dir ]
 then
 	git rm -rf $dir/ && rm -rf $dir/

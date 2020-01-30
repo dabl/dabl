@@ -2,18 +2,17 @@ from warnings import warn
 from functools import reduce
 import itertools
 
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from seaborn.utils import despine
 
-
-# from sklearn.dummy import DummyClassifier
-# from sklearn.metrics import recall_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_curve
+from sklearn.preprocessing import scale, minmax_scale
+from sklearn.impute import SimpleImputer
+from sklearn.decomposition import PCA
 
 from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit
 
@@ -405,6 +404,8 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         legend = (ax.get_geometry()[2] == 1)
     if unique_c is None:
         unique_c = np.unique(c)
+    ax.set_xlabel(getattr(x, 'name', None))
+    ax.set_ylabel(getattr(y, 'name', None))
     for i in unique_c:
         mask = c == i
         ax.scatter(x[mask], y[mask], label=i, s=s, alpha=alpha, **kwargs)
@@ -424,6 +425,77 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         for handle in legend.legendHandles:
             handle.set_alpha(1)
             handle.set_sizes((100,))
+
+
+def auto_swarm_scatter(X, col1, col2, target_col, swarm_threshold=20,
+                       alpha='auto', s='auto', ax=None, legend=False,
+                       jitter_noise='auto'):
+    """Do a scatterplot with automatic addition of noise.
+
+    Do a scatter plot for multiple classes. In addition to what
+    discrete_scatter does, this function additionally adds noise
+    (jitters) variables that have few unique values which might otherwise
+    lead to overplotting.
+
+    If X contains at least two additional columns of features, PCA will
+    be used to compute the jitter, otherwise random normal noise is added.
+
+    Parameters
+    ----------
+    X : dataframe
+        Dataframe of columns to plot and target to color. Additional columns
+        might be used to compute principal components added as jitter.
+
+    col1 : string or int
+        Column name to scatter on x axis
+
+    col2 : string or int
+        Column name to scatter on y axis
+
+    target_col : string or int
+        Target column to use to color points.
+
+    swarm_threshold : integer
+        Maximum number of unique values in a column to add noise.
+
+    jitter_noise : string, default='auto'
+        What kind of noise to add, 'pca', 'random' or 'auto'.
+        'auto' will select 'pca' if there's at least two more features
+        present in X and 'random' otherwise.
+    """
+    do_swarm, uniques = dict(), dict()
+    for col in [col1, col2]:
+        unique = X[col].unique()
+        uniques[col] = unique
+        do_swarm[col] = len(unique) <= swarm_threshold
+
+    n_swarm = do_swarm[col1] + do_swarm[col2]
+
+    if n_swarm == 0:
+        # special case so we don't do pca with 0 components
+        return discrete_scatter(X[col1], X[col2], X[target_col], ax=ax,
+                                alpha=alpha, s=s)
+
+    if X.shape[1] < 5 or jitter_noise == 'random':
+        noise = np.random.normal(scale=1/10, size=(X.shape[0], n_swarm))
+    elif jitter_noise in ['auto', 'pca']:
+        X_imp = SimpleImputer().fit_transform(X.drop(target_col, axis=1))
+        noise = .9 * minmax_scale(PCA(n_components=n_swarm).fit_transform(
+            scale(X_imp)))
+    else:
+        ValueError("Unknown value for jitter_noise: {}".format(jitter_noise))
+
+    noise_index = 0
+    results = dict()
+    for col in [col1, col2]:
+        if do_swarm[col]:
+            delta = np.nanmin(np.diff(np.sort(uniques[col])))
+            results[col] = X[col] + delta * noise[:, noise_index]
+            noise_index += 1
+        else:
+            results[col] = X[col]
+    return discrete_scatter(results[col1], results[col2], X[target_col], ax=ax,
+                            alpha=alpha, s=s, legend=legend)
 
 
 def class_hists(data, column, target, bins="auto", ax=None, legend=False,
@@ -498,7 +570,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
 
 
 def pairplot(data, target_col, columns=None, scatter_alpha='auto',
-             scatter_size='auto'):
+             scatter_size='auto', auto_swarm=False, jitter_noise='auto'):
     """Pairplot (scattermatrix)
 
     Because there's already too many implementations of this.
@@ -530,10 +602,16 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
         if i == j:
             class_hists(data, columns[i], target_col, ax=ax.twinx())
         else:
-            discrete_scatter(data[columns[j]], data[columns[i]],
-                             c=data[target_col], legend=legend, ax=ax,
-                             alpha=scatter_alpha,
-                             s=scatter_size)
+            if auto_swarm:
+                auto_swarm_scatter(data, columns[j], columns[i],
+                                   target_col=target_col,
+                                   ax=ax, alpha=scatter_alpha, s=scatter_size,
+                                   jitter_noise=jitter_noise)
+            else:
+                discrete_scatter(data[columns[j]], data[columns[i]],
+                                 c=data[target_col], legend=legend, ax=ax,
+                                 alpha=scatter_alpha,
+                                 s=scatter_size)
         if j == 0:
             ax.set_ylabel(columns[i])
         else:

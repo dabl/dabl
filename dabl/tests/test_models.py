@@ -171,3 +171,15 @@ def test_shuffle_cross_validation():
     assert sr.log_[-2].r2 < 0.1
     sr = SimpleRegressor().fit(X, y)
     assert sr.log_[-2].r2 > .9
+
+
+def test_classification_of_string_targets():
+    X = np.array([1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
+    y = np.array(['a', 'b', 'a', 'b', 'a', 'b', 'a', 'b', 'a', 'b'])
+    obj = SimpleClassifier()
+
+    fitted = obj.fit(X, y)
+    pred = fitted.predict(np.array([1, 2]).reshape(-1, 1))
+
+    np.testing.assert_array_equal(obj.classes_, np.array(['a', 'b']))
+    np.testing.assert_array_equal(pred, np.array(['a', 'b']))

@@ -10,14 +10,15 @@ import warnings
 from warnings import warn
 
 _FLOAT_REGEX = r"^[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))$"
+_FLOAT_MATCHING_CACHE = {}
 
 
-def _float_matching(col, return_safe_col=False):
-    is_floaty = col.str.match(_FLOAT_REGEX)
+def _float_matching(X_col, return_safe_col=False, already_warned=False):
+    is_floaty = X_col.str.match(_FLOAT_REGEX)
     # things that weren't strings
     not_strings = is_floaty.isna()
     if not_strings.any():
-        rest = col[not_strings]
+        rest = X_col[not_strings]
         all_castable = False
         try:
             # if we can convert them all to float we're done
@@ -27,25 +28,47 @@ def _float_matching(col, return_safe_col=False):
         except ValueError:
             pass
         if not all_castable:
-            warn("Mixed types in column {}".format(col.name))
+            if not already_warned:
+                warn(f'Mixed types in column {X_col.name}')
             # make everything string
             rest = rest.astype(str)
-            rest_is_floaty = _float_matching(rest)
+            rest_is_floaty = _float_matching(rest, already_warned=True)
             is_floaty[not_strings] = rest_is_floaty
             if return_safe_col:
-                col = col.copy()
-                col[not_strings] = rest
+                X_col = X_col.copy()
+                X_col[not_strings] = rest
 
     if not is_floaty.dtype == bool:
         is_floaty = is_floaty.astype(bool)
 
     if return_safe_col:
-        return is_floaty, col
+        return is_floaty, X_col
     else:
         return is_floaty
 
 
+def _float_matching_fetch(X, col, return_safe_col=False):
+    """Retrieve _float_matching for X[col] from cache or function call.
+
+    If not present in cache, stores function call results into cache.
+    Uses dataframe object id and column name as cache key.
+    """
+    X_id = id(X)
+    if (X_id, col) in _FLOAT_MATCHING_CACHE:
+        floats, X_col = _FLOAT_MATCHING_CACHE[(X_id, col)]
+    else:
+        floats, X_col = _float_matching(X[col], return_safe_col=True)
+        _FLOAT_MATCHING_CACHE[(X_id, col)] = floats, X_col
+
+    if return_safe_col:
+        return floats, X_col
+    else:
+        return floats
+
+
+
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
+
     # should this error if the inputs are not string?
     def fit(self, X, y=None):
         # FIXME clean float columns will make this fail
@@ -53,7 +76,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             raise TypeError("X is not a dataframe. Convert or call `clean`.")
         encoders = {}
         for col in X.columns:
-            floats, X_col = _float_matching(X[col], return_safe_col=True)
+            floats, X_col = _float_matching_fetch(X, col, return_safe_col=True)
             # FIXME sparse
             if (~floats).any():
                 encoders[col] = OneHotEncoder(sparse=False,
@@ -70,11 +93,11 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             raise ValueError("Given the same columns")
         result = []
         for col in self.columns_:
-            floats, X_col = _float_matching(X[col], return_safe_col=True)
+            floats, X_col = _float_matching_fetch(X, col, return_safe_col=True)
             nofloats = ~floats
-            new_col = X_col.copy()
-            new_col[nofloats] = np.NaN
-            new_col = new_col.astype(np.float)
+            X_new_col = X_col.copy()
+            X_new_col[nofloats] = np.NaN
+            X_new_col = X_new_col.astype(np.float)
             enc = self.encoders_[col]
             if enc is None:
                 if nofloats.any():
@@ -84,15 +107,15 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
                         " to call 'clean' on the whole dataset before "
                         "splitting into training and test set.".format(
                             X.loc[nofloats, col].unique()))
-                new_col = new_col.rename("{}_dabl_continuous".format(col))
-                result.append(new_col)
+                X_new_col = X_new_col.rename("{}_dabl_continuous".format(col))
+                result.append(X_new_col)
                 continue
             cats = pd.DataFrame(0, index=X.index,
                                 columns=enc.get_feature_names([str(col)]))
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(pd.DataFrame(
                     X_col[nofloats]))
-            cats["{}_dabl_continuous".format(col)] = new_col
+            cats["{}_dabl_continuous".format(col)] = X_new_col
             result.append(cats)
         return pd.concat(result, axis=1)
 
@@ -138,9 +161,9 @@ def _find_string_floats(X, dirty_float_threshold):
         if clean_float_string[col]:
             # already know it's clean
             continue
-        column = X[col]
-        common_values = column.value_counts()[:5].index
-        is_common = column.isin(common_values) | column.isna()
+        X_col = X[col]
+        common_values = X_col.value_counts()[:5].index
+        is_common = X_col.isin(common_values) | X_col.isna()
         if is_float.loc[~is_common, col].mean() > dirty_float_threshold:
             dirty_float[col] = 1
 

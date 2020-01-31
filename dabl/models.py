@@ -126,9 +126,12 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         # This could/should be solved with dask?
         if isinstance(self, RegressorMixin):
             # this is how inheritance works, right?
-            cv = KFold(n_splits=5)
+            cv = KFold(n_splits=5, shuffle=self.shuffle,
+                       random_state=self.random_state)
         elif isinstance(self, ClassifierMixin):
-            cv = StratifiedKFold(n_splits=5)
+            cv = StratifiedKFold(
+                n_splits=5, shuffle=self.shuffle,
+                random_state=self.random_state)
         data_preproc = []
         for i, (train, test) in enumerate(cv.split(X, y)):
             # maybe do two levels of preprocessing
@@ -189,6 +192,9 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
             Keys are column names, values are types as provided by
             detect_types.
 
+    shuffle : boolean, default=True
+        Whether to shuffle the training set in cross-validation.
+
     Attributes
     ----------
     est_ : sklearn estimator
@@ -196,11 +202,12 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
 
     """
     def __init__(self, refit=True, random_state=None, verbose=1,
-                 type_hints=None):
+                 type_hints=None, shuffle=True):
         self.verbose = verbose
         self.random_state = random_state
         self.refit = refit
         self.type_hints = type_hints
+        self.shuffle = shuffle
 
     def _get_estimators(self):
         return get_fast_classifiers(n_classes=len(self.classes_))
@@ -269,13 +276,17 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
             If dict, provide type information for columns.
             Keys are column names, values are types as provided by
             detect_types.
+
+    shuffle : boolean, default=True
+        Whether to shuffle the training set in cross-validation.
     """
     def __init__(self, refit=True, random_state=None, verbose=1,
-                 type_hints=None):
+                 type_hints=None, shuffle=True):
         self.verbose = verbose
         self.refit = refit
         self.random_state = random_state
         self.type_hints = type_hints
+        self.shuffle = shuffle
 
     def _get_estimators(self):
         return get_fast_regressors()

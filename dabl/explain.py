@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from warnings import warn
 
 import matplotlib.pyplot as plt
@@ -14,10 +15,23 @@ from sklearn.impute import SimpleImputer
 from .models import SimpleClassifier, SimpleRegressor, AnyClassifier
 from .utils import _validate_Xyt
 from .plot.utils import (plot_coefficients, plot_multiclass_roc_curve,
-                         find_pretty_grid, _make_subplots)
+                         find_pretty_grid, _make_subplots, _find_inliers,
+                         _get_scatter_alpha,
+                         _get_scatter_size)
 
 
-def classification_metrics(estimator, X_val, y_val):
+def plot_classification_metrics(estimator, X_val, y_val):
+    """Show classification metrics on a validation set.
+
+    Parameters
+    ----------
+    estimator : sklearn or dabl estimator
+        Trained estimator
+    X_val : DataFrame
+        Validation set features
+    y_val : Series
+        Validation set target.
+    """
     y_pred = estimator.predict(X_val)
     print(classification_report(y_val, y_pred))
     print(confusion_matrix(y_val, y_pred))
@@ -31,8 +45,42 @@ def classification_metrics(estimator, X_val, y_val):
         warn("Can't plot roc curve, install sklearn 0.22-dev")
 
 
+def plot_regression_metrics(estimator, X_val, y_val, drop_outliers=False):
+    """Show classification metrics on a validation set.
+
+    Parameters
+    ----------
+    estimator : sklearn or dabl estimator
+        Trained estimator
+    X_val : DataFrame
+        Validation set features
+    y_val : Series
+        Validation set target.
+    drop_outliers : boolean, default=False
+        Whether to drop outliers in the predictions.
+    """
+    y_pred = estimator.predict(X_val)
+    # residual plot
+    if drop_outliers:
+        inlier_mask = _find_inliers(pd.Series(y_pred))
+        y_val = y_val[inlier_mask]
+        y_pred = y_pred[inlier_mask]
+    true_min = y_val.min()
+    true_max = y_val.max()
+    scatter_alpha = _get_scatter_alpha('auto', y_val)
+    scatter_size = _get_scatter_size('auto', y_val)
+    plt.plot([true_min, true_max], [true_min, true_max], '--', label='Ideal')
+    plt.scatter(y_val, y_pred, alpha=scatter_alpha, s=scatter_size)
+    plt.xlabel("Predictions")
+    plt.ylabel("True target")
+    plt.title("Observed vs predicted")
+    plt.legend()
+    ax = plt.gca()
+    ax.set_aspect("equal")
+
+
 def explain(estimator, X_val=None, y_val=None, target_col=None,
-            feature_names=None):
+            feature_names=None, n_top_features=10):
     """Explain estimator.
 
     Provide basic properties and evaluation plots for the estimator.
@@ -51,13 +99,20 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
 
     target_col : string or int, optional
         Column name of target if included in X.
+
+    n_top_features : int, default=10
+        Number of features to show for coefficients or feature importances.
+
     """
     if feature_names is None:
         try:
             feature_names = estimator.feature_names_.to_list()
         except AttributeError:
-            raise ValueError("Can't determine input feature names, "
-                             "please pass them.")
+            if hasattr(X_val, 'columns'):
+                feature_names = X_val.columns
+            else:
+                raise ValueError("Can't determine input feature names, "
+                                 "please pass them.")
 
     classifier = False
     if hasattr(estimator, 'classes_') and len(estimator.classes_) >= 2:
@@ -74,11 +129,9 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                                      do_clean=False)
 
         if classifier:
-            # classification metrics:
-            classification_metrics(estimator, X_val, y_val)
+            plot_classification_metrics(estimator, X_val, y_val)
         else:
-            # FIXME add regression metrics
-            pass
+            plot_regression_metrics(estimator, X_val, y_val)
 
     if isinstance(inner_estimator, DecisionTreeClassifier):
         try:
@@ -106,18 +159,21 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
             coef = np.atleast_2d(inner_estimator.coef_)
             for ax, k, c in zip(axes.ravel(), inner_estimator.classes_, coef):
                 plot_coefficients(c, inner_feature_names, ax=ax,
-                                  classname="class: {}".format(k))
+                                  classname="class: {}".format(k),
+                                  n_top_features=n_top_features)
         else:
             coef = np.squeeze(inner_estimator.coef_)
             if coef.ndim > 1:
                 raise ValueError("Don't know how to handle "
                                  "multi-target regressor")
-            plot_coefficients(coef, inner_feature_names)
+            plot_coefficients(coef, inner_feature_names,
+                              n_top_features=n_top_features)
 
     elif isinstance(inner_estimator, RandomForestClassifier):
         # FIXME This is a bad thing to show!
         plot_coefficients(
-            inner_estimator.feature_importances_, inner_feature_names)
+            inner_estimator.feature_importances_, inner_feature_names,
+            n_top_features=n_top_features)
         plt.ylabel("Imputity Decrease")
 
     if X_val is not None:

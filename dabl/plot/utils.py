@@ -124,7 +124,8 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10,
            color=colors)
     feature_names = np.array(feature_names)
     ax.set_xticks(np.arange(0, len(interesting_coefficients)))
-    ax.set_xticklabels(feature_names[interesting_coefficients], rotation=60, ha="right")
+    ax.set_xticklabels(feature_names[interesting_coefficients],
+                       rotation=60, ha="right")
     _short_tick_names(ax, ticklabel_length=20)
     ax.set_ylabel("Coefficient magnitude")
     ax.set_xlabel("Feature")
@@ -353,10 +354,12 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
         Length of each label in xticklabels and yticklabels
     """
     ax.set_xticklabels(
-        [_shortname(t.get_text(), maxlen=ticklabel_length) for t in ax.get_xticklabels()]
+        [_shortname(t.get_text(), maxlen=ticklabel_length)
+         for t in ax.get_xticklabels()]
     )
     ax.set_yticklabels(
-        [_shortname(t.get_text(), maxlen=ticklabel_length) for t in ax.get_yticklabels()]
+        [_shortname(t.get_text(), maxlen=ticklabel_length)
+         for t in ax.get_yticklabels()]
     )
     ax.set_xlabel(_shortname(ax.get_xlabel(), maxlen=label_length))
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=label_length))
@@ -502,7 +505,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
         if ordinal:
             ax.bar(range(counts.shape[0]), counts[name], width=.9,
                    bottom=bottom * i, tick_label=counts.index, linewidth=2,
-                   edgecolor='k')
+                   edgecolor='k', label=name)
             xmin, xmax = 0 - .5, counts.shape[0] - .5
         else:
             ax.bar(bin_edges[:-1], counts[name], bottom=bottom * i, label=name,

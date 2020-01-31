@@ -76,7 +76,8 @@ def test_detect_constant():
 
 def test_target_col_not_dropped():
     X = pd.DataFrame(np.zeros((100, 1)))
-    X[-4:] = 1
+    # work-around for pandas 1.0
+    X.iloc[-4:] = 1
     types = detect_types(X)
     assert types.useless[0]
     types = detect_types(X, target_col=0)

@@ -221,3 +221,14 @@ def test_plot_classification_continuous():
     # known result
     assert axes[0].get_xlabel() == "LDA 0"
     assert axes[0].get_ylabel() == 'LDA 1'
+
+
+def test_plot_string_target():
+    X, y = make_blobs(n_samples=30)
+    data = pd.DataFrame(X)
+    y = pd.Series(y)
+    y[y == 0] = 'a'
+    y[y == 1] = 'b'
+    y[y == 2] = 'c'
+    data['target'] = y
+    plot(data, target_cols='target')

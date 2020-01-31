@@ -53,15 +53,35 @@ def _float_matching_fetch(X, col, return_safe_col=False):
     If not present in cache, stores function call results into cache.
     Uses dataframe object id and column name as cache key.
     """
-    X_id = id(X)
-    if (X_id, col) in _FLOAT_MATCHING_CACHE:
-        floats, X_col = _FLOAT_MATCHING_CACHE[(X_id, col)]
+    hash_key = f'{id(X)}-{col}'
+    cache_hit = False
+
+    if hash_key in _FLOAT_MATCHING_CACHE:
+        cache_hit = True
+        print(f'cache hit: {hash_key}')
+        floats_a, X_col_a = _FLOAT_MATCHING_CACHE[hash_key]
+        floats_b, X_col_b = _float_matching(X[col], return_safe_col=True)
+        if (floats_a.equals(floats_b) and X_col_a.equals(X_col_b)):
+            print('cache match')
+        else:
+            print('')
+            print('---- unequal cache payload and function response! ----')
+            print(f'*** floats_a: \n{floats_a}')
+            print(f'*** floats_b: \n{floats_b}')
+            print('')
+            print(f'*** X_col_a: \n{X_col_a}')
+            print(f'*** X_col_b: \n{X_col_b}')
+            print('')
     else:
+        print(f'cache miss: {hash_key}')
         floats, X_col = _float_matching(X[col], return_safe_col=True)
-        _FLOAT_MATCHING_CACHE[(X_id, col)] = floats, X_col
+        _FLOAT_MATCHING_CACHE[hash_key] = floats, X_col
 
     if return_safe_col:
-        return floats, X_col
+        if cache_hit:
+            return floats_a, X_col_a
+        else:
+            return floats, X_col
     else:
         return floats
 
@@ -77,6 +97,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         encoders = {}
         for col in X.columns:
             floats, X_col = _float_matching_fetch(X, col, return_safe_col=True)
+            # floats, X_col = _float_matching(X[col], return_safe_col=True)
             # FIXME sparse
             if (~floats).any():
                 encoders[col] = OneHotEncoder(sparse=False,
@@ -94,6 +115,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         result = []
         for col in self.columns_:
             floats, X_col = _float_matching_fetch(X, col, return_safe_col=True)
+            # floats, X_col = _float_matching(X[col], return_safe_col=True)
             nofloats = ~floats
             X_new_col = X_col.copy()
             X_new_col[nofloats] = np.NaN

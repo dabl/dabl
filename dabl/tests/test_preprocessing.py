@@ -97,6 +97,22 @@ def test_continuous_castable():
     assert types.continuous['a']
 
 
+def test_dirty_float_single_warning():
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+
+        rng = np.random.RandomState(0)
+        cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
+
+        dirty3 = pd.Series(cont_clean)
+        dirty3[::20] = [("missing", "but weird")] * 5
+
+        X = pd.DataFrame({'dirty3': dirty3})
+        clean(X)
+
+        assert len(w) == 1
+
+
 def test_detect_types():
     def random_str(length=7):
         return "".join([random.choice(string.ascii_letters)
@@ -239,22 +255,6 @@ def test_transform_dirty_float():
     assert res.a_column_missing.sum() == 9
     assert res.a_column_garbage.sum() == 1
     assert (dfc.get_feature_names() == res.columns).all()
-
-
-def test_dirty_float_single_warning():
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-
-        rng = np.random.RandomState(0)
-        cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
-
-        dirty3 = pd.Series(cont_clean)
-        dirty3[::20] = [("missing", "but weird")] * 5
-
-        X = pd.DataFrame({'dirty3': dirty3})
-        clean(X)
-
-        assert len(w) < 2
 
 
 @pytest.mark.parametrize(

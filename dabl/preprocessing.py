@@ -16,7 +16,7 @@ _FLOAT_MATCHING_CACHE = {}
 _MIXED_TYPE_WARNINGS = {}
 
 
-def _float_matching(X_col, return_safe_col=False, already_warned=False):
+def _float_matching(X_col, return_safe_col=False):
     is_floaty = X_col.str.match(_FLOAT_REGEX)
     # things that weren't strings
     not_strings = is_floaty.isna()
@@ -36,7 +36,7 @@ def _float_matching(X_col, return_safe_col=False, already_warned=False):
                 _MIXED_TYPE_WARNINGS[X_col.name] = True
             # make everything string
             rest = rest.astype(str)
-            rest_is_floaty = _float_matching(rest, already_warned=True)
+            rest_is_floaty = _float_matching(rest)
             is_floaty[not_strings] = rest_is_floaty
             if return_safe_col:
                 X_col = X_col.copy()

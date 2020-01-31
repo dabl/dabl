@@ -252,7 +252,7 @@ def test_dirty_float_single_warning():
         dirty3[::20] = [("missing", "but weird")] * 5
 
         X = pd.DataFrame({'dirty3': dirty3})
-        clean_X = clean(X)
+        clean(X)
 
         assert len(w) < 2
 

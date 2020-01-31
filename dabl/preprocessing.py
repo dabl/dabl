@@ -71,7 +71,6 @@ def _float_matching_fetch(X, col, return_safe_col=False):
         return floats
 
 
-
 class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
     # should this error if the inputs are not string?
     def fit(self, X, y=None):

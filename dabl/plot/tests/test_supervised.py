@@ -139,6 +139,11 @@ def test_plot_X_y():
     plot(X, y)
 
 
+def test_plot_regression_numpy():
+    X, y = make_regression()
+    plot(X, y)
+
+
 def test_plot_lda_binary():
     X, y = make_blobs(centers=2)
     X = pd.DataFrame(X)

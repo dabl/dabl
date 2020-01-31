@@ -150,3 +150,20 @@ def test_evaluate_score_ndim(X, y):
     sr = SimpleRegressor(random_state=0)
     print(f"Data ndim: X: {X.shape}, y: {y.shape}")
     sr.fit(X, y)
+
+
+def test_shuffle_cross_validation():
+    # somewhat nonlinear design with sorted target
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(100, 10))
+    w = rng.normal(size=(10,))
+    y = np.dot(X, w)
+    y = .1 * y ** 2 + 2 * y
+    # throws off linear model if we sort
+    sorting = np.argsort(y)
+    X = pd.DataFrame(X[sorting, :])
+    y = pd.Series(y[sorting])
+    sr = SimpleRegressor(shuffle=False).fit(X, y)
+    assert sr.log_[-2].r2 < 0.1
+    sr = SimpleRegressor().fit(X, y)
+    assert sr.log_[-2].r2 > .9

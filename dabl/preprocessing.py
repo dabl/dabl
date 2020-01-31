@@ -1,13 +1,15 @@
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.compose import make_column_transformer, ColumnTransformer
-from sklearn.utils.validation import check_is_fitted
-import pandas as pd
-import numpy as np
+from joblib import hash
 import warnings
 from warnings import warn
+
+import numpy as np
+import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.compose import make_column_transformer, ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.utils.validation import check_is_fitted
 
 _FLOAT_REGEX = r"^[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))$"
 _FLOAT_MATCHING_CACHE = {}
@@ -53,35 +55,16 @@ def _float_matching_fetch(X, col, return_safe_col=False):
     If not present in cache, stores function call results into cache.
     Uses dataframe object id and column name as cache key.
     """
-    hash_key = f'{id(X)}-{col}'
-    cache_hit = False
+    hash_key = f'{col}-{hash(X[col])}'
 
     if hash_key in _FLOAT_MATCHING_CACHE:
-        cache_hit = True
-        print(f'cache hit: {hash_key}')
-        floats_a, X_col_a = _FLOAT_MATCHING_CACHE[hash_key]
-        floats_b, X_col_b = _float_matching(X[col], return_safe_col=True)
-        if (floats_a.equals(floats_b) and X_col_a.equals(X_col_b)):
-            print('cache match')
-        else:
-            print('')
-            print('---- unequal cache payload and function response! ----')
-            print(f'*** floats_a: \n{floats_a}')
-            print(f'*** floats_b: \n{floats_b}')
-            print('')
-            print(f'*** X_col_a: \n{X_col_a}')
-            print(f'*** X_col_b: \n{X_col_b}')
-            print('')
+        floats, X_col = _FLOAT_MATCHING_CACHE[hash_key]
     else:
-        print(f'cache miss: {hash_key}')
         floats, X_col = _float_matching(X[col], return_safe_col=True)
         _FLOAT_MATCHING_CACHE[hash_key] = floats, X_col
 
     if return_safe_col:
-        if cache_hit:
-            return floats_a, X_col_a
-        else:
-            return floats, X_col
+        return floats, X_col
     else:
         return floats
 

@@ -520,6 +520,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
             or (y is not None) and (target_col is not None)):
         raise ValueError(
             "Need to specify exactly one of y and target_col.")
+    if not isinstance(X, pd.DataFrame):
+        X = pd.DataFrame(X)
     if isinstance(y, str):
         warnings.warn("The second positional argument of plot is a Series 'y'."
                       " If passing a column name, use a keyword.",

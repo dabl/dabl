@@ -6,7 +6,7 @@ beginners, and reduce boiler plate for common tasks.
 
 This library is in very active development, so it's not recommended for production use.
 
-Development at `github.com/amueller/dabl <https://github.com/amueller/dabl>`_.
+Development at `github.com/dabl/dabl <https://github.com/dabl/dabl>`_.
 
 Examples
 --------
@@ -20,7 +20,7 @@ A minimum example of using dabl for classification is:
     >>> sc = dabl.SimpleClassifier().fit(X_train, y_train)
     Running ...
     >>> print("Accuracy score", sc.score(X_test, y_test))
-    Accuracy score 0.98
+    Accuracy score 0.9...
 
 
 This will return increasingly better results immediately and should conclude
@@ -60,7 +60,7 @@ Here are some examples of visualizations produced simply by calling ``plot(X, y)
  
     Often Linear Discriminant Analysis can find interesting linear projections
     of the data.  Here on the mfeat-factors dataset most of the 10 classes can
-    be well spearated using a 2d projection.
+    be well separated using a 2d projection.
   
 .. toctree::
    :maxdepth: 2

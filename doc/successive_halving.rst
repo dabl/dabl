@@ -112,7 +112,7 @@ Aggressive elimination of candidates
 Ideally, we want the last iteration to evaluate ``ratio`` candidates. We then
 just have to pick the best one. When the number budget is small with respect to
 the number of candidates, the last iteration may have to evaluate more than
-``ratio`` candidates.::
+``ratio`` candidates::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC

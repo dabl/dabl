@@ -74,6 +74,16 @@ def test_detect_constant():
     assert res.useless.sum() == 4
 
 
+def test_target_col_not_dropped():
+    X = pd.DataFrame(np.zeros((100, 1)))
+    # work-around for pandas 1.0
+    X.iloc[-4:] = 1
+    types = detect_types(X)
+    assert types.useless[0]
+    types = detect_types(X, target_col=0)
+    assert types.categorical[0]
+
+
 def test_convert_cat_to_string():
     X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3, 'a']})
     X_clean = clean(X)

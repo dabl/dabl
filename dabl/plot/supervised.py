@@ -323,8 +323,8 @@ def _plot_top_pairs(features, target, scatter_alpha='auto',
         discrete_scatter(features[:, x], features[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
                          s=scatter_size)
-        ax.set_xlabel(feature_names[x])
-        ax.set_ylabel(feature_names[y])
+        ax.set_xlabel(_shortname(feature_names[x]))
+        ax.set_ylabel(_shortname(feature_names[y]))
         ax.set_title("{:.3f}".format(score))
     return fig, axes
 
@@ -520,6 +520,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
             or (y is not None) and (target_col is not None)):
         raise ValueError(
             "Need to specify exactly one of y and target_col.")
+    if not isinstance(X, pd.DataFrame):
+        X = pd.DataFrame(X)
     if isinstance(y, str):
         warnings.warn("The second positional argument of plot is a Series 'y'."
                       " If passing a column name, use a keyword.",
@@ -534,7 +536,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         target_col = y.name
         X = pd.concat([X, y], axis=1)
 
-    X, types = clean(X, type_hints=type_hints, return_types=True)
+    X, types = clean(X, type_hints=type_hints, return_types=True,
+                     target_col=target_col)
     types = _check_X_target_col(X, target_col, types=types)
     # low_cardinality integers plot better as categorical
     # FIXME the logic should be down in the plotting functions maybe
@@ -557,7 +560,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         # make sure we include the target column in X
         # even though it's not categorical
         plt.hist(X[target_col], bins='auto')
-        plt.xlabel(target_col)
+        plt.xlabel(_shortname(target_col))
         plt.ylabel("frequency")
         plt.title("Target distribution")
         scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])

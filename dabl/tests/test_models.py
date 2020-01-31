@@ -62,6 +62,10 @@ def test_regression_boston():
     er = SimpleRegressor()
     er.fit(data, target_col='target')
 
+    # test nupmy array
+    er = SimpleRegressor()
+    er.fit(boston.data, boston.target)
+
 
 @pytest.mark.parametrize('Model', [AnyClassifier, SimpleClassifier])
 def test_classifier_digits(monkeypatch, Model):
@@ -150,3 +154,32 @@ def test_evaluate_score_ndim(X, y):
     sr = SimpleRegressor(random_state=0)
     print(f"Data ndim: X: {X.shape}, y: {y.shape}")
     sr.fit(X, y)
+
+
+def test_shuffle_cross_validation():
+    # somewhat nonlinear design with sorted target
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(100, 10))
+    w = rng.normal(size=(10,))
+    y = np.dot(X, w)
+    y = .1 * y ** 2 + 2 * y
+    # throws off linear model if we sort
+    sorting = np.argsort(y)
+    X = pd.DataFrame(X[sorting, :])
+    y = pd.Series(y[sorting])
+    sr = SimpleRegressor(shuffle=False).fit(X, y)
+    assert sr.log_[-2].r2 < 0.1
+    sr = SimpleRegressor().fit(X, y)
+    assert sr.log_[-2].r2 > .9
+
+
+def test_classification_of_string_targets():
+    X = np.array([1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
+    y = np.array(['a', 'b', 'a', 'b', 'a', 'b', 'a', 'b', 'a', 'b'])
+    obj = SimpleClassifier()
+
+    fitted = obj.fit(X, y)
+    pred = fitted.predict(np.array([1, 2]).reshape(-1, 1))
+
+    np.testing.assert_array_equal(obj.classes_, np.array(['a', 'b']))
+    np.testing.assert_array_equal(pred, np.array(['a', 'b']))

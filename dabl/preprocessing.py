@@ -13,6 +13,7 @@ from sklearn.utils.validation import check_is_fitted
 
 _FLOAT_REGEX = r"^[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))$"
 _FLOAT_MATCHING_CACHE = {}
+_MIXED_TYPE_WARNINGS = {}
 
 
 def _float_matching(X_col, return_safe_col=False, already_warned=False):
@@ -30,8 +31,9 @@ def _float_matching(X_col, return_safe_col=False, already_warned=False):
         except ValueError:
             pass
         if not all_castable:
-            if not already_warned:
+            if X_col.name not in _MIXED_TYPE_WARNINGS:
                 warn(f'Mixed types in column {X_col.name}')
+                _MIXED_TYPE_WARNINGS[X_col.name] = True
             # make everything string
             rest = rest.astype(str)
             rest_is_floaty = _float_matching(rest, already_warned=True)
@@ -79,7 +81,6 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         encoders = {}
         for col in X.columns:
             floats, X_col = _float_matching_fetch(X, col, return_safe_col=True)
-            # floats, X_col = _float_matching(X[col], return_safe_col=True)
             # FIXME sparse
             if (~floats).any():
                 encoders[col] = OneHotEncoder(sparse=False,
@@ -97,7 +98,6 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
         result = []
         for col in self.columns_:
             floats, X_col = _float_matching_fetch(X, col, return_safe_col=True)
-            # floats, X_col = _float_matching(X[col], return_safe_col=True)
             nofloats = ~floats
             X_new_col = X_col.copy()
             X_new_col[nofloats] = np.NaN

@@ -30,16 +30,16 @@ def find_pretty_grid(n_plots, max_cols=5):
 
     Parameters
     ----------
-    n_plots : int
+    n_plots: int
         Number of plots to arrange.
-    max_cols : int, default=5
+    max_cols: int, default=5
         Maximum number of columns.
 
     Returns
     -------
-    n_rows : int
+    n_rows: int
         Number of rows in grid.
-    n_cols : int
+    n_cols: int
         Number of columns in grid.
 
     Examples
@@ -80,13 +80,13 @@ def plot_coefficients(coefficients, feature_names, n_top_features=10,
 
     Parameters
     ----------
-    coefficients : nd-array, shape (n_features,)
+    coefficients: nd-array, shape (n_features,)
         Model coefficients.
 
-    feature_names : list or nd-array of strings, shape (n_features,)
+    feature_names: list or nd-array of strings, shape (n_features,)
         Feature names for labeling the coefficients.
 
-    n_top_features : int, default=10
+    n_top_features: int, default=10
         How many features to show. The function will show the largest (most
         positive) and smallest (most negative)  n_top_features coefficients,
         for a total of 2 * n_top_features coefficients.
@@ -170,13 +170,13 @@ def _shortname(some_string, maxlen=20):
 
     Parameters
     ----------
-    some_string : string
+    some_string: string
         Input string to shorten
-    maxlen : int, default=20
+    maxlen: int, default=20
 
     Returns
     -------
-    return_string : string
+    return_string: string
         Output string of size ``min(len(some_string), maxlen)``.
     """
     some_string = str(some_string)
@@ -194,15 +194,15 @@ def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None):
 
     Parameters
     ----------
-    data : pandas data frame
+    data: pandas data frame
         Data to tabulate.
-    rows : column specifier
+    rows: column specifier
         Column in data to tabulate across rows.
-    cols : column specifier
+    cols: column specifier
         Column in data to use to subpartition rows.
-    vary_lightness : bool, default=False
+    vary_lightness: bool, default=False
         Whether to vary lightness across categories.
-    ax : matplotlib axes or None
+    ax: matplotlib axes or None
         Axes to plot into.
     """
 
@@ -346,11 +346,11 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
 
     Parameters
     ----------
-    ax : matplotlib axes
+    ax: matplotlib axes
         Axes on which to shorten labels.
-    label_length : int, default=20
+    label_length: int, default=20
         Length of xlabel and ylabel
-    ticklabel_length : int, default=10
+    ticklabel_length: int, default=10
         Length of each label in xticklabels and yticklabels
     """
     ax.set_xticklabels(
@@ -401,27 +401,27 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
 
     Parameters
     ----------
-    x : array-like
+    x: array-like
         x coordinates to scatter
-    y : array-like
+    y: array-like
         y coordinates to scatter
-    c : array-like
+    c: array-like
         Grouping of samples (similar to hue in seaborn)
-    unique_c : array-like, default='None'
+    unique_c: array-like, default='None'
         Unique values of c considered in scatter. If not
         provided unique elements of c are determined.
-    legend : bool, or "first", default="first"
+    legend: bool, or "first", default="first"
         Whether to create a legend. "first" mean only the
         first one in a given gridspec.
-    clip_outliers : bool, default='True'
+    clip_outliers: bool, default='True'
         Whether to clip outliers in x and y. The limits are
         determined based on 0.01 and 0.99 quantiles of x and
         y ignoring nan values.
-    alpha : float, default='auto'
+    alpha: float, default='auto'
         Alpha values for scatter plots. 'auto' is dirty hacks.
-    s : float, default='auto'.
+    s: float, default='auto'.
         Marker size for scatter plots. 'auto' is dirty hacks.
-    ax : matplotlib axes, default=None
+    ax: matplotlib axes, default=None
         Axes to plot into
     kwargs :
         Passed through to plt.scatter
@@ -476,20 +476,20 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
 
     Parameters
     ----------
-    data : pandas DataFrame
+    data: pandas DataFrame
         Input data to plot
-    column : column specifier
+    column: column specifier
         Column in the data to compute histograms over (must be continuous).
-    target : column specifier
+    target: column specifier
         Target column in data, must be categorical.
-    bins : string, int or array-like
+    bins: string, int or array-like
         Number of bins, 'auto' or bin edges. Passed to np.histogram_bin_edges.
         We always show at least 5 bins for now.
-    ax : matplotlib axes
+    ax: matplotlib axes
         Axes to plot into
-    legend : boolean, default=False
+    legend: boolean, default=False
         Whether to create a legend.
-    scale_separately : boolean, default=True
+    scale_separately: boolean, default=True
         Whether to scale each class separately.
 
     Examples
@@ -552,15 +552,15 @@ def pairplot(data, target_col, columns=None, scatter_alpha='auto',
 
     Parameters
     ----------
-    data : pandas dataframe
+    data: pandas dataframe
         Input data
-    target_col : column specifier
+    target_col: column specifier
         Target column in data.
-    columns : column specifiers, default=None.
+    columns: column specifiers, default=None.
         Columns in data to include. None means all.
-    scatter_alpha : float, default='auto'
+    scatter_alpha: float, default='auto'
         Alpha values for scatter plots. 'auto' is dirty hacks.
-    scatter_size : float, default='auto'.
+    scatter_size: float, default='auto'.
         Marker size for scatter plots. 'auto' is dirty hacks.
     """
     if columns is None:

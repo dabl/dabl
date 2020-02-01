@@ -35,9 +35,13 @@ def _validate_Xyt(X, y, target_col, do_clean=True):
             "Need to specify either y or target_col.")
     if do_clean:
         X = clean(X)
+    elif not isinstance(X, pd.DataFrame):
+        X = pd.DataFrame(X)
     if target_col is not None:
         y = X[target_col]
         X = X.drop(target_col, axis=1)
+    elif not isinstance(y, (pd.Series, pd.DataFrame)):
+        y = pd.Series(y)
     return X, y
 
 

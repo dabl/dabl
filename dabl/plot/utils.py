@@ -408,7 +408,7 @@ def joint_plot(df, x, y, clip_outliers=False, **kwargs):
     --------
     >>> from dabl.datasets import load_ames
     >>> data = load_ames()
-    >>> discrete_scatter(
+    >>> joint_plot(
     ...    df = data,
     ...    x="Year Built",
     ...    y="SalePrice",

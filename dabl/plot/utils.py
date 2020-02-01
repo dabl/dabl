@@ -329,11 +329,11 @@ def _check_X_target_col(X, target_col, types=None, type_hints=None, task=None):
     if task == "classification" and not types.loc[target_col, 'categorical']:
         raise ValueError("Type for target column {} detected as {},"
                          " need categorical for classification.".format(
-            target_col, types.T.idxmax()[target_col]))
+                                target_col, types.T.idxmax()[target_col]))
     if task == "regression" and (not types.loc[target_col, 'continuous']):
         raise ValueError("Type for target column {} detected as {},"
                          " need continuous for regression.".format(
-            target_col, types.T.idxmax()[target_col]))
+                                target_col, types.T.idxmax()[target_col]))
     return types
 
 

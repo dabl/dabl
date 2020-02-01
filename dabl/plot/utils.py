@@ -406,6 +406,7 @@ def joint_plot(df, x, y, clip_outliers=False, **kwargs):
         Passed through to sns.jointplot
     Examples
     --------
+    >>> from dabl.datasets import load_ames
     >>> data = load_ames()
     >>> discrete_scatter(
     ...    df = data,

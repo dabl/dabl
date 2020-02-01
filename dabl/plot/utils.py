@@ -2,13 +2,12 @@ from warnings import warn
 from functools import reduce
 import itertools
 
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from seaborn.utils import despine
-
+import seaborn as sns
 
 # from sklearn.dummy import DummyClassifier
 # from sklearn.metrics import recall_score
@@ -16,7 +15,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_curve
 
 from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit
-
 
 from ..preprocessing import detect_types
 
@@ -331,11 +329,11 @@ def _check_X_target_col(X, target_col, types=None, type_hints=None, task=None):
     if task == "classification" and not types.loc[target_col, 'categorical']:
         raise ValueError("Type for target column {} detected as {},"
                          " need categorical for classification.".format(
-                             target_col, types.T.idxmax()[target_col]))
+            target_col, types.T.idxmax()[target_col]))
     if task == "regression" and (not types.loc[target_col, 'continuous']):
         raise ValueError("Type for target column {} detected as {},"
                          " need continuous for regression.".format(
-                             target_col, types.T.idxmax()[target_col]))
+            target_col, types.T.idxmax()[target_col]))
     return types
 
 
@@ -389,6 +387,38 @@ def _find_scatter_plots_classification(X, target, how_many=3,
     scores = pd.DataFrame(scores, columns=['feature0', 'feature1', 'score'])
     top = scores.sort_values(by='score').iloc[-how_many:][::-1]
     return top
+
+
+def joint_plot(df, x, y, clip_outliers=True, **kwargs):
+    """
+    Creates a joint plot for the x and y columns of the Dataframe df
+
+    :param df: Dataframe of values
+    :param x: str
+        title of the column of df used for x values
+    :param y: str
+        title of the column of df used for y values
+    :param clip_outliers: bool, default='True'
+        Whether to clip outliers in x and y. The limits are
+        determined based on 0.01 and 0.99 quantiles of x and
+        y ignoring nan values.
+    :param kwargs:
+        Passed through to sns.jointplot
+    Examples
+    --------
+    >>> data = load_ames()
+    >>> discrete_scatter(
+    ...    df = data,
+    ...    x="Year Built",
+    ...    y="SalePrice",
+    ...    clip_outliers=True
+    ... )
+    """
+    # create dataframe from the two identified columns
+    df = df[[x, y]]
+    if clip_outliers:
+        df = _two_columns_drop_outliers(df)
+    sns.jointplot(x, y, df, **kwargs)
 
 
 def discrete_scatter(x, y, c, unique_c=None, legend='first',
@@ -624,6 +654,7 @@ def _clean_outliers(data):
         # the two is a complete hack
         inner_range = (high - low) / 2
         return series.between(low - inner_range, high + inner_range)
+
     mask = data.apply(_find_outliers_series)
     mask = mask.apply(lambda x: reduce(np.logical_and, x), axis=1).fillna(True)
     dropped = len(mask) - mask.sum()
@@ -631,6 +662,22 @@ def _clean_outliers(data):
         warn("Dropped {} outliers.".format(int(dropped)), UserWarning)
         return mask
     return None
+
+
+def _two_columns_drop_outliers(df):
+    """
+    Function to remove the outlier values from a dataframe containing two continuously valued numerical columns
+    :param df: two_column dataframe
+    :return: cleaned dataframe df
+    """
+    # get outlier indeces to remove
+    x_inliers = _find_inliers(df.iloc[:, 0])
+    y_inliers = _find_inliers(df.iloc[:, 1])
+    temp = x_inliers & y_inliers
+    temp = temp.loc[temp == False].index.values
+    # drop the values and reset the indeces
+    df = df.drop(temp).reset_index(drop=True)
+    return df
 
 
 def _get_scatter_alpha(scatter_alpha, x):

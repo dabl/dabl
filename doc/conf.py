@@ -175,7 +175,6 @@ def setup(app):
     app.add_stylesheet("basic.css")
 
 
-
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve('dabl',
                                          'https://github.com/dabl/'

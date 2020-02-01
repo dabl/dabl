@@ -14,9 +14,11 @@
 
 import sys
 import os
+import dabl
 
 import sphinx_rtd_theme
-import dabl
+sys.path.insert(0, os.path.abspath('sphinxext'))
+from github_link import make_linkcode_resolve # noqa
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -36,7 +38,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode',
+    'sphinx.ext.linkcode',
     'numpydoc',
     'sphinx_gallery.gen_gallery',
     'matplotlib.sphinxext.plot_directive'
@@ -313,3 +315,10 @@ sphinx_gallery_conf = {
 def setup(app):
     # a copy button to copy snippet of code from the documentation
     app.add_javascript('js/copybutton.js')
+
+
+# The following is used by sphinx.ext.linkcode to provide links to github
+linkcode_resolve = make_linkcode_resolve('dabl',
+                                         'https://github.com/dabl/'
+                                         'dabl/blob/{revision}/'
+                                         '{package}/{path}#L{lineno}')

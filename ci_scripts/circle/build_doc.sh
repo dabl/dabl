@@ -114,12 +114,11 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
   pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.* pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib sphinx_rtd_theme seaborn
+  joblib sphinx_rtd_theme seaborn numpydoc
 
 source activate testenv
 pip install sphinx-gallery
 pip install scikit-learn
-pip install numpydoc==0.8
 
 # Build and install in dev mode
 python setup.py develop

@@ -14,7 +14,7 @@
 
 import sys
 import os
-import dabl                                  
+import dabl
 
 import sphinx_rtd_theme
 sys.path.insert(0, os.path.abspath('sphinxext'))

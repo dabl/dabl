@@ -1,10 +1,11 @@
 import pytest
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.datasets import load_iris
 
 from dabl.utils import data_df_from_bunch
-from dabl.plot.utils import find_pretty_grid, plot_coefficients, pairplot
+from dabl.plot.utils import find_pretty_grid, plot_coefficients, pairplot, joint_plot
 
 
 def test_find_pretty_grid():
@@ -39,3 +40,8 @@ def test_pairplot_iris():
     # so we can have sharex / sharey
     assert axes.shape == (4, 4)
     assert len(plt.gcf().get_axes()) == 4 * 4 + 4
+
+
+def test_joint_plot():
+    tips = sns.load_dataset("tips")
+    joint_plot(tips, 'total_bill', 'tip', clip_outliers=True)

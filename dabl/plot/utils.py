@@ -389,7 +389,7 @@ def _find_scatter_plots_classification(X, target, how_many=3,
     return top
 
 
-def joint_plot(df, x, y, clip_outliers=True, **kwargs):
+def joint_plot(df, x, y, clip_outliers=False, **kwargs):
     """
     Creates a joint plot for the x and y columns of the Dataframe df
 

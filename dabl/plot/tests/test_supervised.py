@@ -2,12 +2,12 @@ import pytest
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
 import itertools
 
 from sklearn.datasets import (make_regression, make_blobs, load_digits,
                               fetch_openml)
 from sklearn.preprocessing import KBinsDiscretizer
+
 from dabl.preprocessing import clean, detect_types, guess_ordinal
 from dabl.plot.supervised import (
     plot, plot_classification_categorical,
@@ -237,3 +237,4 @@ def test_plot_string_target():
     y[y == 2] = 'c'
     data['target'] = y
     plot(data, target_col='target')
+

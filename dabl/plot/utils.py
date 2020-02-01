@@ -674,7 +674,7 @@ def _two_columns_drop_outliers(df):
     x_inliers = _find_inliers(df.iloc[:, 0])
     y_inliers = _find_inliers(df.iloc[:, 1])
     temp = x_inliers & y_inliers
-    temp = temp.loc[temp == False].index.values
+    temp = temp.loc[temp.isin([False])].index.values
     # drop the values and reset the indeces
     df = df.drop(temp).reset_index(drop=True)
     return df

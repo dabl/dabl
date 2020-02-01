@@ -237,4 +237,3 @@ def test_plot_string_target():
     y[y == 2] = 'c'
     data['target'] = y
     plot(data, target_col='target')
-

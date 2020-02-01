@@ -666,7 +666,8 @@ def _clean_outliers(data):
 
 def _two_columns_drop_outliers(df):
     """
-    Function to remove the outlier values from a dataframe containing two continuously valued numerical columns
+    Function to remove the outlier values from a dataframe
+    containing two continuously valued numerical columns
     :param df: two_column dataframe
     :return: cleaned dataframe df
     """

@@ -5,7 +5,9 @@ import seaborn as sns
 from sklearn.datasets import load_iris
 
 from dabl.utils import data_df_from_bunch
-from dabl.plot.utils import find_pretty_grid, plot_coefficients, pairplot, joint_plot
+from dabl.plot.utils import (find_pretty_grid,
+                             plot_coefficients,
+                             pairplot, joint_plot)
 
 
 def test_find_pretty_grid():

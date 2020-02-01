@@ -407,17 +407,39 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         y coordinates to scatter
     c : array-like
         Grouping of samples (similar to hue in seaborn)
+    unique_c : array-like, default='None'
+        Unique values of c considered in scatter. If not
+        provided unique elements of c are determined.
     legend : bool, or "first", default="first"
         Whether to create a legend. "first" mean only the
         first one in a given gridspec.
-    scatter_alpha : float, default='auto'
+    clip_outliers : bool, default='True'
+        Whether to clip outliers in x and y. The limits are
+        determined based on 0.01 and 0.99 quantiles of x and
+        y ignoring nan values.
+    alpha : float, default='auto'
         Alpha values for scatter plots. 'auto' is dirty hacks.
-    scatter_size : float, default='auto'.
+    s : float, default='auto'.
         Marker size for scatter plots. 'auto' is dirty hacks.
     ax : matplotlib axes, default=None
         Axes to plot into
     kwargs :
         Passed through to plt.scatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from dabl.datasets import load_ames
+    >>> data = load_ames()
+    >>> fig = plt.figure()
+    >>> discrete_scatter(
+    ...    x=data["Year Built"],
+    ...    y=data["SalePrice"],
+    ...    c=data["Overall Qual"],
+    ...    unique_c=[2, 4, 6, 8, 10],
+    ...    legend=True,
+    ...    alpha=0.3
+    ... )
     """
     alpha = _get_scatter_alpha(alpha, x)
     s = _get_scatter_size(s, x)

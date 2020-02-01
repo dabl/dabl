@@ -139,6 +139,11 @@ def test_plot_X_y():
     plot(X, y)
 
 
+def test_plot_regression_numpy():
+    X, y = make_regression()
+    plot(X, y)
+
+
 def test_plot_lda_binary():
     X, y = make_blobs(centers=2)
     X = pd.DataFrame(X)
@@ -221,3 +226,14 @@ def test_plot_classification_continuous():
     # known result
     assert axes[0].get_xlabel() == "LDA 0"
     assert axes[0].get_ylabel() == 'LDA 1'
+
+
+def test_plot_string_target():
+    X, y = make_blobs(n_samples=30)
+    data = pd.DataFrame(X)
+    y = pd.Series(y)
+    y[y == 0] = 'a'
+    y[y == 1] = 'b'
+    y[y == 2] = 'c'
+    data['target'] = y
+    plot(data, target_col='target')

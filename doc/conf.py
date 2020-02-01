@@ -14,11 +14,11 @@
 
 import sys
 import os
+import dabl                                  
 
 import sphinx_rtd_theme
 sys.path.insert(0, os.path.abspath('sphinxext'))
-from github_link import make_linkcode_resolve
-import dabl
+from github_link import make_linkcode_resolve # noqa
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

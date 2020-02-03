@@ -62,6 +62,10 @@ def test_regression_boston():
     er = SimpleRegressor()
     er.fit(data, target_col='target')
 
+    # test nupmy array
+    er = SimpleRegressor()
+    er.fit(boston.data, boston.target)
+
 
 @pytest.mark.parametrize('Model', [AnyClassifier, SimpleClassifier])
 def test_classifier_digits(monkeypatch, Model):

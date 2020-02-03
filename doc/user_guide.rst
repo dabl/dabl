@@ -47,6 +47,7 @@ Data cleaning
 >>> import dabl
 >>> import pandas as pd
 >>> data = pd.read_csv(dabl.datasets.data_path("adult.csv.gz"))
+
 .. include:: ./data_cleaning.rst
 
 

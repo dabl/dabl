@@ -34,7 +34,7 @@ it tries to do something sensible, and then provides tools for the user to
 inspect and evaluate the results to judge them.
 
 auto-sklearn is completely automatic and black-box.  It searches a vast space
-of models and constructs complex ensemles of high accuracy, taking a substantial
+of models and constructs complex ensembles of high accuracy, taking a substantial
 amount of computation and time in the process.  The goal of auto-sklearn is to
 build the best model possible given the data.  dabl, conversely, tries to enable
 the user to quickly iterate and get a grasp on the properties of the data at hand
@@ -42,24 +42,9 @@ and the fitted models.
 
 dabl is meant to support you in the following tasks, in order:
 
-Data cleaning
--------------
->>> import dabl
->>> import pandas as pd
->>> data = pd.read_csv(dabl.datasets.data_path("adult.csv.gz"))
->>> data_clean = dabl.clean(data)[::10]
 
-The first step in any data analysis is data cleaning. dabl tries to detect the
-types of your data and apply appropriate conversions.  It also tries to detect
-potential data quality issues.
-The field of data cleaning is impossibly broad, and dabl's approaches are by no
-means sophisticated.  The goal of dabl is to get the data "clean enough" to
-create useful visualizations and models, and to allow users to perform
-custom cleaning operations themselves.
-In particular if the detection of semantic types (continuous, categorical,
-ordinal, text, etc) fails, the user can provide ``type_hints``:
+.. include:: ./data_cleaning.rst
 
->>> data_clean = dabl.clean(data, type_hints={"capital-gain": "continuous"})
 
 Exploratory Data analysis
 -------------------------
@@ -189,7 +174,7 @@ Future Goals and Roadmap
 -------------------------
 dabl aims to provide easy-to-use, turn-key solutions for supervised machine
 learning that strongly encourage iterative and interactive model building.
-Key ingedients to achieve this are:
+Key ingredients to achieve this are:
 
 - Ready-made visualizations
 - Model diagnostics

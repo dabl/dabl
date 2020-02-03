@@ -537,10 +537,12 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         # check for missing values
         # scale etc
         steps_categorical = []
+        categorical_cols = X.columns[types.categorical]
+        X[categorical_cols] = X[categorical_cols].replace(to_replace='',
+                                                          value=np.NaN)
         if (self.force_imputation
                 or X.loc[:, types.categorical].isna().any(axis=None)):
-            steps_categorical.append(
-                SimpleImputer(strategy='most_frequent', add_indicator=True))
+            steps_categorical.append(SimpleImputer(strategy='most_frequent'))
         steps_categorical.append(
             OneHotEncoder(categories='auto', handle_unknown='ignore',
                           sparse=False))
@@ -578,7 +580,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             transformer_cols.append(('dirty_float',
                                      pipe_dirty_float, types['dirty_float']))
 
-        if not len(transformer_cols):
+        if not transformer_cols:
             raise ValueError("No feature columns found")
         self.ct_ = ColumnTransformer(transformer_cols, sparse_threshold=.1)
 

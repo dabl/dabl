@@ -267,9 +267,8 @@ def test_type_hints(type_hints):
 
 def test_simple_preprocessor():
     sp = EasyPreprocessor()
-    sp.fit(X_cat)
-    trans = sp.transform(X_cat)
-    assert trans.shape == (3, 7)  # FIXME should be 6?
+    trans = sp.fit_transform(X_cat)
+    assert trans.shape == (3, 6)
 
     iris = load_iris()
     sp = EasyPreprocessor()

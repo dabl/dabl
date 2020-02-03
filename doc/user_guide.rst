@@ -48,6 +48,7 @@ dabl is meant to support you in the following tasks, in order:
 
 Exploratory Data analysis
 -------------------------
+>>> import dabl
 >>> dabl.plot(data, target_col="income")
 Target looks like classification
 Linear Discriminant Analysis training set score: ...

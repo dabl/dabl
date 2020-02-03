@@ -42,13 +42,16 @@ and the fitted models.
 
 dabl is meant to support you in the following tasks, in order:
 
-
+Data cleaning
+-------------
+>>> import dabl
+>>> import pandas as pd
+>>> data = pd.read_csv(dabl.datasets.data_path("adult.csv.gz"))
 .. include:: ./data_cleaning.rst
 
 
 Exploratory Data analysis
 -------------------------
->>> import dabl
 >>> dabl.plot(data, target_col="income")
 Target looks like classification
 Linear Discriminant Analysis training set score: ...

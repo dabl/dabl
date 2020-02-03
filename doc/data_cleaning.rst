@@ -1,10 +1,5 @@
 .. _data_cleaning_user_guide:
 
-Data cleaning
--------------
->>> import dabl
->>> import pandas as pd
->>> data = pd.read_csv(dabl.datasets.data_path("adult.csv.gz"))
 >>> data_clean = dabl.clean(data)[::10]
 
 The first step in any data analysis is data cleaning. dabl tries to detect the

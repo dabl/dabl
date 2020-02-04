@@ -204,6 +204,12 @@ def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None):
         Whether to vary lightness across categories.
     ax : matplotlib axes or None
         Axes to plot into.
+
+    Examples
+    --------
+    >>> from dabl.datasets import load_titanic
+    >>> data = load_titanic()
+    >>> mosaic_plot(data, 'sex', 'survived')
     """
 
     cont = pd.crosstab(data[cols], data[rows])

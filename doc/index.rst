@@ -75,6 +75,7 @@ Here are some examples of visualizations produced simply by calling ``plot(X, y)
    :caption: Documentation
 
    user_guide
+   concepts_term
    api
 
 .. toctree::

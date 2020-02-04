@@ -37,15 +37,15 @@ def plot_regression_continuous(X, target_col, types=None,
     Parameters
     ----------
     X : dataframe
-        Input data including features and target
+        Input data including features and target.
     target_col : str or int
-        Identifier of the target column in X
-    types : dataframe of types, optional.
+        Identifier of the target column in X.
+    types : dataframe of types, optional
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
-    scatter_alpha : float, default='auto'.
+    scatter_alpha : float, default='auto'
         Alpha values for scatter plots. 'auto' is dirty hacks.
-    scatter_size : float, default='auto'.
+    scatter_size : float, default='auto'
         Marker size for scatter plots. 'auto' is dirty hacks.
     drop_outliers : bool, default=True
         Whether to drop outliers when plotting.
@@ -102,10 +102,10 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
     Parameters
     ----------
     X : dataframe
-        Input data including features and target
+        Input data including features and target.
     target_col : str or int
-        Identifier of the target column in X
-    types : dataframe of types, optional.
+        Identifier of the target column in X.
+    types : dataframe of types, optional
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
     """
@@ -169,15 +169,15 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     Parameters
     ----------
     X : dataframe
-        Input data including features and target
+        Input data including features and target.
     target_col : str or int
-        Identifier of the target column in X
+        Identifier of the target column in X.
     types : dataframe of types, optional.
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
-    scatter_alpha : float, default='auto'.
+    scatter_alpha : float, default='auto'
         Alpha values for scatter plots. 'auto' is dirty hacks.
-    scatter_size : float, default='auto'.
+    scatter_size : float, default='auto'
         Marker size for scatter plots. 'auto' is dirty hacks.
     univariate_plot : string, default="histogram"
         Supported: 'histogram' and 'kde'.

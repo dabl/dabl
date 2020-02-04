@@ -402,11 +402,11 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
     Parameters
     ----------
     x : array-like
-        x coordinates to scatter
+        x coordinates to scatter.
     y : array-like
-        y coordinates to scatter
+        y coordinates to scatter.
     c : array-like
-        Grouping of samples (similar to hue in seaborn)
+        Grouping of samples (similar to hue in seaborn).
     unique_c : array-like, default='None'
         Unique values of c considered in scatter. If not
         provided unique elements of c are determined.
@@ -422,9 +422,9 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
     s : float, default='auto'.
         Marker size for scatter plots. 'auto' is dirty hacks.
     ax : matplotlib axes, default=None
-        Axes to plot into
+        Axes to plot into.
     kwargs :
-        Passed through to plt.scatter
+        Passed through to plt.scatter.
 
     Examples
     --------
@@ -477,7 +477,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
     Parameters
     ----------
     data : pandas DataFrame
-        Input data to plot
+        Input data to plot.
     column : column specifier
         Column in the data to compute histograms over (must be continuous).
     target : column specifier
@@ -486,7 +486,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
         Number of bins, 'auto' or bin edges. Passed to np.histogram_bin_edges.
         We always show at least 5 bins for now.
     ax : matplotlib axes
-        Axes to plot into
+        Axes to plot into.
     legend : boolean, default=False
         Whether to create a legend.
     scale_separately : boolean, default=True

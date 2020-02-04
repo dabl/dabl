@@ -185,7 +185,7 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
         Random state or seed.
 
     verbose : integer, default=1
-        Verbosity (higher is more output)
+        Verbosity (higher is more output).
 
     type_hints : dict or None
             If dict, provide type information for columns.
@@ -270,7 +270,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
         Random state or seed.
 
     verbose : integer, default=1
-        Verbosity (higher is more output)
+        Verbosity (higher is more output).
 
     type_hints : dict or None
             If dict, provide type information for columns.

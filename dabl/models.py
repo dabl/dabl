@@ -97,7 +97,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
     def _fit(self, X, y=None, target_col=None):
         """Fit estimator.
 
-        Requiers to either specify the target as separate 1d array or Series y
+        Requires to either specify the target as separate 1d array or Series y
         (in scikit-learn fashion) or as column of the dataframe X specified by
         target_col.
         If y is specified, X is assumed not to contain the target.
@@ -400,7 +400,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
     def fit(self, X, y=None, *, target_col=None):
         """Fit estimator.
 
-        Requiers to either specify the target as separate 1d array or Series y
+        Requires to either specify the target as separate 1d array or Series y
         (in scikit-learn fashion) or as column of the dataframe X specified by
         target_col.
         If y is specified, X is assumed not to contain the target.

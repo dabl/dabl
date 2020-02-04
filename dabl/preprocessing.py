@@ -488,7 +488,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         Whether to scale continuous data.
 
     force_imputation : bool, default=True
-        Whether to create imputers even if not training data is missing.
+        Whether to create imputers even if no training data is missing.
 
     verbose : int, default=0
         Control output verbosity.

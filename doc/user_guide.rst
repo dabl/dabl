@@ -189,7 +189,7 @@ Future Goals and Roadmap
 -------------------------
 dabl aims to provide easy-to-use, turn-key solutions for supervised machine
 learning that strongly encourage iterative and interactive model building.
-Key ingedients to achieve this are:
+Key ingredients to achieve this are:
 
 - Ready-made visualizations
 - Model diagnostics

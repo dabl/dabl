@@ -34,7 +34,7 @@ it tries to do something sensible, and then provides tools for the user to
 inspect and evaluate the results to judge them.
 
 auto-sklearn is completely automatic and black-box.  It searches a vast space
-of models and constructs complex ensemles of high accuracy, taking a substantial
+of models and constructs complex ensembles of high accuracy, taking a substantial
 amount of computation and time in the process.  The goal of auto-sklearn is to
 build the best model possible given the data.  dabl, conversely, tries to enable
 the user to quickly iterate and get a grasp on the properties of the data at hand

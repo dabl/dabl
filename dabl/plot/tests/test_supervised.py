@@ -248,7 +248,8 @@ def test_na_vals_reg_plot_raise_warning():
     scatter_size = _get_scatter_size('auto', X['target_col'])
     with pytest.warns(UserWarning, match="Missing values in target_col have "
                                          "been removed for regression"):
-        plot_regression_continuous(X, 'target_col', scatter_alpha=scatter_alpha,
+        plot_regression_continuous(X, 'target_col',
+                                   scatter_alpha=scatter_alpha,
                                    scatter_size=scatter_size)
     with pytest.warns(UserWarning, match="Missing values in target_col have "
                                          "been removed for regression"):

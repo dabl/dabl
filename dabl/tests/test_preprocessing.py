@@ -343,10 +343,16 @@ def test_titanic_feature_names():
 
 
 def test_digits_type_hints():
-    data = data_df_from_bunch(load_digits())
-    data_clean = clean(data,
-                       type_hints={"x{}".format(i): 'continuous'
-                                   for i in range(64)})
+    data_bunch = load_digits()
+
+    try:
+        feature_names = data_bunch.feature_names
+    except AttributeError:
+        feature_names = ['x%d' % i for i in range(data_bunch.data.shape[1])]
+
+    data = data_df_from_bunch(data_bunch)
+    data_clean = clean(data, type_hints={
+                       feature: 'continuous' for feature in feature_names})
     assert data_clean.shape[1] == 65
 
 

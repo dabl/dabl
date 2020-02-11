@@ -370,10 +370,16 @@ def test_easy_preprocessor_transform():
 
 
 def test_dirty_float_target_regression():
+    titanic_data = load_titanic()
     data = pd.DataFrame({'one': np.repeat(np.arange(50), 2)})
     dirty = make_dirty_float()
     data['target'] = dirty
-    plot(data, target_col="target")
     with pytest.warns(UserWarning, match="Discarding dirty_float targets that "
                                          "cannot be converted to float."):
         clean(data, target_col="target")
+    with pytest.warns(UserWarning, match="Discarding dirty_float targets that "
+                                         "cannot be converted to float."):
+        plot(data, target_col="target")
+
+    # check if works for non dirty_float targets
+    plot(titanic_data, 'survived')

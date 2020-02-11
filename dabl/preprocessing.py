@@ -417,8 +417,8 @@ def clean(X, type_hints=None, return_types=False,
     if not X.index.is_unique:
         warn("Index not unique, resetting index!", UserWarning)
         X = X.reset_index(drop=True)
-    types = detect_types(X, type_hints=type_hints, verbose=verbose,
-                         target_col=target_col)
+    types_p = types = detect_types(X, type_hints=type_hints, verbose=verbose,
+                                   target_col=target_col)
     # drop useless columns
     X = X.loc[:, ~types.useless].copy()
     types = types[~types.useless]
@@ -435,8 +435,8 @@ def clean(X, type_hints=None, return_types=False,
         types = pd.concat([types[~types.dirty_float], types_df])
 
         # discard dirty float targets that cant be converted to float
-        if target_col is not None and np.isnan(X["{}_dabl_continuous".format(
-                target_col)]).any():
+        if target_col is not None and types_p['dirty_float'][target_col] and\
+                np.isnan(X["{}_dabl_continuous".format(target_col)]).any():
             warn("Discarding dirty_float targets that cannot be converted "
                  "to float.", UserWarning)
             X = X.dropna(subset=["{}_dabl_continuous".format(target_col)])

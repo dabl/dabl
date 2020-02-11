@@ -435,7 +435,7 @@ def clean(X, type_hints=None, return_types=False,
         types = pd.concat([types[~types.dirty_float], types_df])
 
         # discard dirty float targets that cant be converted to float
-        if target_col is not None and np.isnan(X["{}_dabl_continuous".format(\
+        if target_col is not None and np.isnan(X["{}_dabl_continuous".format(
                 target_col)]).any():
             warn("Discarding dirty_float targets that cannot be converted "
                  "to float.", UserWarning)

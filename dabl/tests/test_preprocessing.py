@@ -15,6 +15,7 @@ from dabl.preprocessing import (detect_types, EasyPreprocessor,
                                 _float_matching)
 from dabl.utils import data_df_from_bunch
 from dabl.datasets import load_titanic
+from dabl import plot
 
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
@@ -366,3 +367,13 @@ def test_easy_preprocessor_transform():
     pipe.fit(X_train, y_train)
     pipe.predict(X_train)
     pipe.predict(X_val)
+
+
+def test_dirty_float_target_regression():
+    data = pd.DataFrame({'one': np.repeat(np.arange(50), 2)})
+    dirty = make_dirty_float()
+    data['target'] = dirty
+    plot(data, target_col="target")
+    with pytest.warns(UserWarning, match="Discarding dirty_float targets that "
+                                         "cannot be converted to float."):
+        clean(data, target_col="target")

@@ -433,6 +433,17 @@ def clean(X, type_hints=None, return_types=False,
         # we should know what these are but maybe running this again is fine?
         types_df = detect_types(X_df)
         types = pd.concat([types[~types.dirty_float], types_df])
+
+        # discard dirty float targets that cant be converted to float
+        if np.isnan(X["{}_dabl_continuous".format(target_col)]).any():
+            warn("Discarding dirty_float targets that cannot be converted "
+                 "to float.", UserWarning)
+            X = X.dropna(subset=["{}_dabl_continuous".format(target_col)])
+            X = X.rename(columns={"{}_dabl_continuous".format(
+                target_col): "{}".format(target_col)})
+            types = types.rename(index={"{}_dabl_continuous".format(
+                target_col): "{}".format(target_col)})
+
     # deal with low cardinality ints
     # TODO ?
     # ensure that the indicator variables are also marked as categorical

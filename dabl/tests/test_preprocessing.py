@@ -1,20 +1,21 @@
 import os
-import string
-import random
 import pytest
+import random
+import string
+import warnings
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn.datasets import load_iris, load_digits
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
+from dabl.datasets import load_titanic
 from dabl.preprocessing import (detect_types, EasyPreprocessor,
                                 DirtyFloatCleaner, clean, _FLOAT_REGEX,
                                 _float_matching)
 from dabl.utils import data_df_from_bunch
-from dabl.datasets import load_titanic
 
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
@@ -94,6 +95,22 @@ def test_continuous_castable():
     X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3]})
     types = detect_types(X)
     assert types.continuous['a']
+
+
+def test_dirty_float_single_warning():
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+
+        rng = np.random.RandomState(0)
+        cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
+
+        dirty3 = pd.Series(cont_clean)
+        dirty3[::20] = [("missing", "but weird")] * 5
+
+        X = pd.DataFrame({'dirty3': dirty3})
+        clean(X)
+
+        assert len(w) == 1
 
 
 def test_detect_types():

@@ -22,3 +22,11 @@
 .section .align-default {
     text-align: left;
 }
+
+/* prevent highlight of Parameters / Attributes / Returns */
+.rst-content dl.method dl.field-list > dt,
+.rst-content dl.function dl.field-list > dt,
+.rst-content dl.class dl.field-list > dt {
+    background: none;
+    border: none;
+}

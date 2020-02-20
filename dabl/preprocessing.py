@@ -486,7 +486,7 @@ def clean(X, type_hints=None, return_types=False,
 
 
 class EasyPreprocessor(BaseEstimator, TransformerMixin):
-    """A simple preprocessor
+    """A simple preprocessor.
 
     Detects variable types, encodes everything as floats
     for use with sklearn.
@@ -499,7 +499,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         Main container for all transformations.
 
     columns_ : pandas columns
-        Columns of training data
+        Columns of training data.
 
     dtypes_ : Series of dtypes
         Dtypes of training data columns.
@@ -514,7 +514,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         Whether to scale continuous data.
 
     force_imputation : bool, default=True
-        Whether to create imputers even if not training data is missing.
+        Whether to create imputers even if no training data is missing.
 
     verbose : int, default=0
         Control output verbosity.
@@ -630,8 +630,14 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             elif name == 'categorical':
                 # this is the categorical pipe, extract one hot encoder
                 ohe = trans.steps[-1][1]
-                # FIXME that is really strange?!
-                ohe_cols = self.columns_[self.columns_.map(cols)]
+                imputer = trans.steps[0][1]
+
+                ohe_cols = cols[cols].index
+                added_cols = ohe_cols[imputer.indicator_.features_].map(
+                    lambda x: '{}_imputed'.format(x))
+                ohe_cols = ohe_cols.to_list()
+                ohe_cols.extend(added_cols)
+
                 feature_names.extend(ohe.get_feature_names(ohe_cols))
             elif name == "remainder":
                 assert trans == "drop"
@@ -656,7 +662,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         -------
         X_transformed : array of int of shape = [n_samples, n_features]
             The array containing the element-wise square roots of the values
-            in `X`
+            in `X`.
         """
         # Check is fit had been called
         with warnings.catch_warnings():

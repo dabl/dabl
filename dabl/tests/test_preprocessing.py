@@ -360,10 +360,16 @@ def test_titanic_feature_names():
 
 
 def test_digits_type_hints():
-    data = data_df_from_bunch(load_digits())
-    data_clean = clean(data,
-                       type_hints={"x{}".format(i): 'continuous'
-                                   for i in range(64)})
+    data_bunch = load_digits()
+
+    try:
+        feature_names = data_bunch.feature_names
+    except AttributeError:
+        feature_names = ['x%d' % i for i in range(data_bunch.data.shape[1])]
+
+    data = data_df_from_bunch(data_bunch)
+    data_clean = clean(data, type_hints={
+                       feature: 'continuous' for feature in feature_names})
     assert data_clean.shape[1] == 65
 
 
@@ -377,3 +383,16 @@ def test_easy_preprocessor_transform():
     pipe.fit(X_train, y_train)
     pipe.predict(X_train)
     pipe.predict(X_val)
+
+
+def test_simple_preprocessor_imputed_features():
+    # Issue: 211
+
+    data = pd.DataFrame({'A': [0, 1, 2, 1, np.NaN]}, dtype=int)
+    types = detect_types(data, type_hints={'A': 'categorical'})
+
+    ep = EasyPreprocessor(types=types)
+    ep.fit(data)
+
+    expected_names = ['A_0', 'A_1', 'A_2', 'A_imputed_False', 'A_imputed_True']
+    assert ep.get_feature_names() == expected_names

@@ -11,11 +11,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
-from dabl.datasets import load_titanic
 from dabl.preprocessing import (detect_types, EasyPreprocessor,
                                 DirtyFloatCleaner, clean, _FLOAT_REGEX,
                                 _float_matching)
 from dabl.utils import data_df_from_bunch
+from dabl.datasets import load_titanic
+from dabl import plot
 
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
@@ -396,3 +397,19 @@ def test_simple_preprocessor_imputed_features():
 
     expected_names = ['A_0', 'A_1', 'A_2', 'A_imputed_False', 'A_imputed_True']
     assert ep.get_feature_names() == expected_names
+
+
+def test_dirty_float_target_regression():
+    titanic_data = load_titanic()
+    data = pd.DataFrame({'one': np.repeat(np.arange(50), 2)})
+    dirty = make_dirty_float()
+    data['target'] = dirty
+    with pytest.warns(UserWarning, match="Discarding dirty_float targets that "
+                                         "cannot be converted to float."):
+        clean(data, target_col="target")
+    with pytest.warns(UserWarning, match="Discarding dirty_float targets that "
+                                         "cannot be converted to float."):
+        plot(data, target_col="target")
+
+    # check if works for non dirty_float targets
+    plot(titanic_data, 'survived')

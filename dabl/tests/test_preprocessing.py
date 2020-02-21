@@ -359,3 +359,36 @@ def test_easy_preprocessor_transform():
     pipe.fit(X_train, y_train)
     pipe.predict(X_train)
     pipe.predict(X_val)
+
+
+def test_easy_preprocessor_cat_cols():
+    # Create dataframe with 1 numerical and 3 categorical features.
+    cat_1_unique = ['a', 'b', 'c']
+    cat_2_unique = ['D', 'E', 'F', 'G']
+    cat_3_unique = [-2.0, -1.0]
+    data = pd.DataFrame({
+        'cat_1': ['a', 'b', 'a', '', '', 'c', 'a', 'c', 'a', 'a'],
+        'cat_2': ['D', 'D', 'E', np.NaN, 'D', np.NaN, 'E', 'F', 'F', 'G'],
+        'cat_3': [-2., -1., -1., -2., -1., '', -1., -2., '', np.NaN],
+        'num': np.sin(range(10)),  # Valid continuous feature.
+    })
+
+    # Preprocess data, i.e. replace empty strings with NaNs, impute NaNs, and
+    # encode categorical variables with OneHotEncoder.
+    ep = EasyPreprocessor()
+    data_t = ep.fit_transform(data)
+
+    cat_all = [cat_1_unique, cat_2_unique, cat_3_unique]
+    n_unique_cats = sum(len(cats) for cats in cat_all)
+    # The number of features after preprocessing must be equal to
+    # the number of unique categories within the dataframe + the number of
+    # remaining valid features.
+    assert data_t.shape[1] == n_unique_cats + 1
+
+    cat_pipe = ep.ct_.named_transformers_['categorical']
+    ohe = cat_pipe.named_steps['onehotencoder']
+    # The category sets detected by OneHotEncoder inside EasyPreprocessor
+    # must match the ones specified in cat_all.
+    assert len(ohe.categories_) == len(cat_all)
+    for cat_list, ohe_cat_list in zip(cat_all, ohe.categories_):
+        assert set(cat_list) == set(ohe_cat_list)

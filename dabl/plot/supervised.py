@@ -24,6 +24,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     class_hists, discrete_scatter, mosaic_plot,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
+from warnings import warn
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -51,6 +52,11 @@ def plot_regression_continuous(X, target_col, types=None,
         Whether to drop outliers when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
+
+    if np.isnan(X[target_col]).any():
+        X = X.dropna(subset=[target_col])
+        warn("Missing values in target_col have been removed for regression",
+             UserWarning)
 
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
@@ -110,6 +116,12 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
         types.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
+
+    # drop nans from target column
+    if np.isnan(X[target_col]).any():
+        X = X.dropna(subset=[target_col])
+        warn("Missing values in target_col have been removed for regression",
+             UserWarning)
 
     if types is None:
         types = detect_types(X)
@@ -452,7 +464,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
             n_cats = np.minimum(n_cats, 20)
             X_new = _prune_category_make_X(X, col, target_col,
                                            max_categories=n_cats)
-            mosaic_plot(X_new, col, target_col, ax=ax)
+            mosaic_plot(X_new, col, target_col, ax=ax, legend=i == 0)
             ax.set_title(col)
         elif kind == 'count':
             X_new = _prune_category_make_X(X, col, target_col)

@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 import itertools
 
 from sklearn.datasets import (make_regression, make_blobs, load_digits,
-                              fetch_openml)
+                              fetch_openml, load_diabetes)
 from sklearn.preprocessing import KBinsDiscretizer
 from dabl.preprocessing import clean, detect_types, guess_ordinal
 from dabl.plot.supervised import (
     plot, plot_classification_categorical,
     plot_classification_continuous, plot_regression_categorical,
-    plot_regression_continuous)
+    plot_regression_continuous, _get_scatter_alpha, _get_scatter_size)
 from dabl.utils import data_df_from_bunch
 
 
@@ -237,3 +237,25 @@ def test_plot_string_target():
     y[y == 2] = 'c'
     data['target'] = y
     plot(data, target_col='target')
+
+
+def test_na_vals_reg_plot_raise_warning():
+    X, y = load_diabetes(return_X_y=True)
+    X = pd.DataFrame(X)
+    y[::50] = np.NaN
+    X['target_col'] = y
+    scatter_alpha = _get_scatter_alpha('auto', X['target_col'])
+    scatter_size = _get_scatter_size('auto', X['target_col'])
+    with pytest.warns(UserWarning, match="Missing values in target_col have "
+                                         "been removed for regression"):
+        plot(X, 'target_col')
+    with pytest.warns(UserWarning, match="Missing values in target_col have "
+                                         "been removed for regression"):
+        plot_regression_continuous(X, 'target_col',
+                                   scatter_alpha=scatter_alpha,
+                                   scatter_size=scatter_size)
+    with pytest.warns(UserWarning, match="Missing values in target_col have "
+                                         "been removed for regression"):
+        plot_regression_categorical(X, 'target_col',
+                                    scatter_alpha=scatter_alpha,
+                                    scatter_size=scatter_size)

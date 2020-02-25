@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, plot_confusion_matrix
+from sklearn.metrics import plot_roc_curve, plot_precision_recall_curve
+
 from sklearn.inspection import plot_partial_dependence
 from sklearn.feature_selection import f_classif
 from sklearn.impute import SimpleImputer
@@ -34,15 +36,19 @@ def plot_classification_metrics(estimator, X_val, y_val):
     """
     y_pred = estimator.predict(X_val)
     print(classification_report(y_val, y_pred))
-    print(confusion_matrix(y_val, y_pred))
-    try:
-        from sklearn.metrics import plot_roc_curve
-        if len(estimator.classes_) == 2:
-            plot_roc_curve(estimator, X_val, y_val)
-        elif len(estimator.classes_) > 2:
-            plot_multiclass_roc_curve(estimator, X_val, y_val)
-    except ImportError:
-        warn("Can't plot roc curve, install sklearn 0.22-dev")
+    fig, ax = plt.subplots(1, 3, figsize=(14, 4))
+    cf = plot_confusion_matrix(estimator, X_val, y_val, ax=ax[0], values_format='d')
+    ax[0].images[0].colorbar.remove()
+
+    ax[1].set_title("ROC Curve")
+    if len(estimator.classes_) == 2:
+        roc = plot_roc_curve(estimator, X_val, y_val, ax=ax[1])
+        ax[2].set_title("Precision recall curve")
+        pr = plot_precision_recall_curve(estimator, X_val, y_val, ax=ax[2])
+    elif len(estimator.classes_) > 2:
+        roc = plot_multiclass_roc_curve(estimator, X_val, y_val, ax=ax[1])
+        pr = None
+    return cf, roc, pr
 
 
 def plot_regression_metrics(estimator, X_val, y_val, drop_outliers=False):
@@ -104,6 +110,7 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
         Number of features to show for coefficients or feature importances.
 
     """
+    figures = []
     if feature_names is None:
         try:
             feature_names = estimator.feature_names_.to_list()
@@ -129,9 +136,10 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                                      do_clean=False)
 
         if classifier:
-            plot_classification_metrics(estimator, X_val, y_val)
+            fig = plot_classification_metrics(estimator, X_val, y_val)
         else:
-            plot_regression_metrics(estimator, X_val, y_val)
+            fig = plot_regression_metrics(estimator, X_val, y_val)
+        figures.append(fig)
 
     if isinstance(inner_estimator, DecisionTreeClassifier):
         try:
@@ -147,10 +155,13 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
         plot_tree(inner_estimator, feature_names=inner_feature_names,
                   class_names=class_names, filled=True, max_depth=5,
                   precision=2, proportion=True)
+        figures.append(plt.gcf())
+
         # FIXME This is a bad thing to show!
         plot_coefficients(
             inner_estimator.feature_importances_, inner_feature_names)
         plt.ylabel("Impurity Decrease")
+        figures.append(plt.gcf())
 
     elif hasattr(inner_estimator, 'coef_'):
         # probably a linear model, can definitely show the coefficients
@@ -168,6 +179,7 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                                  "multi-target regressor")
             plot_coefficients(coef, inner_feature_names,
                               n_top_features=n_top_features)
+        figures.append(plt.gcf())
 
     elif isinstance(inner_estimator, RandomForestClassifier):
         # FIXME This is a bad thing to show!
@@ -215,6 +227,8 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                             ax.set_ylabel('')
             except ValueError as e:
                 warn("Couldn't run partial dependence plot: " + str(e))
+            figures.append(plot)
+    return figures
 
 
 def _extract_inner_estimator(estimator, feature_names):

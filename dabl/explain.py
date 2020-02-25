@@ -225,9 +225,9 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                             "Partial Dependence for class {}".format(c))
                         for ax in plot.axes_.ravel():
                             ax.set_ylabel('')
+                figures.append(plot)
             except ValueError as e:
                 warn("Couldn't run partial dependence plot: " + str(e))
-            figures.append(plot)
     return figures
 
 

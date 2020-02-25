@@ -11,5 +11,5 @@ from dabl.utils import data_df_from_bunch
 wine_bunch = load_wine()
 wine_df = data_df_from_bunch(wine_bunch)
 
-plot(wine_df, 'target')
+plot(wine_df, target_col='target')
 plt.show()

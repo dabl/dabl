@@ -11,5 +11,5 @@ import matplotlib.pyplot as plt
 # returns a plain dataframe
 data = load_ames()
 
-plot(data, 'SalePrice')
+plot(data, target_col='SalePrice')
 plt.show()

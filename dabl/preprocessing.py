@@ -649,7 +649,8 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
                 ohe_cols = ohe_cols.to_list()
                 ohe_cols.extend(added_cols)
 
-                feature_names.extend(ohe.get_feature_names(ohe_cols))
+                feature_names.extend(ohe.get_feature_names(
+                    ohe_cols.astype(str)))
             elif name == "remainder":
                 assert trans == "drop"
             elif name == "dirty_float":

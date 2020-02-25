@@ -675,17 +675,20 @@ def _get_scatter_size(scatter_size, x):
         return 1
 
 
-def plot_multiclass_roc_curve(estimator, X_val, y_val):
+def plot_multiclass_roc_curve(estimator, X_val, y_val, ax=None):
     if len(estimator.classes_) < 3:
         raise ValueError("Only for multi-class")
     try:
         y_score = estimator.predict_proba(X_val)
     except AttributeError:
         y_score = estimator.decision_function(X_val)
-    fig, axes = _make_subplots(len(estimator.classes_))
-    for i, (ax, c) in enumerate(zip(axes.ravel(), estimator.classes_)):
+    if ax is None:
+        fig, ax = plt.subplots()
+    for i, c in enumerate(estimator.classes_):
         fpr, tpr, _ = roc_curve(y_val == c, y_score[:, i])
-        ax.plot(fpr, tpr)
-        ax.set_xlabel("False Positive Rate")
-        ax.set_ylabel("True Positive Rate (recall)")
-        ax.set_title("ROC curve for class {}".format(c))
+        ax.plot(fpr, tpr, label=c)
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate (recall)")
+    ax.set_title("ROC curve")
+    ax.legend()
+    return ax

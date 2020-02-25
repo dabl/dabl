@@ -47,7 +47,7 @@ def plot_classification_metrics(estimator, X_val, y_val):
         ax[2].set_title("Precision recall curve")
         pr = plot_precision_recall_curve(estimator, X_val, y_val, ax=ax[2])
     else:
-        roc = plot_multiclass_roc_curve(estimator, X_val, y_val)
+        roc = plot_multiclass_roc_curve(estimator, X_val, y_val, ax=ax[1])
         pr = None
     return cf, roc, pr
 

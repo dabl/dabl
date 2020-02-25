@@ -1,10 +1,11 @@
 import os
-import string
-import random
 import pytest
+import random
+import string
+import warnings
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn.datasets import load_iris, load_digits
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
@@ -15,6 +16,7 @@ from dabl.preprocessing import (detect_types, EasyPreprocessor,
                                 _float_matching)
 from dabl.utils import data_df_from_bunch
 from dabl.datasets import load_titanic
+from dabl import plot
 
 
 X_cat = pd.DataFrame({'a': ['b', 'c', 'b'],
@@ -94,6 +96,22 @@ def test_continuous_castable():
     X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3]})
     types = detect_types(X)
     assert types.continuous['a']
+
+
+def test_dirty_float_single_warning():
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+
+        rng = np.random.RandomState(0)
+        cont_clean = ["{:2.2f}".format(x) for x in rng.uniform(size=100)]
+
+        dirty3 = pd.Series(cont_clean)
+        dirty3[::20] = [("missing", "but weird")] * 5
+
+        X = pd.DataFrame({'dirty3': dirty3})
+        clean(X)
+
+        assert len(w) == 1
 
 
 def test_detect_types():
@@ -366,3 +384,32 @@ def test_easy_preprocessor_transform():
     pipe.fit(X_train, y_train)
     pipe.predict(X_train)
     pipe.predict(X_val)
+
+
+def test_simple_preprocessor_imputed_features():
+    # Issue: 211
+
+    data = pd.DataFrame({'A': [0, 1, 2, 1, np.NaN]}, dtype=int)
+    types = detect_types(data, type_hints={'A': 'categorical'})
+
+    ep = EasyPreprocessor(types=types)
+    ep.fit(data)
+
+    expected_names = ['A_0', 'A_1', 'A_2', 'A_imputed_False', 'A_imputed_True']
+    assert ep.get_feature_names() == expected_names
+
+
+def test_dirty_float_target_regression():
+    titanic_data = load_titanic()
+    data = pd.DataFrame({'one': np.repeat(np.arange(50), 2)})
+    dirty = make_dirty_float()
+    data['target'] = dirty
+    with pytest.warns(UserWarning, match="Discarding dirty_float targets that "
+                                         "cannot be converted to float."):
+        clean(data, target_col="target")
+    with pytest.warns(UserWarning, match="Discarding dirty_float targets that "
+                                         "cannot be converted to float."):
+        plot(data, target_col="target")
+
+    # check if works for non dirty_float targets
+    plot(titanic_data, 'survived')

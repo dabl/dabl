@@ -464,7 +464,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
             n_cats = np.minimum(n_cats, 20)
             X_new = _prune_category_make_X(X, col, target_col,
                                            max_categories=n_cats)
-            mosaic_plot(X_new, col, target_col, ax=ax)
+            mosaic_plot(X_new, col, target_col, ax=ax, legend=i == 0)
             ax.set_title(col)
         elif kind == 'count':
             X_new = _prune_category_make_X(X, col, target_col)

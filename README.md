@@ -28,3 +28,14 @@ over different gradient boosting models and other tree ensembles and
 potentially kernel methods.
 
 Stay Tuned!
+
+## Pandas Profiling package
+The Pandas Profiling package is useful for initial data analysis. Using Pandas Profiling can provide a thorough summary of the data in only a single line of code. Using the ```ProfileReport()``` method, you are able to access a HTML report of your data that can help you find correlations and identify missing data.
+
+## Try it out
+
+```
+pip install pandas-profiling
+```
+
+or [https://github.com/pandas-profiling/pandas-profiling]

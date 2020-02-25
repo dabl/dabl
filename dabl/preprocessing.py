@@ -606,7 +606,8 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
                 ohe = trans.steps[-1][1]
                 # FIXME that is really strange?!
                 ohe_cols = self.columns_[self.columns_.map(cols)]
-                feature_names.extend(ohe.get_feature_names(ohe_cols))
+                feature_names.extend(ohe.get_feature_names(
+                    ohe_cols.astype(str)))
             elif name == "remainder":
                 assert trans == "drop"
             elif name == "dirty_float":

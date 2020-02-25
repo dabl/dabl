@@ -37,7 +37,8 @@ def plot_classification_metrics(estimator, X_val, y_val):
     y_pred = estimator.predict(X_val)
     print(classification_report(y_val, y_pred))
     fig, ax = plt.subplots(1, 3, figsize=(14, 4))
-    cf = plot_confusion_matrix(estimator, X_val, y_val, ax=ax[0], values_format='d')
+    cf = plot_confusion_matrix(estimator, X_val, y_val, ax=ax[0],
+                               values_format='d')
     ax[0].images[0].colorbar.remove()
 
     ax[1].set_title("ROC Curve")
@@ -45,8 +46,8 @@ def plot_classification_metrics(estimator, X_val, y_val):
         roc = plot_roc_curve(estimator, X_val, y_val, ax=ax[1])
         ax[2].set_title("Precision recall curve")
         pr = plot_precision_recall_curve(estimator, X_val, y_val, ax=ax[2])
-    elif len(estimator.classes_) > 2:
-        roc = plot_multiclass_roc_curve(estimator, X_val, y_val, ax=ax[1])
+    else:
+        roc = plot_multiclass_roc_curve(estimator, X_val, y_val)
         pr = None
     return cf, roc, pr
 
@@ -254,4 +255,4 @@ def _extract_inner_estimator(estimator, feature_names):
         # now we have input feature names for the final step
         inner_estimator = final_est
     # done unwrapping, start evaluating
-    return inner_estimator, np.array(feature_names)
+    return inner_estimator, np.array(feature_names, dtype=object)

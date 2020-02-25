@@ -681,3 +681,4 @@ def plot_multiclass_roc_curve(estimator, X_val, y_val):
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate (recall)")
         ax.set_title("ROC curve for class {}".format(c))
+    return fig

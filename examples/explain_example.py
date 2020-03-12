@@ -10,3 +10,5 @@ sc = SimpleClassifier()
 sc.fit(wine_df, target_col='target')
 
 dabl.explain(sc)
+
+

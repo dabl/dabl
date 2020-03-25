@@ -6,7 +6,7 @@ with io.open('README.md', encoding='utf_8') as fp:
     readme = fp.read()
 
 setup(name='dabl',
-      version='0.1.8',
+      version='0.1.7',
       description='Data Analysis Baseline Library',
       author='Andreas Mueller',
       url='https://github.com/amueller/dabl',

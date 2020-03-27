@@ -352,15 +352,15 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
             If dict, provide type information for columns.
             Keys are column names, values are types as provided by
             detect_types.
-            
+
      portfolio : str, default='baseline'
-             Lets you choose a portfolio. Choose 'baseline' for multiple 
+             Lets you choose a portfolio. Choose 'baseline' for multiple
              classifiers with default parameters, 'hgb' for
-             high-performing HistGradientBoostingClassifiers, 
+             high-performing HistGradientBoostingClassifiers,
              'svc' for high-performing support vector classifiers,
              'mixed' for a portfolio of different high-performing
              classifiers.
-             
+
 
     Attributes
     ----------

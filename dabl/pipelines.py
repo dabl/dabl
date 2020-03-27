@@ -145,7 +145,7 @@ def get_any_classifiers(portfolio='baseline'):
             gamma=0.05170269991130989, kernel='rbf', probability=False),
         SVC(C=12825.233283804411, coef0=-0.5596962381502244, degree=1,
             gamma=0.007137693124484331, kernel='rbf', probability=False),
-        SVC(C=0.12779439580461893, coef0=-0.007860547843195675, degree=2, 
+        SVC(C=0.12779439580461893, coef0=-0.007860547843195675, degree=2,
             gamma=0.011489094638370643, kernel='sigmoid', probability=False)]
 
     hgb = [

@@ -352,6 +352,15 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
             If dict, provide type information for columns.
             Keys are column names, values are types as provided by
             detect_types.
+            
+     portfolio : str, default='baseline'
+             Lets you choose a portfolio. Choose 'baseline' for multiple 
+             classifiers with default parameters, 'hgb' for
+             high-performing HistGradientBoostingClassifiers, 
+             'svc' for high-performing support vector classifiers,
+             'mixed' for a portfolio of different high-performing
+             classifiers.
+             
 
     Attributes
     ----------
@@ -363,14 +372,15 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
     """
     def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0,
-                 type_hints=None):
+                 type_hints=None, portfolio='baseline'):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget
         self.type_hints = type_hints
+        self.portfolio = portfolio
 
     def _get_estimators(self):
-        return get_any_classifiers()
+        return get_any_classifiers(portfolio=self.portfolio)
 
     def _preprocess_target(self, y):
         # copy and paste from above, should be a mixin

@@ -147,13 +147,62 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
     plt.suptitle("Categorical Feature vs Target")
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
+        print(f"DBG {col}")
+
+        # count frequency for each categorical including NaN rows
+        vc = X[col].value_counts(dropna=False)
+        #is_categorical = hasattr(X[col], 'cat') # https://pandas.pydata.org/pandas-docs/stable/user_guide/categorical.html#categorical-is-not-a-numpy-array
+        #print(vc.index.dtype, vc.index.dtype==pd.CategoricalDtype, is_categorical)
+        is_ordinal = True
+        try:
+            _ = [float(s) for s in vc.index.values]
+        except ValueError:
+            is_ordinal = False
+        # mpl returns string labels so reformat index to match
+        print(f'DBG is ordinal {is_ordinal}')
+        vc.index = vc.index.astype('str') 
+
         X_new = _prune_category_make_X(X, col, target_col)
-        medians = X_new.groupby(col)[target_col].median()
-        order = medians.sort_values().index
+        # original ordering TODO remove
+        if not is_ordinal:
+            medians = X_new.groupby(col)[target_col].median()
+            order = medians.sort_values().index
+        else:
+            # replaced sorting code
+            order = sorted(np.unique(X[col].dropna()))  # sort by alphanumeric item order
+            #order = sorted(X[col].value_counts(dropna=False).index.fillna('NaN'))
+        #print(X[col].dtype)
+        #breakpoint()
+        #if X[col].dtype == 'O':
+        #    order = None # use natural-order for string columns
+        #    print(f"Order dropped for {col}")
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
-        ax.set_title("F={:.2E}".format(f[col_ind]))
+        ax.set_title("F={:.2E}".format(f[col_ind])) 
         # shorten long ticks and labels
         _short_tick_names(ax)
+
+        # hack in new y axis labels TODO fix this up, extract, test fn
+        new_labels = []
+        for label in ax.get_yticklabels():
+            text = label.get_text()
+            print(f"DBG label {text}")
+            try:
+                count = vc[text]
+                if count > 10_000:
+                    count = ">10K"
+                elif count > 1_000:
+                    count = ">1k"
+                elif count > 100:
+                    count = ">100"
+                else:
+                    count = str(count)
+            except KeyError:
+                # KeyError raised if value_counts vc doesn't doesn't have this label
+                # e.g. if 
+                #breakpoint()
+                count = "unk."
+            new_labels.append(f'{text} ({count})')
+        ax.set_yticklabels(new_labels);
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row

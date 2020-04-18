@@ -97,10 +97,18 @@ def plot_regression_continuous(X, target_col, types=None,
 
 
 def add_counts_to_yticklabels(ax, vc):
+    """Add count labels (e.g. ">1k") to ordinal y-axis labels
+
+    Parameters
+    ----------
+    ax : matplotlib axes
+        Axes on which to shorten labels.
+    vc: value_counts result
+        Result of Series.value_counts() for this column
+    """
     new_labels = []
     for label in ax.get_yticklabels():
         text = label.get_text()
-        print(f"DBG label {text}")
         try:
             count = vc[text]
             if count > 10_000:
@@ -113,12 +121,11 @@ def add_counts_to_yticklabels(ax, vc):
                 count = str(count)
         except KeyError:
             # KeyError raised if value_counts vc doesn't doesn't have this label
-            # e.g. 'dabl_other' (set by dab)
-            #if label.get_text() != 'dabl_other':
-            #    1/0 # DBG
+            # 'dabl_other' set by dabl seems to be the only cause of this
             count = "unk."
         new_labels.append(f'{text} ({count})')
     ax.set_yticklabels(new_labels);
+
 
 def plot_regression_categorical(X, target_col, types=None, **kwargs):
     """Plots for categorical features in regression.
@@ -171,83 +178,16 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
     plt.suptitle("Categorical Feature vs Target")
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
-        X_new = _prune_category_make_X(X, col, target_col)
-        medians = X_new.groupby(col)[target_col].median()
-        order = medians.sort_values().index
-        sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
-        ax.set_title("F={:.2E}".format(f[col_ind]))
-        # shorten long ticks and labels
-        _short_tick_names(ax)
-
-    for j in range(i + 1, axes.size):
-        # turn off axis if we didn't fill last row
-        axes.ravel()[j].set_axis_off()
-
-
-
-def plot_regression_categoricalNEW(X, target_col, types=None, **kwargs):
-    """Plots for categorical features in regression.
-
-    Creates box plots of target distribution for important categorical
-    features. Relevant features are identified using mutual information.
-
-    For high cardinality categorical variables (variables with many categories)
-    only the most frequent categories are shown.
-
-    Parameters
-    ----------
-    X : dataframe
-        Input data including features and target.
-    target_col : str or int
-        Identifier of the target column in X.
-    types : dataframe of types, optional
-        Output of detect_types on X. Can be used to avoid recomputing the
-        types.
-    """
-    types = _check_X_target_col(X, target_col, types, task="regression")
-
-    # drop nans from target column
-    if np.isnan(X[target_col]).any():
-        X = X.dropna(subset=[target_col])
-        warn("Missing values in target_col have been removed for regression",
-             UserWarning)
-
-    if types is None:
-        types = detect_types(X)
-    features = X.loc[:, types.categorical]
-    if target_col in features.columns:
-        features = features.drop(target_col, axis=1)
-    if features.shape[1] == 0:
-        return
-    features = features.astype('category')
-    show_top = _get_n_top(features, "categorical")
-
-    # can't use OrdinalEncoder because we might have mix of int and string
-    ordinal_encoded = features.apply(lambda x: x.cat.codes)
-    target = X[target_col]
-    f = mutual_info_regression(
-        ordinal_encoded, target,
-        discrete_features=np.ones(X.shape[1], dtype=bool))
-    top_k = np.argsort(f)[-show_top:][::-1]
-
-    # large number of categories -> taller plot
-    row_height = 3 if X.nunique().max() <= 5 else 5
-    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
-    plt.suptitle("Categorical Feature vs Target")
-    for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
-        col = features.columns[i]
-        print(f"DBG {col}") # DBG
 
         # count frequency for each categorical including NaN rows
         vc = X[col].value_counts(dropna=False)
-        vc.index = vc.index.astype('str') # convert vc index to string to match mpl's string labels
+        vc.index = vc.index.astype('str')  # convert vc index to string to match mpl's string labels
         # assume the series is ordinal unless a float conversion fails
-        is_ordinal = True # includes numeric items like 2.0, np.NaN but not "somelabel"
+        is_ordinal = True  # includes numeric items like 2.0, np.NaN but not "somelabel"
         try:
             _ = [float(s) for s in vc.index.values]
         except ValueError:
             is_ordinal = False
-        print(f'DBG is ordinal {is_ordinal}') # DBG
 
         X_new = _prune_category_make_X(X, col, target_col)
         if is_ordinal:
@@ -260,15 +200,14 @@ def plot_regression_categoricalNEW(X, target_col, types=None, **kwargs):
 
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
         ax.set_title("F={:.2E}".format(f[col_ind])) 
-        #for tl in ax.get_xticklabels():
+        #for tl in ax.get_xticklabels():  # DBG
         #    print(i, 'pre tick_label', tl.get_text())
-        #add_counts_to_yticklabels(ax, vc)
+        add_counts_to_yticklabels(ax, vc)
         # DBG
         #for tl in ax.get_xticklabels(): 
         #    print(i, 'tick_label', tl.get_text())
         # shorten long ticks and labels
         _short_tick_names(ax) ## DBG this is the line that loses the tick labels!
-        print('ian')
 
 
     for j in range(i + 1, axes.size):

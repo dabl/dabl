@@ -120,11 +120,12 @@ def add_counts_to_yticklabels(ax, vc):
             else:
                 count = str(count)
         except KeyError:
-            # KeyError raised if value_counts vc doesn't doesn't have this label
-            # 'dabl_other' set by dabl seems to be the only cause of this
+            # KeyError raised if value_counts vc doesn't doesn't have
+            # this label 'dabl_other' set by dabl seems to be the
+            # only cause of this
             count = "unk."
         new_labels.append(f'{text} ({count})')
-    ax.set_yticklabels(new_labels);
+    ax.set_yticklabels(new_labels)
 
 
 def plot_regression_categorical(X, target_col, types=None, **kwargs):
@@ -181,9 +182,11 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
 
         # count frequency for each categorical including NaN rows
         vc = X[col].value_counts(dropna=False)
-        vc.index = vc.index.astype('str')  # convert vc index to string to match mpl's string labels
+        # convert vc index to string to match mpl's string labels
+        vc.index = vc.index.astype('str')
         # assume the series is ordinal unless a float conversion fails
-        is_ordinal = True  # includes numeric items like 2.0, np.NaN but not "somelabel"
+        # ordinals are numeric like 2.0, np.NaN but not "somelabel"
+        is_ordinal = True
         try:
             _ = [float(s) for s in vc.index.values]
         except ValueError:
@@ -192,23 +195,23 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
         X_new = _prune_category_make_X(X, col, target_col)
         if is_ordinal:
             # alphanumeric label sort for ordinal items
-            order = sorted(np.unique(X[col].dropna()))  
+            order = sorted(np.unique(X[col].dropna()))
         else:
             # median sort for non-ordinal labels
             medians = X_new.groupby(col)[target_col].median()
             order = medians.sort_values().index
 
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
-        ax.set_title("F={:.2E}".format(f[col_ind])) 
-        #for tl in ax.get_xticklabels():  # DBG
+        ax.set_title("F={:.2E}".format(f[col_ind]))
+        #  for tl in ax.get_xticklabels():  # DBG
         #    print(i, 'pre tick_label', tl.get_text())
         add_counts_to_yticklabels(ax, vc)
         # DBG
-        #for tl in ax.get_xticklabels(): 
+        # for tl in ax.get_xticklabels():
         #    print(i, 'tick_label', tl.get_text())
         # shorten long ticks and labels
-        _short_tick_names(ax) ## DBG this is the line that loses the tick labels!
-
+        # DBG this is the line that loses the tick labels sometimes
+        _short_tick_names(ax)
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row

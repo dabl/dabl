@@ -25,7 +25,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
 from warnings import warn
-
+from .utils import add_counts_to_yticklabels
 
 def plot_regression_continuous(X, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
@@ -95,37 +95,6 @@ def plot_regression_continuous(X, target_col, types=None,
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
 
-
-def add_counts_to_yticklabels(ax, vc):
-    """Add count labels (e.g. ">1k") to ordinal y-axis labels
-
-    Parameters
-    ----------
-    ax : matplotlib axes
-        Axes on which to shorten labels.
-    vc: value_counts result
-        Result of Series.value_counts() for this column
-    """
-    new_labels = []
-    for label in ax.get_yticklabels():
-        text = label.get_text()
-        try:
-            count = vc[text]
-            if count > 10_000:
-                count = ">10K"
-            elif count > 1_000:
-                count = ">1k"
-            elif count > 100:
-                count = ">100"
-            else:
-                count = str(count)
-        except KeyError:
-            # KeyError raised if value_counts vc doesn't doesn't have
-            # this label 'dabl_other' set by dabl seems to be the
-            # only cause of this
-            count = "unk."
-        new_labels.append(f'{text} ({count})')
-    ax.set_yticklabels(new_labels)
 
 
 def plot_regression_categorical(X, target_col, types=None, **kwargs):

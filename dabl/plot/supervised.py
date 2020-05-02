@@ -173,14 +173,8 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
         plt.draw()
         ax.set_title("F={:.2E}".format(f[col_ind]))
-        #  for tl in ax.get_xticklabels():  # DBG
-        #    print(i, 'pre tick_label', tl.get_text())
         add_counts_to_yticklabels(ax, vc)
-        # DBG
-        # for tl in ax.get_xticklabels():
-        #    print(i, 'tick_label', tl.get_text())
         # shorten long ticks and labels
-        # DBG this is the line that loses the tick labels sometimes
         _short_tick_names(ax)
 
     for j in range(i + 1, axes.size):

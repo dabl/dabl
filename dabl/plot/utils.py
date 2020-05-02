@@ -403,8 +403,8 @@ def add_counts_to_yticklabels(ax, vc):
             else:
                 count = str(count)
         except KeyError:
-            # KeyError raised if value_counts vc doesn't doesn't have
-            # this label 'dabl_other' set by dabl seems to be the
+            # KeyError raised if value_counts doesn't doesn't have
+            # the label - 'dabl_other' set by dabl seems to be the
             # only cause of this
             count = "unk."
         new_labels.append(f'{text} ({count})')

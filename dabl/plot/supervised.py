@@ -171,6 +171,7 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
             order = medians.sort_values().index
 
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
+        plt.draw()
         ax.set_title("F={:.2E}".format(f[col_ind]))
         #  for tl in ax.get_xticklabels():  # DBG
         #    print(i, 'pre tick_label', tl.get_text())

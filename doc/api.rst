@@ -65,7 +65,9 @@ Plotting
     class_hists
     discrete_scatter
     find_pretty_grid
+    heatmap
     mosaic_plot
+    pairplot
     plot_classification_categorical
     plot_classification_continuous
     plot_coefficients

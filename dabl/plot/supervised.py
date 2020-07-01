@@ -25,7 +25,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
 from warnings import warn
-
+from .utils import add_counts_to_yticklabels
 
 def plot_regression_continuous(X, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
@@ -96,6 +96,7 @@ def plot_regression_continuous(X, target_col, types=None,
         axes.ravel()[j].set_axis_off()
 
 
+
 def plot_regression_categorical(X, target_col, types=None, **kwargs):
     """Plots for categorical features in regression.
 
@@ -147,11 +148,32 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
     plt.suptitle("Categorical Feature vs Target")
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
+
+        # count frequency for each categorical including NaN rows
+        vc = X[col].value_counts(dropna=False)
+        # convert vc index to string to match mpl's string labels
+        vc.index = vc.index.astype('str')
+        # assume the series is ordinal unless a float conversion fails
+        # ordinals are numeric like 2.0, np.NaN but not "somelabel"
+        is_ordinal = True
+        try:
+            _ = [float(s) for s in vc.index.values]
+        except ValueError:
+            is_ordinal = False
+
         X_new = _prune_category_make_X(X, col, target_col)
-        medians = X_new.groupby(col)[target_col].median()
-        order = medians.sort_values().index
+        if is_ordinal:
+            # alphanumeric label sort for ordinal items
+            order = sorted(np.unique(X[col].dropna()))
+        else:
+            # median sort for non-ordinal labels
+            medians = X_new.groupby(col)[target_col].median()
+            order = medians.sort_values().index
+
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
+        plt.draw()
         ax.set_title("F={:.2E}".format(f[col_ind]))
+        add_counts_to_yticklabels(ax, vc)
         # shorten long ticks and labels
         _short_tick_names(ax)
 

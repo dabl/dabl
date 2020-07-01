@@ -379,6 +379,38 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=label_length))
 
 
+def add_counts_to_yticklabels(ax, vc):
+    """Add count labels (e.g. ">1k") to ordinal y-axis labels
+
+    Parameters
+    ----------
+    ax : matplotlib axes
+        Axes on which to shorten labels.
+    vc: value_counts result
+        Result of Series.value_counts() for this column
+    """
+    new_labels = []
+    for label in ax.get_yticklabels():
+        text = label.get_text()
+        try:
+            count = vc[text]
+            if count > 10_000:
+                count = ">10K"
+            elif count > 1_000:
+                count = ">1k"
+            elif count > 100:
+                count = ">100"
+            else:
+                count = str(count)
+        except KeyError:
+            # KeyError raised if value_counts doesn't doesn't have
+            # the label - 'dabl_other' set by dabl seems to be the
+            # only cause of this
+            count = "unk."
+        new_labels.append(f'{text} ({count})')
+    ax.set_yticklabels(new_labels)
+
+
 def _find_scatter_plots_classification(X, target, how_many=3,
                                        random_state=None):
     # input is continuous

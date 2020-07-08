@@ -30,7 +30,7 @@ source activate testenv
 
 if [[ "$SKLEARN_VERSION" == "dev" ]]
 then
-    pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+    pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 else
     conda install --yes scikit-learn=$SKLEARN_VERSION
 fi

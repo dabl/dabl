@@ -373,7 +373,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
     """
     def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0,
-                 type_hints=None, portfolio='baseline'):
+                 type_hints=None, portfolio='mixed'):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget

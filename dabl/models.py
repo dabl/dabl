@@ -353,11 +353,12 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
             Keys are column names, values are types as provided by
             detect_types.
 
-     portfolio : str, default='baseline'
+     portfolio : str, default='mixed'
              Lets you choose a portfolio. Choose 'baseline' for multiple
              classifiers with default parameters, 'hgb' for
              high-performing HistGradientBoostingClassifiers,
              'svc' for high-performing support vector classifiers,
+             'rf' for high-performing random forest classifiers,
              'mixed' for a portfolio of different high-performing
              classifiers.
 

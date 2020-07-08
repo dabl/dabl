@@ -3,6 +3,8 @@ from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from functools import partial
 from itertools import product
+from numpy.ma import MaskedArray
+
 import time
 import warnings
 
@@ -21,7 +23,6 @@ from sklearn.model_selection._validation import _fit_and_score
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._joblib import Parallel, delayed
-from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.validation import indexable, check_is_fitted
 
 

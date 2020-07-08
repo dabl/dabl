@@ -24,6 +24,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     class_hists, discrete_scatter, mosaic_plot,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
+from warnings import warn
 
 
 def plot_regression_continuous(X, target_col, types=None,
@@ -37,20 +38,25 @@ def plot_regression_continuous(X, target_col, types=None,
     Parameters
     ----------
     X : dataframe
-        Input data including features and target
+        Input data including features and target.
     target_col : str or int
-        Identifier of the target column in X
-    types : dataframe of types, optional.
+        Identifier of the target column in X.
+    types : dataframe of types, optional
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
-    scatter_alpha : float, default='auto'.
+    scatter_alpha : float, default='auto'
         Alpha values for scatter plots. 'auto' is dirty hacks.
-    scatter_size : float, default='auto'.
+    scatter_size : float, default='auto'
         Marker size for scatter plots. 'auto' is dirty hacks.
     drop_outliers : bool, default=True
         Whether to drop outliers when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
+
+    if np.isnan(X[target_col]).any():
+        X = X.dropna(subset=[target_col])
+        warn("Missing values in target_col have been removed for regression",
+             UserWarning)
 
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
@@ -102,14 +108,20 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
     Parameters
     ----------
     X : dataframe
-        Input data including features and target
+        Input data including features and target.
     target_col : str or int
-        Identifier of the target column in X
-    types : dataframe of types, optional.
+        Identifier of the target column in X.
+    types : dataframe of types, optional
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
+
+    # drop nans from target column
+    if np.isnan(X[target_col]).any():
+        X = X.dropna(subset=[target_col])
+        warn("Missing values in target_col have been removed for regression",
+             UserWarning)
 
     if types is None:
         types = detect_types(X)
@@ -169,15 +181,15 @@ def plot_classification_continuous(X, target_col, types=None, hue_order=None,
     Parameters
     ----------
     X : dataframe
-        Input data including features and target
+        Input data including features and target.
     target_col : str or int
-        Identifier of the target column in X
+        Identifier of the target column in X.
     types : dataframe of types, optional.
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
-    scatter_alpha : float, default='auto'.
+    scatter_alpha : float, default='auto'
         Alpha values for scatter plots. 'auto' is dirty hacks.
-    scatter_size : float, default='auto'.
+    scatter_size : float, default='auto'
         Marker size for scatter plots. 'auto' is dirty hacks.
     univariate_plot : string, default="histogram"
         Supported: 'histogram' and 'kde'.
@@ -452,7 +464,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
             n_cats = np.minimum(n_cats, 20)
             X_new = _prune_category_make_X(X, col, target_col,
                                            max_categories=n_cats)
-            mosaic_plot(X_new, col, target_col, ax=ax)
+            mosaic_plot(X_new, col, target_col, ax=ax, legend=i == 0)
             ax.set_title(col)
         elif kind == 'count':
             X_new = _prune_category_make_X(X, col, target_col)
@@ -519,7 +531,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
     if ((y is None and target_col is None)
             or (y is not None) and (target_col is not None)):
         raise ValueError(
-            "Need to specify exactly one of y and target_col.")
+            "Need to specify either y or target_col.")
     if not isinstance(X, pd.DataFrame):
         X = pd.DataFrame(X)
     if isinstance(y, str):

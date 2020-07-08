@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, Patch
 from seaborn.utils import despine
 
 
@@ -186,7 +186,7 @@ def _shortname(some_string, maxlen=20):
         return some_string
 
 
-def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None):
+def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None, legend=True):
     """Create a mosaic plot from a dataframe.
 
     Right now only horizontal mosaic plots are supported,
@@ -204,6 +204,14 @@ def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None):
         Whether to vary lightness across categories.
     ax : matplotlib axes or None
         Axes to plot into.
+    legend : boolean, default=True
+        Whether to create a legend.
+
+    Examples
+    --------
+    >>> from dabl.datasets import load_titanic
+    >>> data = load_titanic()
+    >>> mosaic_plot(data, 'sex', 'survived')
     """
 
     cont = pd.crosstab(data[cols], data[rows])
@@ -229,6 +237,12 @@ def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None):
             pos_x += width
             ax.add_patch(rect)
         pos_y += height
+
+    if legend:
+        legend_elements = [Patch(facecolor=plt.cm.tab10(i), edgecolor='k')
+                           for i in range(len(cont.index))]
+        legend_labels = [str(index) for index in cont.index]
+        ax.legend(legend_elements, legend_labels)
 
     ax.set_ylim(0, pos_y)
     ax.set_yticks(positions_y)
@@ -402,11 +416,11 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
     Parameters
     ----------
     x : array-like
-        x coordinates to scatter
+        x coordinates to scatter.
     y : array-like
-        y coordinates to scatter
+        y coordinates to scatter.
     c : array-like
-        Grouping of samples (similar to hue in seaborn)
+        Grouping of samples (similar to hue in seaborn).
     unique_c : array-like, default='None'
         Unique values of c considered in scatter. If not
         provided unique elements of c are determined.
@@ -422,9 +436,9 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
     s : float, default='auto'.
         Marker size for scatter plots. 'auto' is dirty hacks.
     ax : matplotlib axes, default=None
-        Axes to plot into
+        Axes to plot into.
     kwargs :
-        Passed through to plt.scatter
+        Passed through to plt.scatter.
 
     Examples
     --------
@@ -470,14 +484,14 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
             handle.set_sizes((100,))
 
 
-def class_hists(data, column, target, bins="auto", ax=None, legend=False,
+def class_hists(data, column, target, bins="auto", ax=None, legend=True,
                 scale_separately=True):
     """Grouped univariate histograms.
 
     Parameters
     ----------
     data : pandas DataFrame
-        Input data to plot
+        Input data to plot.
     column : column specifier
         Column in the data to compute histograms over (must be continuous).
     target : column specifier
@@ -486,8 +500,8 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=False,
         Number of bins, 'auto' or bin edges. Passed to np.histogram_bin_edges.
         We always show at least 5 bins for now.
     ax : matplotlib axes
-        Axes to plot into
-    legend : boolean, default=False
+        Axes to plot into.
+    legend : boolean, default=True
         Whether to create a legend.
     scale_separately : boolean, default=True
         Whether to scale each class separately.

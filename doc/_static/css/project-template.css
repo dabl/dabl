@@ -18,3 +18,7 @@
 .wy-nav-content {
     max-width: 850px;
 }
+
+.section .align-default {
+    text-align: left;
+}

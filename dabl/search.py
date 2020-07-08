@@ -263,7 +263,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
     """Grid-search with successive halving.
 
     The search strategy for hyper-parameter optimization starts evaluating all
-    the candidates with a small amount a resource and iteratively selects the
+    the candidates with a small amount of resource and iteratively selects the
     best candidates, using more and more resources.
 
     Read more in the :ref:`User guide<successive_halving_user_guide>`.
@@ -322,7 +322,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
+        Refer to :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
     refit : boolean, default=True
@@ -403,7 +403,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
     ----------
     n_candidates_ : int
         The number of candidate parameters that were evaluated at the first
-        iteartion.
+        iteration.
 
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
@@ -413,7 +413,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used at
         each iteration must be a multiple of ``r_min_``, the actual number of
-        resources used at the last iteartion may be smaller than
+        resources used at the last iteration may be smaller than
         ``max_budget_``.
 
     r_min_ : int
@@ -519,7 +519,7 @@ class GridSuccessiveHalving(BaseSuccessiveHalving):
     data, according to the scoring parameter.
 
     If `n_jobs` was set to a value higher than one, the data is copied for each
-    parameter setting(and not `n_jobs` times). This is done for efficiency
+    parameter setting (and not `n_jobs` times). This is done for efficiency
     reasons if individual jobs take very little time, but may raise errors if
     the dataset is large and not enough memory is available.  A workaround in
     this case is to set `pre_dispatch`. Then, the memory is copied only
@@ -623,7 +623,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
+        Refer to :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
     refit : boolean, default=True
@@ -704,7 +704,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
     ----------
     n_candidates_ : int
         The number of candidate parameters that were evaluated at the first
-        iteartion.
+        iteration.
 
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
@@ -714,7 +714,7 @@ class RandomSuccessiveHalving(BaseSuccessiveHalving):
         The maximum number of resources that any candidate is allowed to use
         for a given iteration. Note that since the number of resources used at
         each iteration must be a multiple of ``r_min_``, the actual number of
-        resources used at the last iteartion may be smaller than
+        resources used at the last iteration may be smaller than
         ``max_budget_``.
 
     r_min_ : int

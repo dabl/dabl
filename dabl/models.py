@@ -97,7 +97,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
     def _fit(self, X, y=None, target_col=None):
         """Fit estimator.
 
-        Requiers to either specify the target as separate 1d array or Series y
+        Requires to either specify the target as separate 1d array or Series y
         (in scikit-learn fashion) or as column of the dataframe X specified by
         target_col.
         If y is specified, X is assumed not to contain the target.
@@ -185,7 +185,7 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
         Random state or seed.
 
     verbose : integer, default=1
-        Verbosity (higher is more output)
+        Verbosity (higher is more output).
 
     type_hints : dict or None
             If dict, provide type information for columns.
@@ -270,7 +270,7 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
         Random state or seed.
 
     verbose : integer, default=1
-        Verbosity (higher is more output)
+        Verbosity (higher is more output).
 
     type_hints : dict or None
             If dict, provide type information for columns.
@@ -353,6 +353,15 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
             Keys are column names, values are types as provided by
             detect_types.
 
+     portfolio : str, default='baseline'
+             Lets you choose a portfolio. Choose 'baseline' for multiple
+             classifiers with default parameters, 'hgb' for
+             high-performing HistGradientBoostingClassifiers,
+             'svc' for high-performing support vector classifiers,
+             'mixed' for a portfolio of different high-performing
+             classifiers.
+
+
     Attributes
     ----------
     search_ : SuccessiveHalving instance
@@ -363,14 +372,15 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
     """
     def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0,
-                 type_hints=None):
+                 type_hints=None, portfolio='baseline'):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget
         self.type_hints = type_hints
+        self.portfolio = portfolio
 
     def _get_estimators(self):
-        return get_any_classifiers()
+        return get_any_classifiers(portfolio=self.portfolio)
 
     def _preprocess_target(self, y):
         # copy and paste from above, should be a mixin
@@ -400,7 +410,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
     def fit(self, X, y=None, *, target_col=None):
         """Fit estimator.
 
-        Requiers to either specify the target as separate 1d array or Series y
+        Requires to either specify the target as separate 1d array or Series y
         (in scikit-learn fashion) or as column of the dataframe X specified by
         target_col.
         If y is specified, X is assumed not to contain the target.
@@ -419,7 +429,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         if ((y is None and target_col is None)
                 or (y is not None) and (target_col is not None)):
             raise ValueError(
-                "Need to specify exactly one of y and target_col.")
+                "Need to specify either y or target_col.")
         X, y = _validate_Xyt(X, y, target_col, do_clean=False)
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)

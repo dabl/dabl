@@ -353,7 +353,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
             Keys are column names, values are types as provided by
             detect_types.
 
-     portfolio : str, default='mixed'
+     portfolio : str, default='baseline'
              Lets you choose a portfolio. Choose 'baseline' for multiple
              classifiers with default parameters, 'hgb' for
              high-performing HistGradientBoostingClassifiers,
@@ -373,7 +373,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
     """
     def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0,
-                 type_hints=None, portfolio='mixed'):
+                 type_hints=None, portfolio='baseline'):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget

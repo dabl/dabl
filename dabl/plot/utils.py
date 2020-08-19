@@ -240,7 +240,7 @@ def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None, legend=True):
         pos_y += height
 
     if legend:
-        legend_elements = [Patch(facecolor=plt.cm.tab10(i), edgecolor='k')
+        legend_elements = [Patch(facecolor=colors[i], edgecolor='k')
                            for i in range(len(cont.index))]
         legend_labels = [str(index) for index in cont.index]
         ax.legend(legend_elements, legend_labels)

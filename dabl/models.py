@@ -33,11 +33,12 @@ from .search import GridSuccessiveHalving
 
 
 def _format_scores(scores):
-    return " ".join(
-        ('{}: {:.3f}'.format(name, score) for name, score in scores.items()))
+    return " ".join(('{}: {:.3f}'.format(name, score)
+                     for name, score in scores.items()))
 
 
 class _DablBaseEstimator(BaseEstimator):
+
     @if_delegate_has_method(delegate='est_')
     def predict_proba(self, X):
         return self.est_.predict_proba(X)
@@ -73,14 +74,9 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore',
                                         category=UndefinedMetricWarning)
-                test_scores = _fit_and_score(estimator,
-                                             X,
-                                             y,
-                                             scorer=scorers,
-                                             train=train,
-                                             test=test,
-                                             parameters={},
-                                             fit_params={},
+                test_scores = _fit_and_score(estimator, X, y, scorer=scorers,
+                                             train=train, test=test,
+                                             parameters={}, fit_params={},
                                              verbose=self.verbose)[0]
             res.append(test_scores)
 
@@ -130,13 +126,12 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         # This could/should be solved with dask?
         if isinstance(self, RegressorMixin):
             # this is how inheritance works, right?
-            cv = KFold(n_splits=5,
-                       shuffle=self.shuffle,
+            cv = KFold(n_splits=5, shuffle=self.shuffle,
                        random_state=self.random_state)
         elif isinstance(self, ClassifierMixin):
-            cv = StratifiedKFold(n_splits=5,
-                                 shuffle=self.shuffle,
-                                 random_state=self.random_state)
+            cv = StratifiedKFold(
+                n_splits=5, shuffle=self.shuffle,
+                random_state=self.random_state)
         data_preproc = []
         for i, (train, test) in enumerate(cv.split(X, y)):
             # maybe do two levels of preprocessing
@@ -159,7 +154,8 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
             if scores[rank_scoring] > self.current_best_[rank_scoring]:
                 if self.verbose:
                     print("=== new best {} (using {}):".format(
-                        scores.name, rank_scoring))
+                        scores.name,
+                        rank_scoring))
                     print(_format_scores(scores))
                     print()
 
@@ -167,7 +163,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
                 best_est = est
         if self.verbose:
             print("\nBest model:\n{}\nBest Scores:\n{}".format(
-                nice_repr(best_est), _format_scores(self.current_best_)))
+                  nice_repr(best_est), _format_scores(self.current_best_)))
         if self.refit:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', UserWarning)
@@ -205,12 +201,8 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
         Best estimator found.
 
     """
-    def __init__(self,
-                 refit=True,
-                 random_state=None,
-                 verbose=1,
-                 type_hints=None,
-                 shuffle=True):
+    def __init__(self, refit=True, random_state=None, verbose=1,
+                 type_hints=None, shuffle=True):
         self.verbose = verbose
         self.random_state = random_state
         self.refit = refit
@@ -228,20 +220,18 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
 
         if target_type == "binary":
             minority_class = y.value_counts().index[1]
-            my_average_precision_scorer = make_scorer(average_precision_score,
-                                                      pos_label=minority_class,
-                                                      needs_threshold=True)
-            scoring = {
-                'accuracy': 'accuracy',
-                'average_precision': my_average_precision_scorer,
-                'roc_auc': 'roc_auc',
-                'recall_macro': 'recall_macro',
-                'f1_macro': 'f1_macro'
-            }
+            my_average_precision_scorer = make_scorer(
+                average_precision_score, pos_label=minority_class,
+                needs_threshold=True)
+            scoring = {'accuracy': 'accuracy',
+                       'average_precision': my_average_precision_scorer,
+                       'roc_auc': 'roc_auc',
+                       'recall_macro': 'recall_macro',
+                       'f1_macro': 'f1_macro'
+                       }
         elif target_type == "multiclass":
-            scoring = [
-                'accuracy', 'recall_macro', 'precision_macro', 'f1_macro'
-            ]
+            scoring = ['accuracy', 'recall_macro', 'precision_macro',
+                       'f1_macro']
         else:
             raise ValueError("Unknown target type: {}".format(target_type))
         return y, scoring
@@ -290,12 +280,8 @@ class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
     shuffle : boolean, default=True
         Whether to shuffle the training set in cross-validation.
     """
-    def __init__(self,
-                 refit=True,
-                 random_state=None,
-                 verbose=1,
-                 type_hints=None,
-                 shuffle=True):
+    def __init__(self, refit=True, random_state=None, verbose=1,
+                 type_hints=None, shuffle=True):
         self.verbose = verbose
         self.refit = refit
         self.random_state = random_state
@@ -387,12 +373,8 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         Best estimator (pipeline) found during search.
 
     """
-    def __init__(self,
-                 n_jobs=None,
-                 force_exhaust_budget=True,
-                 verbose=0,
-                 type_hints=None,
-                 portfolio='baseline'):
+    def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0,
+                 type_hints=None, portfolio='baseline'):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.force_exhaust_budget = force_exhaust_budget
@@ -448,7 +430,8 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         # copy and paste from above?!
         if ((y is None and target_col is None)
                 or (y is not None) and (target_col is not None)):
-            raise ValueError("Need to specify either y or target_col.")
+            raise ValueError(
+                "Need to specify either y or target_col.")
         X, y = _validate_Xyt(X, y, target_col, do_clean=False)
         if not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(X)
@@ -471,15 +454,10 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         param_grid = [{'classifier': [est]} for est in estimators]
         gs = GridSuccessiveHalving(
             ratio=ratio,
-            estimator=pipe,
-            param_grid=param_grid,
+            estimator=pipe, param_grid=param_grid,
             force_exhaust_budget=self.force_exhaust_budget,
-            verbose=self.verbose,
-            cv=cv,
-            error_score='raise',
-            scoring=self.scoring_,
-            refit='recall_macro',
-            n_jobs=self.n_jobs)
+            verbose=self.verbose, cv=cv, error_score='raise',
+            scoring=self.scoring_, refit='recall_macro', n_jobs=self.n_jobs)
         self.search_ = gs
         with sklearn.config_context(print_changed_only=True):
             gs.fit(X, y)

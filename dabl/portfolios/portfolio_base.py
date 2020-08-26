@@ -6,6 +6,7 @@ from sklearn.svm import SVC
 
 enable_hist_gradient_boosting
 
+
 def portfolio_base():
     base = [
         LogisticRegression(C=1, solver='lbfgs', multi_class='multinomial'),

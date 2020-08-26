@@ -3,6 +3,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 
 enable_hist_gradient_boosting
 
+
 def portfolio_hgb():
     hgb = [
         HistGradientBoostingClassifier(l2_regularization=1e-06,

@@ -6,6 +6,7 @@ from sklearn.svm import SVC
 
 enable_hist_gradient_boosting
 
+
 def portfolio_mixed():
     mixed = [
         HistGradientBoostingClassifier(l2_regularization=1e-06,

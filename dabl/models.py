@@ -370,8 +370,8 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
     est_ : sklearn estimator
         Best estimator (pipeline) found during search.
-    """
 
+    """
     def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0,
                  type_hints=None, portfolio='baseline'):
         self.verbose = verbose

@@ -358,9 +358,10 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
              classifiers with default parameters, 'hgb' for
              high-performing HistGradientBoostingClassifiers,
              'svc' for high-performing support vector classifiers,
+             'rf' for high-performing random forest classifiers,
+             'lr' for high-performing logistic regression classifiers,
              'mixed' for a portfolio of different high-performing
              classifiers.
-
 
     Attributes
     ----------

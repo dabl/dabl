@@ -279,7 +279,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     inferred_types = X.apply(pd.api.types.infer_dtype)
     _FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
     _INTEGER_TYPES = ['integer', 'mixed-integer']
-    _DATE_TYPES = ['datetime64', 'datetime', 'date', 'timedelta64', 'timedelta', 'time', 'period']
+    _DATE_TYPES = ['datetime64', 'datetime', 'date',
+                   'timedelta64', 'timedelta', 'time', 'period']
     _OBJECT_TYPES = ['string', 'bytes', 'mixed']
     _CATEGORICAL_TYPES = ['categorical', 'boolean']
     floats = inferred_types.isin(_FLOAT_TYPES)

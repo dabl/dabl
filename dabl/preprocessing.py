@@ -278,10 +278,11 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     kinds = dtypes.apply(lambda x: x.kind)
     inferred_types = X.apply(pd.api.types.infer_dtype)
     _FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
-    _INTEGER_TYPES = ['integer', 'mixed-integer']
+    _INTEGER_TYPES = ['integer']
     _DATE_TYPES = ['datetime64', 'datetime', 'date',
                    'timedelta64', 'timedelta', 'time', 'period']
-    _OBJECT_TYPES = ['string', 'bytes', 'mixed']
+    # FIXME we should be able to do better for mixed-integer
+    _OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
     _CATEGORICAL_TYPES = ['categorical', 'boolean']
     floats = inferred_types.isin(_FLOAT_TYPES)
     integers = inferred_types.isin(_INTEGER_TYPES)
@@ -331,7 +332,6 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     else:
         dirty_float = clean_float_string = pd.Series(0, index=X.columns,
                                                      dtype=bool)
-
     # using integers or string as categories only if low cardinality
     few_entries = n_values < max_int_cardinality
     # constant features are useless

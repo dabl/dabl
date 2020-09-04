@@ -273,11 +273,22 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         if v == 'continuous':
             binary[k] = False
 
+    inferred_types = pd.api.types.infer_dtype(X, skipna=True)
     dtypes = X.dtypes
     kinds = dtypes.apply(lambda x: x.kind)
-    # FIXME use pd.api.type.is_string_dtype etc maybe
-    floats = kinds == "f"
-    integers = (kinds == "i") | (kinds == "u")
+    inferred_types = X.apply(pd.api.types.infer_dtype)
+    _FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
+    _INTEGER_TYPES = ['integer', 'mixed-integer']
+    _DATE_TYPES = ['datetime64', 'datetime', 'date', 'timedelta64', 'timedelta', 'time', 'period']
+    _OBJECT_TYPES = ['string', 'bytes', 'mixed']
+    _CATEGORICAL_TYPES = ['categorical', 'boolean']
+    floats = inferred_types.isin(_FLOAT_TYPES)
+    integers = inferred_types.isin(_INTEGER_TYPES)
+    categorical = inferred_types.isin(_CATEGORICAL_TYPES)
+    objects = inferred_types.isin(_OBJECT_TYPES)
+    dates = inferred_types.isin(_DATE_TYPES)
+    other = - (floats | integers | objects | dates | categorical)
+    assert not other.any()
     # check if float column is actually all integers
     # we'll treat them as int for now.
     for col, isfloat in floats.items():
@@ -311,10 +322,6 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
             warn("Suspiciously looks like an index: {}, but unsure,"
                  " so keeping it for now".format(warn_for), UserWarning)
 
-    categorical = dtypes == 'category'
-    objects = (kinds == "O") & ~categorical  # FIXME string?
-    dates = kinds == "M"
-    other = - (floats | integers | objects | dates | categorical)
     # check if we can cast strings to float
     # we don't need to cast all, could so something smarter?
     if objects.any():

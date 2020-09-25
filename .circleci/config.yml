@@ -50,7 +50,7 @@ jobs:
       - run: ls -ltrh doc/_build/html/
       - deploy:
           command: |
-              if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
+              if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
                 bash ci_scripts/circle/push_doc.sh doc/_build/html/
               fi
 

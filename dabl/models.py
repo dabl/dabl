@@ -77,7 +77,12 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
                 test_scores = _fit_and_score(estimator, X, y, scorer=scorers,
                                              train=train, test=test,
                                              parameters={}, fit_params={},
-                                             verbose=self.verbose)[0]
+                                             verbose=self.verbose)
+                if isinstance(test_scores, dict):
+                    test_scores = test_scores['test_scores']
+                else:
+                    test_scores = test_scores[0]
+                # FIXME version compatibility?
             res.append(test_scores)
 
         res_mean = pd.DataFrame(res).mean(axis=0)
@@ -148,7 +153,10 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         self.current_best_ = {rank_scoring: -np.inf}
         for est in estimators:
             set_random_state(est, self.random_state)
-            scorers, _ = _check_multimetric_scoring(est, self.scoring_)
+            scorers = _check_multimetric_scoring(est, self.scoring_)
+            if not isinstance(scorers, dict):
+                # before sklearn 0.24 it returned a tuple
+                scorers = scorers[0]
             scores = self._evaluate_one(est, data_preproc, scorers)
             # make scoring configurable
             if scores[rank_scoring] > self.current_best_[rank_scoring]:

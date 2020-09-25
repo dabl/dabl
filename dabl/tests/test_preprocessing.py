@@ -97,6 +97,17 @@ def test_continuous_castable():
     types = detect_types(X)
     assert types.continuous['a']
 
+#@pytest.mark.parametrize("null_object", [np.nan, None])  # FIXME in sklearn 0.24?
+@pytest.mark.parametrize("null_object", [np.nan])
+def test_boolean_and_nan(null_object):
+    X = pd.DataFrame({'a': [True, False, True, False, null_object]})
+    types = detect_types(X)
+    assert types.categorical.a
+
+    X_preprocessed = EasyPreprocessor().fit_transform(X)
+    assert X_preprocessed.shape[1] == 4
+    assert all(np.unique(X_preprocessed) == [0, 1])
+
 
 def test_dirty_float_single_warning():
     with warnings.catch_warnings(record=True) as w:

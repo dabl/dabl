@@ -23,6 +23,14 @@ fi
 # Absolute path needed because we use cd further down in this script
 GENERATED_DOC_DIR=$(readlink -f $GENERATED_DOC_DIR)
 
+if [ "$CIRCLE_BRANCH" = "master" ]
+then
+    dir=dev
+else
+    # Strip off .X
+    dir="${CIRCLE_BRANCH}"
+fi
+
 MSG="Pushing the docs to $dir/ for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"
 
 cd $HOME

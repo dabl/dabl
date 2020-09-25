@@ -1,7 +1,7 @@
 Release History
 ===============
 
-dabl 0.1.10
+dabl 0.1.9
 -------------
 - Fix bug in type detection when a column contained boolean data and missing values, :issue:`256` by :user:`amueller`.
 - Bundle LICENSE file with project in release, :issue:`253` by :user:`dhirschfeld`.

@@ -261,13 +261,9 @@ class CustomBaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         """
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
-        if scoring
-        scorers = _check_multimetric_scoring(
+
+        scorers, self.multimetric_ = _check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
-        if not isinstance(scorers, dict):
-                # before sklearn 0.24 it returned a tuple
-                scorers = scorers[0]
-        self.multimetric_ = len(self.scorers) > 1
 
         if self.multimetric_:
             if self.refit is not False and (

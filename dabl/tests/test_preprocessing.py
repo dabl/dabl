@@ -97,7 +97,7 @@ def test_continuous_castable():
     types = detect_types(X)
     assert types.continuous['a']
 
-#@pytest.mark.parametrize("null_object", [np.nan, None])  # FIXME in sklearn 0.24?
+# @pytest.mark.parametrize("null_object", [np.nan, None]) FIXME in sklearn
 @pytest.mark.parametrize("null_object", [np.nan])
 def test_boolean_and_nan(null_object):
     X = pd.DataFrame({'a': [True, False, True, False, null_object]})

@@ -259,3 +259,26 @@ def test_na_vals_reg_plot_raise_warning():
         plot_regression_categorical(X, 'target_col',
                                     scatter_alpha=scatter_alpha,
                                     scatter_size=scatter_size)
+
+
+def test_plot_regression_continuous_with_target_outliers():
+    df = pd.DataFrame(
+        data={
+            "feature": np.random.randint(low=1, high=100, size=200),
+            # target values are bound between 50 and 100
+            "target": np.random.randint(low=50, high=100, size=200)
+            }
+    )
+    scatter_alpha = _get_scatter_alpha('auto', df['target'])
+    scatter_size = _get_scatter_size('auto', df['target'])
+    # append single outlier record with target value 0
+    df = df.append({"feature": 50, "target": 0}, ignore_index=True)
+
+    with pytest.warns(
+        UserWarning,
+        match="Dropped 1 outliers in column target."
+    ):
+        plot_regression_continuous(df, 'target',
+                                   scatter_alpha=scatter_alpha,
+                                   scatter_size=scatter_size
+                                   )

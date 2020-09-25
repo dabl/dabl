@@ -58,6 +58,10 @@ def plot_regression_continuous(X, target_col, types=None,
         warn("Missing values in target_col have been removed for regression",
              UserWarning)
 
+    if drop_outliers:
+        inliers = _find_inliers(X.loc[:, target_col])
+        X = X.loc[inliers, :]
+
     features = X.loc[:, types.continuous]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)

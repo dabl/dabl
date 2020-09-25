@@ -1,6 +1,9 @@
 Release History
 ===============
 
+dabl 0.2.0 (current development)
+--------------------------------
+
 dabl 0.1.9
 -------------
 - Fix bug in type detection when a column contained boolean data and missing values, :issue:`256` by :user:`amueller`.

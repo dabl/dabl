@@ -76,11 +76,11 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore',
                                         category=UndefinedMetricWarning)
-                test_scores = _fit_and_score(estimator, X, y, scorer=scorers,
-                                             train=train, test=test,
-                                             parameters={}, fit_params={},
-                                             verbose=self.verbose)[0]
-            res.append(test_scores)
+                scores = _fit_and_score(estimator, X, y, scorer=scorers,
+                                        train=train, test=test,
+                                        parameters={}, fit_params={},
+                                        verbose=self.verbose)
+            res.append(scores['test_scores'])
 
         res_mean = pd.DataFrame(res).mean(axis=0)
         try:
@@ -150,7 +150,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         self.current_best_ = {rank_scoring: -np.inf}
         for est in estimators:
             set_random_state(est, self.random_state)
-            scorers, _ = _check_multimetric_scoring(est, self.scoring_)
+            scorers = _check_multimetric_scoring(est, self.scoring_)
             scores = self._evaluate_one(est, data_preproc, scorers)
             # make scoring configurable
             if scores[rank_scoring] > self.current_best_[rank_scoring]:
@@ -342,10 +342,11 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
     n_jobs : int, default=None
         Number of processes to spawn for parallelizing the search.
 
-    force_exhaust_budget : bool, default=True
-        Whether to ensure at least one model is trained on the full
-        dataset in successive halving.
-        See the documentation of successive halving for details.
+    min_resources : {‘exhaust’, ‘smallest’} or int, default=’exhaust’
+        The minimum amount of resource that any candidate is allowed to use
+        for a given iteration.  Equivalently, this defines the amount of
+        resources r0 that are allocated for each candidate at the first iteration.
+        See the documentation of HalvingGridSearchCV for more information.
 
     verbose : integer, default=0
         Verbosity. Higher means more output.
@@ -374,11 +375,11 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         Best estimator (pipeline) found during search.
 
     """
-    def __init__(self, n_jobs=None, force_exhaust_budget=True, verbose=0,
+    def __init__(self, n_jobs=None, min_resources='exhaust', verbose=0,
                  type_hints=None, portfolio='baseline'):
         self.verbose = verbose
         self.n_jobs = n_jobs
-        self.force_exhaust_budget = force_exhaust_budget
+        self.min_resources = min_resources
         self.type_hints = type_hints
         self.portfolio = portfolio
 
@@ -441,7 +442,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         self.feature_names_ = X.columns
         self.types_ = types
         cv = 5
-        ratio = 3
+        factor = 3
 
         y, self.scoring_ = self._preprocess_target(y)
         self.log_ = []
@@ -454,9 +455,9 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
         estimators = self._get_estimators()
         param_grid = [{'classifier': [est]} for est in estimators]
         gs = HalvingGridSearchCV(
-            ratio=ratio,
+            factor=factor,
             estimator=pipe, param_grid=param_grid,
-            force_exhaust_budget=self.force_exhaust_budget,
+            min_resources=self.min_resources,
             verbose=self.verbose, cv=cv, error_score='raise',
             scoring=self.scoring_, refit='recall_macro', n_jobs=self.n_jobs)
         self.search_ = gs

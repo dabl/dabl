@@ -32,7 +32,7 @@ if [[ "$SKLEARN_VERSION" == "dev" ]]
 then
     pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 else
-    conda install --yes scikit-learn=$SKLEARN_VERSION
+    conda install --yes scikit-learn=$SKLEARN_VERSION --pre
 fi
 
 

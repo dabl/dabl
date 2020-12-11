@@ -24,7 +24,8 @@ except ImportError:
     from sklearn.utils.testing import set_random_state
 
 from sklearn.dummy import DummyClassifier
-from sklearn.model_selection import GridSuccessiveHalving
+from sklearn.experimental import enable_halving_search_cv
+from sklearn.model_selection import HalvingGridSearchCV
 
 
 from .preprocessing import EasyPreprocessor, detect_types
@@ -366,8 +367,8 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    search_ : SuccessiveHalving instance
-        Fitted GridSuccessiveHalving instance for inspection.
+    search_ : HalvingGridSearchCV instance
+        Fitted HalvingGridSearchCV instance for inspection.
 
     est_ : sklearn estimator
         Best estimator (pipeline) found during search.
@@ -452,7 +453,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
 
         estimators = self._get_estimators()
         param_grid = [{'classifier': [est]} for est in estimators]
-        gs = GridSuccessiveHalving(
+        gs = HalvingGridSearchCV(
             ratio=ratio,
             estimator=pipe, param_grid=param_grid,
             force_exhaust_budget=self.force_exhaust_budget,

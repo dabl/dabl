@@ -1,37 +1,15 @@
-from math import ceil, floor, log
-from abc import abstractmethod
+from sklearn.experimental import enable_halving_search_cv
+from sklearn.utils import deprecated
+from sklearn.model_selection import HalvingGridSearchCV  as HalvingGridSearchCV
+from sklearn.model_selection import HalvingRandomSearchCV  as HalvingRandomSearchCV
 
-import numpy as np
-from sklearn.model_selection._search import _check_param_grid
-from sklearn.model_selection import ParameterGrid, ParameterSampler
-from sklearn.utils import check_random_state
-from sklearn.utils.deprecation import deprecated
-from sklearn.utils.validation import _num_samples
-from sklearn.base import is_classifier
-from sklearn.model_selection import GridSuccessiveHalving  as GridSuccessiveHalvingSKL
-from sklearn.model_selection import RandomSuccessiveHalving  as RandomSuccessiveHalvingSKL
-
-
-from ._search import CustomBaseSearchCV
-from ._resample import resample
 
 __all__ = ['GridSuccessiveHalving', 'RandomSuccessiveHalving']
 
 
-def _refit_callable(results):
-    # Custom refit callable to return the index of the best candidate. We want
-    # the best candidate out of the last iteration. By default BaseSearchCV
-    # would return the best candidate out of all iterations.
-
-    last_iter = np.max(results['iter'])
-    sorted_indices = np.argsort(results['mean_test_score'])[::-1]
-    best_index = next(i for i in sorted_indices
-                      if results['iter'][i] == last_iter)
-    return best_index
-
 @deprecated("GridSuccessiveHalving was upstreamed to sklearn,"
             " please import from sklearn.model_selection.")
-class GridSuccessiveHalving(GridSuccessiveHalvingSKL):
+class GridSuccessiveHalving(HalvingGridSearchCV):
     """Grid-search with successive halving.
 
     The search strategy for hyper-parameter optimization starts evaluating all
@@ -307,7 +285,7 @@ class GridSuccessiveHalving(GridSuccessiveHalvingSKL):
 
 @deprecated("RandomSuccessiveHalving was upstreamed to sklearn,"
             " please import from sklearn.model_selection.")
-class RandomSuccessiveHalving(RandomSuccessiveHalvingSKL):
+class RandomSuccessiveHalving(HalvingRandomSearchCV):
     """Randomized search with successive halving.
 
     The search strategy for hyper-parameter optimization starts evaluating all

@@ -24,12 +24,13 @@ except ImportError:
     from sklearn.utils.testing import set_random_state
 
 from sklearn.dummy import DummyClassifier
+from sklearn.model_selection import GridSuccessiveHalving
+
 
 from .preprocessing import EasyPreprocessor, detect_types
 from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
 from .utils import nice_repr, _validate_Xyt
-from .search import GridSuccessiveHalving
 
 
 def _format_scores(scores):

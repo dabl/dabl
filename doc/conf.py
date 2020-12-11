@@ -40,6 +40,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.linkcode',
     'numpydoc',
+    'sphinx_issues',
     'sphinx_gallery.gen_gallery',
     'matplotlib.sphinxext.plot_directive'
 ]
@@ -149,6 +150,7 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'dabldoc'
 
+issues_github_path = 'dabl/dabl'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 # intersphinx configuration

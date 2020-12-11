@@ -222,6 +222,7 @@ def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None, legend=True):
     pos_y = 0
     positions_y = []
     n_cols = cont.shape[1]
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for i, col in enumerate(cont.columns):
         height = cont[col].sum()
         positions_y.append(pos_y + height / 2)
@@ -229,7 +230,7 @@ def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None, legend=True):
         pos_x = 0
         for j, row in enumerate(cont[col]):
             width = row / height
-            color = plt.cm.tab10(j)
+            color = colors[j]
             if vary_lightness:
                 color = _lighten_color(color, (i + 1) / (n_cols + 1))
             rect = Rectangle((pos_x, pos_y), width, height, edgecolor='k',
@@ -239,7 +240,7 @@ def mosaic_plot(data, rows, cols, vary_lightness=False, ax=None, legend=True):
         pos_y += height
 
     if legend:
-        legend_elements = [Patch(facecolor=plt.cm.tab10(i), edgecolor='k')
+        legend_elements = [Patch(facecolor=colors[i], edgecolor='k')
                            for i in range(len(cont.index))]
         legend_labels = [str(index) for index in cont.index]
         ax.legend(legend_elements, legend_labels)
@@ -511,7 +512,7 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=True,
     >>> from dabl.datasets import load_adult
     >>> data = load_adult()
     >>> class_hists(data, "age", "gender", legend=True)
-    <matplotlib...
+    <AxesSubplot:xlabel='age'>
     """
     col_data = data[column].dropna()
 

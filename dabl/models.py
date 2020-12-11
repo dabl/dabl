@@ -24,7 +24,7 @@ except ImportError:
     from sklearn.utils.testing import set_random_state
 
 from sklearn.dummy import DummyClassifier
-from sklearn.experimental import enable_halving_search_cv
+from sklearn.experimental import enable_halving_search_cv # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 
 
@@ -345,8 +345,9 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
     min_resources : {‘exhaust’, ‘smallest’} or int, default=’exhaust’
         The minimum amount of resource that any candidate is allowed to use
         for a given iteration.  Equivalently, this defines the amount of
-        resources r0 that are allocated for each candidate at the first iteration.
-        See the documentation of HalvingGridSearchCV for more information.
+        resources r0 that are allocated for each candidate at the first
+        iteration. See the documentation of HalvingGridSearchCV for more
+        information.
 
     verbose : integer, default=0
         Verbosity. Higher means more output.

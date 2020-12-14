@@ -3,7 +3,9 @@ Release History
 
 dabl 0.2.0 (current development)
 --------------------------------
-
+- Rely on the Successive Halving implementation from scikit-learn 0.24, removing the old implementation.
+  Consequently the search module in dabl has been deprecated and the minimum version requirement of scikit-learn is now 0.24.
+ 
 dabl 0.1.9
 -------------
 - Fix bug in type detection when a column contained boolean data and missing values, :issue:`256` by :user:`amueller`.

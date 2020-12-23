@@ -159,11 +159,11 @@ def guess_ordinal(values):
 def _string_is_date(series):
     try:
         pd.to_datetime(series[:10])
-    except ParserError:
+    except (ParserError, pd.errors.OutOfBoundsDatetime):
         return False
     try:
         pd.to_datetime(series)
-    except ParserError:
+    except (ParserError, pd.errors.OutOfBoundsDatetime):
         return False
     return True
 
@@ -179,8 +179,8 @@ def _find_string_floats(X, dirty_float_threshold):
             # already know it's clean
             continue
         X_col = X[col]
-        common_values = X_col.value_counts()[:5].index
-        is_common = X_col.isin(common_values) | X_col.isna()
+        common_distinct_values = X_col.value_counts()[:5].index
+        is_common = X_col.isin(common_distinct_values) | X_col.isna()
         if is_float.loc[~is_common, col].mean() > dirty_float_threshold:
             dirty_float[col] = 1
 
@@ -229,7 +229,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
 
     max_int_cardinality: int or 'auto', default='auto'
         Maximum number of distinct integers for an integer column
-        to be considered categorical. 'auto' is ``max(42, n_samples/10)``.
+        to be considered categorical. 'auto' is ``max(42, n_samples/100)``.
         Integers are also always considered as continuous variables.
         FIXME not true any more?
 
@@ -275,12 +275,15 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
         max_int_cardinality = max(42, n_samples / 100)
+        if n_samples <= 42:
+            # this is pretty hacky
+            max_int_cardinality = n_samples // 2
     # FIXME only apply nunique to non-continuous?
-    n_values = X.apply(lambda x: x.nunique())
+    n_distinct_values = X.apply(lambda x: x.nunique())
     if verbose > 3:
-        print(n_values)
+        print(n_distinct_values)
 
-    binary = n_values == 2
+    binary = n_distinct_values == 2
     # force binary variables to be continuous
     # if type hints say so
     for k, v in type_hints.items():
@@ -315,7 +318,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     useless = pd.Series(0, index=X.columns, dtype=bool)
 
     # check if we have something that trivially is an index
-    suspicious_index = (n_values == X.shape[0]) & integers
+    suspicious_index = (n_distinct_values == X.shape[0]) & integers
     if suspicious_index.any():
         warn_for = []
         for c in suspicious_index.index[suspicious_index]:
@@ -344,20 +347,26 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         dirty_float = clean_float_string = pd.Series(0, index=X.columns,
                                                      dtype=bool)
     # using integers or string as categories only if low cardinality
-    few_entries = n_values < max_int_cardinality
+    few_entries = (n_distinct_values < max_int_cardinality)
     # constant features are useless
-    useless = (n_values < 2) | useless
+    useless = (n_distinct_values < 2) | useless
     # also throw out near constant:
     near_constant = pd.Series(0, index=X.columns, dtype=bool)
     for col in X.columns:
         if col == target_col:
             continue
         count = X[col].count()
-        if n_values[col] / count > .9:
+        if X[col].isna().mean() > 0.99:
+            # mostly NaN column
+            near_constant[col] = True
+            continue
+
+        if n_distinct_values[col] / count > .9:
             # save some computation
             continue
         if X[col].value_counts().max() / count > near_constant_threshold:
             near_constant[col] = True
+
     if near_constant.any():
         warn("Discarding near-constant features: {}".format(
              near_constant.index[near_constant].tolist()))
@@ -368,7 +377,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
 
     large_cardinality_int = integers & ~few_entries
     # hard coded very low cardinality integers are categorical
-    cat_integers = integers & (n_values <= 5) & ~useless
+    cat_integers = integers & (n_distinct_values <= 5) & ~useless
     low_card_integers = (few_entries & integers
                          & ~binary & ~useless & ~cat_integers)
     non_float_objects = objects & ~dirty_float & ~clean_float_string

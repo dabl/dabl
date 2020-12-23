@@ -2,6 +2,8 @@ from joblib import hash
 import warnings
 from warnings import warn
 
+from dateutil.parser import ParserError
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -154,6 +156,18 @@ def guess_ordinal(values):
     return grad_norm * 1.5 < grad_norm_shuffled
 
 
+def _string_is_date(series):
+    try:
+        pd.to_datetime(series[:10])
+    except ParserError:
+        return False
+    try:
+        pd.to_datetime(series)
+    except ParserError:
+        return False
+    return True
+
+
 def _find_string_floats(X, dirty_float_threshold):
     is_float = X.apply(_float_matching)
     clean_float_string = is_float.all()
@@ -273,9 +287,6 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         if v == 'continuous':
             binary[k] = False
 
-    inferred_types = pd.api.types.infer_dtype(X, skipna=True)
-    dtypes = X.dtypes
-    kinds = dtypes.apply(lambda x: x.kind)
     inferred_types = X.apply(pd.api.types.infer_dtype)
     _FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
     _INTEGER_TYPES = ['integer']
@@ -354,14 +365,16 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     for k, v in type_hints.items():
         if v != "useless" and useless[k]:
             useless[k] = False
+
     large_cardinality_int = integers & ~few_entries
     # hard coded very low cardinality integers are categorical
     cat_integers = integers & (n_values <= 5) & ~useless
     low_card_integers = (few_entries & integers
                          & ~binary & ~useless & ~cat_integers)
     non_float_objects = objects & ~dirty_float & ~clean_float_string
-    cat_string = few_entries & non_float_objects & ~useless
-    free_strings = ~few_entries & non_float_objects
+    date_strings = X.loc[:, non_float_objects].apply(_string_is_date)
+    cat_string = few_entries & non_float_objects & ~useless & ~date_strings
+    free_strings = ~few_entries & non_float_objects & ~date_strings
     continuous = floats | large_cardinality_int | clean_float_string
     categorical = cat_string | binary | categorical | cat_integers
     res = pd.DataFrame(
@@ -369,8 +382,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
          'dirty_float': dirty_float,
          'low_card_int': low_card_integers,
          'categorical': categorical & ~useless,
-         'date': dates,
-         'free_string': free_strings, 'useless': useless,
+         'date': dates | date_strings,
+         'free_string': free_strings, 'useless': useless & ~free_strings,
          })
     # ensure we respected type hints
     for k, v in type_hints.items():

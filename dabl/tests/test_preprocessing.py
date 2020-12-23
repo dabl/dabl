@@ -425,3 +425,25 @@ def test_dirty_float_target_regression():
 
     # check if works for non dirty_float targets
     plot(titanic_data, 'survived')
+
+
+def test_string_types_detection():
+    df = pd.DataFrame({'strings': ['uid123', 'abc4five', 'mqqwen.m,',
+                                   '2cm', 'iddqd'],
+                       'text': ["There once was", "a data scientist",
+                                "that didn't know",
+                                "what type their data was."]})
+    types = detect_types(df)
+    assert types['strings'].free_string
+    assert types['text'].free_string
+
+
+def test_detect_date_types():
+    df = pd.DataFrame({'dates': ["10/3/2010", "1/2/1975", "12/12/1812"],
+                       'more dates': ["1985-7-3", "1985-7-4", "1985-7-5"],
+                       'also times': ['2014-01-01 06:12:39+00:00',
+                                      '2014-01-01 06:51:08+00:00',
+                                      '2014-01-01 09:58:07+00:00']})
+
+    types = detect_types(df)
+    assert types.date.all()

@@ -87,7 +87,7 @@ def test_target_col_not_dropped():
 
 
 def test_convert_cat_to_string():
-    X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3, 'a']})
+    X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3, 'a', 1, 2, 2, 3]})
     X_clean = clean(X)
     assert len(X_clean.a.cat.categories) == 4
 
@@ -179,7 +179,9 @@ def test_detect_types():
 
     res = detect_types(X_cat)
     assert len(res) == 3
-    assert res.categorical.all()
+    assert res.categorical.a
+    assert res.categorical.binary
+    assert res.free_string.second
     assert ~res.continuous.any()
 
     iris = load_iris()
@@ -299,7 +301,7 @@ def test_simple_preprocessor():
     sp = EasyPreprocessor()
     sp.fit(X_cat)
     trans = sp.transform(X_cat)
-    assert trans.shape == (3, 7)  # FIXME should be 6?
+    assert trans.shape == (3, 4)
 
     iris = load_iris()
     sp = EasyPreprocessor()
@@ -428,14 +430,14 @@ def test_dirty_float_target_regression():
 
 
 def test_string_types_detection():
-    df = pd.DataFrame({'strings': ['uid123', 'abc4five', 'mqqwen.m,',
+    df = pd.DataFrame({'strings': ['uid123', 'mqqwen.m,',
                                    '2cm', 'iddqd'],
                        'text': ["There once was", "a data scientist",
                                 "that didn't know",
                                 "what type their data was."]})
     types = detect_types(df)
-    assert types['strings'].free_string
-    assert types['text'].free_string
+    assert types.free_string['strings']
+    assert types.free_string['text']
 
 
 def test_detect_date_types():
@@ -447,3 +449,10 @@ def test_detect_date_types():
 
     types = detect_types(df)
     assert types.date.all()
+
+
+def test_strings_not_binary():
+    df = pd.DataFrame({'binary_lol': ['in soviet russia', 'in soviet russia',
+                                      'the binary is you']})
+    types = detect_types(df)
+    assert types.categorical.binary_lol

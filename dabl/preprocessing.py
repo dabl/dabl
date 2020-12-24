@@ -159,11 +159,13 @@ def guess_ordinal(values):
 def _string_is_date(series):
     try:
         pd.to_datetime(series[:10])
-    except (ParserError, pd.errors.OutOfBoundsDatetime):
+    except (ParserError, pd.errors.OutOfBoundsDatetime, ValueError,
+            TypeError, OverflowError):
         return False
     try:
         pd.to_datetime(series)
-    except (ParserError, pd.errors.OutOfBoundsDatetime):
+    except (ParserError, pd.errors.OutOfBoundsDatetime, ValueError,
+            TypeError, OverflowError):
         return False
     return True
 
@@ -347,7 +349,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         dirty_float = clean_float_string = pd.Series(0, index=X.columns,
                                                      dtype=bool)
     # using integers or string as categories only if low cardinality
-    few_distinct_entries = (n_distinct_values < max_int_cardinality)
+    few_distinct_entries = (n_distinct_values <= max_int_cardinality)
     # constant features are useless
     useless = (n_distinct_values < 2) | useless
     # also throw out near constant:
@@ -384,16 +386,19 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     date_strings = X.loc[:, non_float_objects].apply(_string_is_date)
     cat_string = (few_distinct_entries & non_float_objects
                   & ~useless & ~date_strings)
-    free_strings = ~few_distinct_entries & non_float_objects & ~date_strings
     continuous = floats | large_cardinality_int | clean_float_string
     categorical = cat_string | binary | categorical | cat_integers
+    free_strings = (~few_distinct_entries & non_float_objects
+                    & ~date_strings & ~binary)
+
     res = pd.DataFrame(
         {'continuous': continuous & ~binary & ~useless & ~categorical,
          'dirty_float': dirty_float,
          'low_card_int': low_card_integers,
          'categorical': categorical & ~useless,
-         'date': dates | date_strings,
-         'free_string': free_strings, 'useless': useless & ~free_strings,
+         'date': (dates | date_strings) & ~useless,
+         'free_string': free_strings,
+         'useless': useless & ~free_strings,
          })
     # ensure we respected type hints
     for k, v in type_hints.items():

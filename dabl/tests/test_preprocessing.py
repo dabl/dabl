@@ -456,3 +456,12 @@ def test_strings_not_binary():
                                       'the binary is you']})
     types = detect_types(df)
     assert types.categorical.binary_lol
+
+
+def test_mostly_nan_values():
+    x = np.empty(shape=1000)
+    x[:] = np.NaN
+    x[:3] = 1
+    df = pd.DataFrame({'mostly_empty': x})
+    types = detect_types(df)
+    assert types.useless.mostly_empty

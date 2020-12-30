@@ -203,6 +203,72 @@ def _float_col_is_int(series):
     return True
 
 
+_FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
+_INTEGER_TYPES = ['integer']
+_DATE_TYPES = ['datetime64', 'datetime', 'date',
+               'timedelta64', 'timedelta', 'time', 'period']
+# FIXME we should be able to do better for mixed-integer
+_OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
+_CATEGORICAL_TYPES = ['categorical', 'boolean']
+
+
+def _type_detection_int(series, max_int_cardinality='auto'):
+    n_distinct_values = series.nunique()
+    if n_distinct_values == len(series):
+        # could be an index
+        if series.iloc[0] == 0:
+            if (series == np.arange(len(series))).all():
+                # definitely an index
+                return 'useless'
+        elif series.iloc[0] == 1:
+            if (series == np.arange(1, len(series) + 1)).all():
+                # definitely an index
+                return 'useless'
+    if n_distinct_values > max_int_cardinality:
+        return 'continuous'
+    else:
+        return 'categorical'
+
+
+def _type_detection_float(series, max_int_cardinality='auto'):
+    if _float_col_is_int(series):
+        return _type_detection_int(
+            series, max_int_cardinality=max_int_cardinality)
+    pass
+
+
+def _type_detection_object(series, max_int_cardinality='auto'):
+    clean_float_string, dirty_float = _find_string_floats(
+            series, dirty_float_threshold)
+    if dirty_float.any():
+        return 'dirty_float'
+    elif clean_float_string.any():
+        return _type_detection_float(series.astype(float))
+
+
+def detect_type_series(series, *, max_int_cardinality='auto'):
+    n_distinct_values = series.nunique()
+    if n_distinct_values == 2:
+        return 'categorical'
+    inferred_type = pd.api.types.infer_dtype(series)
+    if inferred_type in _DATE_TYPES:
+        return 'date'
+    elif inferred_type in _CATEGORICAL_TYPES:
+        return 'categorical'
+    elif inferred_type in _FLOAT_TYPES:
+        return _type_detection_float(
+            series, max_int_cardinality=max_int_cardinality)
+    elif inferred_type in _INTEGER_TYPES:
+        return _type_detection_int(
+            series, max_int_cardinality=max_int_cardinality)
+    elif inferred_type in _OBJECT_TYPES:
+        return _type_detection_object(
+            series, max_int_cardinality=max_int_cardinality
+        )
+    else:
+        raise ValueError("WEEEEEIIIRRD")
+
+
 def detect_types(X, type_hints=None, max_int_cardinality='auto',
                  dirty_float_threshold=.9,
                  near_constant_threshold=0.95, target_col=None,
@@ -269,10 +335,6 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
             X.columns[duplicated]))
     if type_hints is None:
         type_hints = dict()
-    # apply type hints drops useless columns,
-    # but in the end we want to check against original columns
-    X_org = X
-    X = _apply_type_hints(X, type_hints=type_hints)
 
     n_samples, n_features = X.shape
     if max_int_cardinality == "auto":
@@ -280,6 +342,14 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         if n_samples <= 42:
             # this is pretty hacky
             max_int_cardinality = n_samples // 2
+
+    # apply type hints drops useless columns,
+    # but in the end we want to check against original columns
+    types_new_impl = X.apply(lambda col: detect_type_series(
+        col, max_int_cardinality=max_int_cardinality))
+    X_org = X
+    X = _apply_type_hints(X, type_hints=type_hints)
+
     # FIXME only apply nunique to non-continuous?
     n_distinct_values = X.apply(lambda x: x.nunique())
     if verbose > 3:
@@ -293,13 +363,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
             binary[k] = False
 
     inferred_types = X.apply(pd.api.types.infer_dtype)
-    _FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
-    _INTEGER_TYPES = ['integer']
-    _DATE_TYPES = ['datetime64', 'datetime', 'date',
-                   'timedelta64', 'timedelta', 'time', 'period']
-    # FIXME we should be able to do better for mixed-integer
-    _OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
-    _CATEGORICAL_TYPES = ['categorical', 'boolean']
+
     floats = inferred_types.isin(_FLOAT_TYPES)
     integers = inferred_types.isin(_INTEGER_TYPES)
     categorical = inferred_types.isin(_CATEGORICAL_TYPES)
@@ -410,6 +474,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     assert (X_org.columns == res.index).all()
 
     assert np.all(res.sum(axis=1) == 1)
+
+    assert (types_new_impl == res).all()
 
     if verbose >= 1:
         print("Detected feature types:")

@@ -93,7 +93,7 @@ def test_convert_cat_to_string():
 
 
 def test_continuous_castable():
-    X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3]})
+    X = pd.DataFrame({'a': [1, 2, 3, '1', 2, 3,  '1.1']})
     types = detect_types(X)
     assert types.continuous['a']
 

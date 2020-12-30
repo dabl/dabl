@@ -171,6 +171,9 @@ def _string_is_date(series):
 
 
 def _find_string_floats(X, dirty_float_threshold):
+    if not isinstance(X, pd.DataFrame):
+        # FIXME workaround to accept series
+        X = pd.DataFrame(X)
     is_float = X.apply(_float_matching)
     clean_float_string = is_float.all()
     # remove 5 most common string values before checking if the rest is float
@@ -234,22 +237,44 @@ def _type_detection_float(series, max_int_cardinality='auto'):
     if _float_col_is_int(series):
         return _type_detection_int(
             series, max_int_cardinality=max_int_cardinality)
-    pass
+    return 'continuous'
 
 
-def _type_detection_object(series, max_int_cardinality='auto'):
+def _type_detection_object(series, *, dirty_float_threshold,
+                           max_int_cardinality='auto'):
     clean_float_string, dirty_float = _find_string_floats(
             series, dirty_float_threshold)
     if dirty_float.any():
         return 'dirty_float'
     elif clean_float_string.any():
-        return _type_detection_float(series.astype(float))
+        return _type_detection_float(
+            series.astype(float), max_int_cardinality=max_int_cardinality)
+    if _string_is_date(series):
+        return 'date'
+    if series.nunique() <= max_int_cardinality:
+        return 'categorical'
+    return "free_string"
 
 
-def detect_type_series(series, *, max_int_cardinality='auto'):
+def detect_type_series(series, *, dirty_float_threshold=0.9,
+                       max_int_cardinality='auto',
+                       near_constant_threshold=0.95, target_col=None):
     n_distinct_values = series.nunique()
+    if series.isna().mean() > 0.99:
+        return 'useless'
+    # infer near-constant-values
+    # fast-pass if n_distinct_values is high
+    count = series.count()
+    if (n_distinct_values < (1 - near_constant_threshold) * count
+            and series.name != target_col):
+        if series.value_counts().max() > near_constant_threshold * count:
+            return 'useless'
+
     if n_distinct_values == 2:
         return 'categorical'
+    elif n_distinct_values == 1:
+        return 'useless'
+
     inferred_type = pd.api.types.infer_dtype(series)
     if inferred_type in _DATE_TYPES:
         return 'date'
@@ -263,7 +288,8 @@ def detect_type_series(series, *, max_int_cardinality='auto'):
             series, max_int_cardinality=max_int_cardinality)
     elif inferred_type in _OBJECT_TYPES:
         return _type_detection_object(
-            series, max_int_cardinality=max_int_cardinality
+            series, max_int_cardinality=max_int_cardinality,
+            dirty_float_threshold=dirty_float_threshold
         )
     else:
         raise ValueError("WEEEEEIIIRRD")
@@ -346,7 +372,9 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     # apply type hints drops useless columns,
     # but in the end we want to check against original columns
     types_new_impl = X.apply(lambda col: detect_type_series(
-        col, max_int_cardinality=max_int_cardinality))
+        col, max_int_cardinality=max_int_cardinality,
+        near_constant_threshold=near_constant_threshold,
+        target_col=target_col))
     X_org = X
     X = _apply_type_hints(X, type_hints=type_hints)
 
@@ -381,28 +409,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
                 integers[col] = True
                 floats[col] = False
 
-    useless = pd.Series(0, index=X.columns, dtype=bool)
-
-    # check if we have something that trivially is an index
-    suspicious_index = (n_distinct_values == X.shape[0]) & integers
-    if suspicious_index.any():
-        warn_for = []
-        for c in suspicious_index.index[suspicious_index]:
-            if X[c].iloc[0] == 0:
-                if (X[c] == np.arange(X.shape[0])).all():
-                    # definitely an index
-                    useless[c] = True
-                else:
-                    warn_for.append(c)
-            elif X[c].iloc[0] == 1:
-                if (X[c] == np.arange(1, X.shape[0] + 1)).all():
-                    # definitely an index
-                    useless[c] = True
-                else:
-                    warn_for.append(c)
-        if warn_for:
-            warn("Suspiciously looks like an index: {}, but unsure,"
-                 " so keeping it for now".format(warn_for), UserWarning)
+    useless = detect_indexes(X, n_distinct_values, integers)
 
     # check if we can cast strings to float
     # we don't need to cast all, could so something smarter?
@@ -475,7 +482,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
 
     assert np.all(res.sum(axis=1) == 1)
 
-    assert (types_new_impl == res).all()
+    assert (types_new_impl == res.idxmax(axis=1)).all()
 
     if verbose >= 1:
         print("Detected feature types:")
@@ -495,6 +502,27 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
                 res.index[res.useless].tolist()
             ))
     return res
+
+
+def _detect_index_series(series):
+    if series.iloc[0] == 0:
+        if (series == np.arange(len(series))).all():
+            return True
+    elif series.iloc[0] == 1:
+        if (series == np.arange(1, len(series) + 1)).all():
+            return True
+    return False
+
+
+def detect_indexes(X, n_distinct_values, integers):
+    useless = pd.Series(0, index=X.columns, dtype=bool)
+
+    # check if we have something that trivially is an index
+    suspicious_index = (n_distinct_values == X.shape[0]) & integers
+    if suspicious_index.any():
+        for c in suspicious_index.index[suspicious_index]:
+            useless[c] = _detect_index_series(X[c])
+    return useless
 
 
 def _apply_type_hints(X, type_hints):

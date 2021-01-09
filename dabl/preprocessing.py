@@ -379,7 +379,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         near_constant_threshold=near_constant_threshold,
         target_col=target_col))
     for t in type_hints:
-        types_new_impl[t] = type_hints[t]
+        if t in X.columns:
+            types_new_impl[t] = type_hints[t]
     X_org = X
     X = _apply_type_hints(X, type_hints=type_hints)
 

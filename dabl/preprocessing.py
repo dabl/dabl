@@ -393,27 +393,6 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     return res
 
 
-def _detect_index_series(series):
-    if series.iloc[0] == 0:
-        if (series == np.arange(len(series))).all():
-            return True
-    elif series.iloc[0] == 1:
-        if (series == np.arange(1, len(series) + 1)).all():
-            return True
-    return False
-
-
-def detect_indexes(X, n_distinct_values, integers):
-    useless = pd.Series(0, index=X.columns, dtype=bool)
-
-    # check if we have something that trivially is an index
-    suspicious_index = (n_distinct_values == X.shape[0]) & integers
-    if suspicious_index.any():
-        for c in suspicious_index.index[suspicious_index]:
-            useless[c] = _detect_index_series(X[c])
-    return useless
-
-
 def _apply_type_hints(X, type_hints):
     if type_hints is not None:
         # use type hints to convert columns
@@ -432,10 +411,6 @@ def _apply_type_hints(X, type_hints):
 
 def _select_cont(X):
     return X.columns.str.endswith("_dabl_continuous")
-
-
-def _make_float(X):
-    return X.astype(np.float, copy=False)
 
 
 def clean(X, type_hints=None, return_types=False,

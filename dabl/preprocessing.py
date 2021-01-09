@@ -261,7 +261,7 @@ def _type_detection_object(series, *, dirty_float_threshold,
 
 def detect_type_series(series, *, dirty_float_threshold=0.9,
                        max_int_cardinality='auto',
-                       near_constant_threshold=0.95, target_col=None, type_hints=None):
+                       near_constant_threshold=0.95, target_col=None):
     n_distinct_values = series.nunique()
     if series.isna().mean() > 0.99:
         return 'useless'
@@ -348,11 +348,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         Boolean dataframe of detected types. Rows are columns in input X,
         columns are possible types (see above).
     """
-    # FIXME integer indices are not dropped!
-    # TODO detect encoding missing values as strings /weird values
     # TODO detect top coding
-    # FIXME dirty int is detected as dirty float right now
-    # TODO discard all constant and binary columns at the beginning?
     # TODO subsample large datsets? one level up?
     if not isinstance(X, pd.DataFrame):
         raise TypeError("X is not a dataframe. Convert or call `clean`.")
@@ -365,148 +361,35 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     if type_hints is None:
         type_hints = dict()
 
-    n_samples, n_features = X.shape
+    n_samples, _ = X.shape
     if max_int_cardinality == "auto":
         max_int_cardinality = max(42, n_samples / 100)
         if n_samples <= 42:
             # this is pretty hacky
             max_int_cardinality = n_samples // 2
 
-    # apply type hints drops useless columns,
-    # but in the end we want to check against original columns
-    types_new_impl = X.apply(lambda col: detect_type_series(
+    types_series = X.apply(lambda col: detect_type_series(
         col, max_int_cardinality=max_int_cardinality,
         near_constant_threshold=near_constant_threshold,
-        target_col=target_col))
+        target_col=target_col, dirty_float_threshold=dirty_float_threshold))
+
     for t in type_hints:
         if t in X.columns:
-            types_new_impl[t] = type_hints[t]
-    X_org = X
-    X = _apply_type_hints(X, type_hints=type_hints)
+            types_series[t] = type_hints[t]
 
-    # FIXME only apply nunique to non-continuous?
-    n_distinct_values = X.apply(lambda x: x.nunique())
-    if verbose > 3:
-        print(n_distinct_values)
+    known_types = ['continuous', 'dirty_float', 'low_card_int', 'categorical',
+                   'date', 'free_string', 'useless']
 
-    binary = n_distinct_values == 2
-    # force binary variables to be continuous
-    # if type hints say so
-    for k, v in type_hints.items():
-        if v == 'continuous':
-            binary[k] = False
-
-    inferred_types = X.apply(pd.api.types.infer_dtype)
-
-    floats = inferred_types.isin(_FLOAT_TYPES)
-    integers = inferred_types.isin(_INTEGER_TYPES)
-    categorical = inferred_types.isin(_CATEGORICAL_TYPES)
-    objects = inferred_types.isin(_OBJECT_TYPES)
-    dates = inferred_types.isin(_DATE_TYPES)
-    other = - (floats | integers | objects | dates | categorical)
-    assert not other.any()
-    # check if float column is actually all integers
-    # we'll treat them as int for now.
-    for col, isfloat in floats.items():
-        if isfloat and (col not in type_hints
-                        or type_hints[col] != "continuous"):
-            if _float_col_is_int(X[col]):
-                # it's int!
-                integers[col] = True
-                floats[col] = False
-
-    useless = detect_indexes(X, n_distinct_values, integers)
-
-    # check if we can cast strings to float
-    # we don't need to cast all, could so something smarter?
-    if objects.any():
-        clean_float_string, dirty_float = _find_string_floats(
-            X.loc[:, objects], dirty_float_threshold)
-    else:
-        dirty_float = clean_float_string = pd.Series(0, index=X.columns,
-                                                     dtype=bool)
-    # using integers or string as categories only if low cardinality
-    few_distinct_entries = (n_distinct_values <= max_int_cardinality)
-    # constant features are useless
-    useless = (n_distinct_values < 2) | useless
-    # also throw out near constant:
-    near_constant = pd.Series(0, index=X.columns, dtype=bool)
-    for col in X.columns:
-        if col == target_col:
-            continue
-        count = X[col].count()
-        if X[col].isna().mean() > 0.99:
-            # mostly NaN column
-            near_constant[col] = True
-            continue
-
-        if n_distinct_values[col] / count > .9:
-            # save some computation
-            continue
-        if X[col].value_counts().max() / count > near_constant_threshold:
-            near_constant[col] = True
-
-    if near_constant.any():
-        warn("Discarding near-constant features: {}".format(
-             near_constant.index[near_constant].tolist()))
-    useless = useless | near_constant
-    for k, v in type_hints.items():
-        if v != "useless" and useless[k]:
-            useless[k] = False
-
-    large_cardinality_int = integers & ~few_distinct_entries
-    # hard coded very low cardinality integers are categorical
-    cat_integers = integers & (n_distinct_values <= 5) & ~useless
-    low_card_integers = (few_distinct_entries & integers
-                         & ~binary & ~useless & ~cat_integers)
-    non_float_objects = objects & ~dirty_float & ~clean_float_string
-    date_strings = X.loc[:, non_float_objects].apply(_string_is_date)
-    cat_string = (few_distinct_entries & non_float_objects
-                  & ~useless & ~date_strings)
-    continuous = floats | large_cardinality_int | clean_float_string
-    categorical = cat_string | binary | categorical | cat_integers
-    free_strings = (~few_distinct_entries & non_float_objects
-                    & ~date_strings & ~binary)
-
-    res = pd.DataFrame(
-        {'continuous': continuous & ~binary & ~useless & ~categorical,
-         'dirty_float': dirty_float,
-         'low_card_int': low_card_integers,
-         'categorical': categorical & ~useless,
-         'date': (dates | date_strings) & ~useless,
-         'free_string': free_strings,
-         'useless': useless & ~free_strings,
-         })
-    # ensure we respected type hints
-    for k, v in type_hints.items():
-        res.loc[k, v] = True
-    res = res.fillna(False)
-    res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
-    # reorder res to have the same order as X.columns
-    res = res.loc[X_org.columns]
-    assert (X_org.columns == res.index).all()
+    res = pd.DataFrame({t: types_series == t for t in known_types})
+    assert (X.columns == res.index).all()
 
     assert np.all(res.sum(axis=1) == 1)
 
-    assert (types_new_impl == res.idxmax(axis=1)).all()
+    assert (types_series == res.idxmax(axis=1)).all()
 
     if verbose >= 1:
         print("Detected feature types:")
-        desc = "{} float, {} int, {} object, {} date, {} other".format(
-            floats.sum(), integers.sum(), objects.sum(), dates.sum(),
-            other.sum())
-        print(desc)
-        print("Interpreted as:")
         print(res.sum())
-    if verbose >= 2:
-        if dirty_float.any():
-            print("WARN Found dirty floats encoded as strings: {}".format(
-                dirty_float.index[dirty_float].tolist()
-            ))
-        if res.useless.sum() > 0:
-            print("WARN dropped useless columns: {}".format(
-                res.index[res.useless].tolist()
-            ))
     return res
 
 

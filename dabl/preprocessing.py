@@ -229,8 +229,11 @@ def _type_detection_int(series, max_int_cardinality='auto'):
                 return 'useless'
     if n_distinct_values > max_int_cardinality:
         return 'continuous'
-    else:
+    elif n_distinct_values <= 5:
+        # weird hack / edge case
         return 'categorical'
+    else:
+        return 'low_card_int'
 
 
 def _type_detection_float(series, max_int_cardinality='auto'):
@@ -258,7 +261,7 @@ def _type_detection_object(series, *, dirty_float_threshold,
 
 def detect_type_series(series, *, dirty_float_threshold=0.9,
                        max_int_cardinality='auto',
-                       near_constant_threshold=0.95, target_col=None):
+                       near_constant_threshold=0.95, target_col=None, type_hints=None):
     n_distinct_values = series.nunique()
     if series.isna().mean() > 0.99:
         return 'useless'
@@ -375,6 +378,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         col, max_int_cardinality=max_int_cardinality,
         near_constant_threshold=near_constant_threshold,
         target_col=target_col))
+    for t in type_hints:
+        types_new_impl[t] = type_hints[t]
     X_org = X
     X = _apply_type_hints(X, type_hints=type_hints)
 

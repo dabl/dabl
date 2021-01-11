@@ -2,6 +2,8 @@ from joblib import hash
 import warnings
 from warnings import warn
 
+from dateutil.parser import ParserError
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -154,7 +156,24 @@ def guess_ordinal(values):
     return grad_norm * 1.5 < grad_norm_shuffled
 
 
+def _string_is_date(series):
+    try:
+        pd.to_datetime(series[:10])
+    except (ParserError, pd.errors.OutOfBoundsDatetime, ValueError,
+            TypeError, OverflowError):
+        return False
+    try:
+        pd.to_datetime(series)
+    except (ParserError, pd.errors.OutOfBoundsDatetime, ValueError,
+            TypeError, OverflowError):
+        return False
+    return True
+
+
 def _find_string_floats(X, dirty_float_threshold):
+    if not isinstance(X, pd.DataFrame):
+        # FIXME workaround to accept series
+        X = pd.DataFrame(X)
     is_float = X.apply(_float_matching)
     clean_float_string = is_float.all()
     # remove 5 most common string values before checking if the rest is float
@@ -165,8 +184,8 @@ def _find_string_floats(X, dirty_float_threshold):
             # already know it's clean
             continue
         X_col = X[col]
-        common_values = X_col.value_counts()[:5].index
-        is_common = X_col.isin(common_values) | X_col.isna()
+        common_distinct_values = X_col.value_counts()[:5].index
+        is_common = X_col.isin(common_distinct_values) | X_col.isna()
         if is_float.loc[~is_common, col].mean() > dirty_float_threshold:
             dirty_float[col] = 1
 
@@ -185,6 +204,99 @@ def _float_col_is_int(series):
     if (series != series.astype(int)).any():
         return False
     return True
+
+
+_FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
+_INTEGER_TYPES = ['integer']
+_DATE_TYPES = ['datetime64', 'datetime', 'date',
+               'timedelta64', 'timedelta', 'time', 'period']
+# FIXME we should be able to do better for mixed-integer
+_OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
+_CATEGORICAL_TYPES = ['categorical', 'boolean']
+
+
+def _type_detection_int(series, max_int_cardinality='auto'):
+    n_distinct_values = series.nunique()
+    if n_distinct_values == len(series):
+        # could be an index
+        if series.iloc[0] == 0:
+            if (series == np.arange(len(series))).all():
+                # definitely an index
+                return 'useless'
+        elif series.iloc[0] == 1:
+            if (series == np.arange(1, len(series) + 1)).all():
+                # definitely an index
+                return 'useless'
+    if n_distinct_values > max_int_cardinality:
+        return 'continuous'
+    elif n_distinct_values <= 5:
+        # weird hack / edge case
+        return 'categorical'
+    else:
+        return 'low_card_int'
+
+
+def _type_detection_float(series, max_int_cardinality='auto'):
+    if _float_col_is_int(series):
+        return _type_detection_int(
+            series, max_int_cardinality=max_int_cardinality)
+    return 'continuous'
+
+
+def _type_detection_object(series, *, dirty_float_threshold,
+                           max_int_cardinality='auto'):
+    clean_float_string, dirty_float = _find_string_floats(
+            series, dirty_float_threshold)
+    if dirty_float.any():
+        return 'dirty_float'
+    elif clean_float_string.any():
+        return _type_detection_float(
+            series.astype(float), max_int_cardinality=max_int_cardinality)
+    if _string_is_date(series):
+        return 'date'
+    if series.nunique() <= max_int_cardinality:
+        return 'categorical'
+    return "free_string"
+
+
+def detect_type_series(series, *, dirty_float_threshold=0.9,
+                       max_int_cardinality='auto',
+                       near_constant_threshold=0.95, target_col=None):
+    n_distinct_values = series.nunique()
+    if series.isna().mean() > 0.99:
+        return 'useless'
+    # infer near-constant-values
+    # fast-pass if n_distinct_values is high
+    count = series.count()
+
+    if n_distinct_values == 1:
+        return 'useless'
+
+    if (n_distinct_values < (1 - near_constant_threshold) * count
+            and series.name != target_col):
+        if series.value_counts().max() > near_constant_threshold * count:
+            return 'useless'
+    if n_distinct_values == 2:
+        return 'categorical'
+
+    inferred_type = pd.api.types.infer_dtype(series)
+    if inferred_type in _DATE_TYPES:
+        return 'date'
+    elif inferred_type in _CATEGORICAL_TYPES:
+        return 'categorical'
+    elif inferred_type in _FLOAT_TYPES:
+        return _type_detection_float(
+            series, max_int_cardinality=max_int_cardinality)
+    elif inferred_type in _INTEGER_TYPES:
+        return _type_detection_int(
+            series, max_int_cardinality=max_int_cardinality)
+    elif inferred_type in _OBJECT_TYPES:
+        return _type_detection_object(
+            series, max_int_cardinality=max_int_cardinality,
+            dirty_float_threshold=dirty_float_threshold
+        )
+    else:
+        raise ValueError("WEEEEEIIIRRD")
 
 
 def detect_types(X, type_hints=None, max_int_cardinality='auto',
@@ -215,7 +327,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
 
     max_int_cardinality: int or 'auto', default='auto'
         Maximum number of distinct integers for an integer column
-        to be considered categorical. 'auto' is ``max(42, n_samples/10)``.
+        to be considered categorical. 'auto' is ``max(42, n_samples/100)``.
         Integers are also always considered as continuous variables.
         FIXME not true any more?
 
@@ -237,11 +349,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         Boolean dataframe of detected types. Rows are columns in input X,
         columns are possible types (see above).
     """
-    # FIXME integer indices are not dropped!
-    # TODO detect encoding missing values as strings /weird values
     # TODO detect top coding
-    # FIXME dirty int is detected as dirty float right now
-    # TODO discard all constant and binary columns at the beginning?
     # TODO subsample large datsets? one level up?
     if not isinstance(X, pd.DataFrame):
         raise TypeError("X is not a dataframe. Convert or call `clean`.")
@@ -251,155 +359,40 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     if duplicated.any():
         raise ValueError("Duplicate Columns: {}".format(
             X.columns[duplicated]))
+
     if type_hints is None:
         type_hints = dict()
-    # apply type hints drops useless columns,
-    # but in the end we want to check against original columns
-    X_org = X
-    X = _apply_type_hints(X, type_hints=type_hints)
 
-    n_samples, n_features = X.shape
+    n_samples, _ = X.shape
     if max_int_cardinality == "auto":
         max_int_cardinality = max(42, n_samples / 100)
-    # FIXME only apply nunique to non-continuous?
-    n_values = X.apply(lambda x: x.nunique())
-    if verbose > 3:
-        print(n_values)
+        if n_samples <= 42:
+            # this is pretty hacky
+            max_int_cardinality = n_samples // 2
 
-    binary = n_values == 2
-    # force binary variables to be continuous
-    # if type hints say so
-    for k, v in type_hints.items():
-        if v == 'continuous':
-            binary[k] = False
+    types_series = X.apply(lambda col: detect_type_series(
+        col, max_int_cardinality=max_int_cardinality,
+        near_constant_threshold=near_constant_threshold,
+        target_col=target_col, dirty_float_threshold=dirty_float_threshold))
 
-    inferred_types = pd.api.types.infer_dtype(X, skipna=True)
-    dtypes = X.dtypes
-    kinds = dtypes.apply(lambda x: x.kind)
-    inferred_types = X.apply(pd.api.types.infer_dtype)
-    _FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
-    _INTEGER_TYPES = ['integer']
-    _DATE_TYPES = ['datetime64', 'datetime', 'date',
-                   'timedelta64', 'timedelta', 'time', 'period']
-    # FIXME we should be able to do better for mixed-integer
-    _OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
-    _CATEGORICAL_TYPES = ['categorical', 'boolean']
-    floats = inferred_types.isin(_FLOAT_TYPES)
-    integers = inferred_types.isin(_INTEGER_TYPES)
-    categorical = inferred_types.isin(_CATEGORICAL_TYPES)
-    objects = inferred_types.isin(_OBJECT_TYPES)
-    dates = inferred_types.isin(_DATE_TYPES)
-    other = - (floats | integers | objects | dates | categorical)
-    assert not other.any()
-    # check if float column is actually all integers
-    # we'll treat them as int for now.
-    for col, isfloat in floats.items():
-        if isfloat and (col not in type_hints
-                        or type_hints[col] != "continuous"):
-            if _float_col_is_int(X[col]):
-                # it's int!
-                integers[col] = True
-                floats[col] = False
+    for t in type_hints:
+        if t in X.columns:
+            types_series[t] = type_hints[t]
 
-    useless = pd.Series(0, index=X.columns, dtype=bool)
-
-    # check if we have something that trivially is an index
-    suspicious_index = (n_values == X.shape[0]) & integers
-    if suspicious_index.any():
-        warn_for = []
-        for c in suspicious_index.index[suspicious_index]:
-            if X[c].iloc[0] == 0:
-                if (X[c] == np.arange(X.shape[0])).all():
-                    # definitely an index
-                    useless[c] = True
-                else:
-                    warn_for.append(c)
-            elif X[c].iloc[0] == 1:
-                if (X[c] == np.arange(1, X.shape[0] + 1)).all():
-                    # definitely an index
-                    useless[c] = True
-                else:
-                    warn_for.append(c)
-        if warn_for:
-            warn("Suspiciously looks like an index: {}, but unsure,"
-                 " so keeping it for now".format(warn_for), UserWarning)
-
-    # check if we can cast strings to float
-    # we don't need to cast all, could so something smarter?
-    if objects.any():
-        clean_float_string, dirty_float = _find_string_floats(
-            X.loc[:, objects], dirty_float_threshold)
-    else:
-        dirty_float = clean_float_string = pd.Series(0, index=X.columns,
-                                                     dtype=bool)
-    # using integers or string as categories only if low cardinality
-    few_entries = n_values < max_int_cardinality
-    # constant features are useless
-    useless = (n_values < 2) | useless
-    # also throw out near constant:
-    near_constant = pd.Series(0, index=X.columns, dtype=bool)
-    for col in X.columns:
-        if col == target_col:
-            continue
-        count = X[col].count()
-        if n_values[col] / count > .9:
-            # save some computation
-            continue
-        if X[col].value_counts().max() / count > near_constant_threshold:
-            near_constant[col] = True
-    if near_constant.any():
-        warn("Discarding near-constant features: {}".format(
-             near_constant.index[near_constant].tolist()))
-    useless = useless | near_constant
-    for k, v in type_hints.items():
-        if v != "useless" and useless[k]:
-            useless[k] = False
-    large_cardinality_int = integers & ~few_entries
-    # hard coded very low cardinality integers are categorical
-    cat_integers = integers & (n_values <= 5) & ~useless
-    low_card_integers = (few_entries & integers
-                         & ~binary & ~useless & ~cat_integers)
-    non_float_objects = objects & ~dirty_float & ~clean_float_string
-    cat_string = few_entries & non_float_objects & ~useless
-    free_strings = ~few_entries & non_float_objects
-    continuous = floats | large_cardinality_int | clean_float_string
-    categorical = cat_string | binary | categorical | cat_integers
-    res = pd.DataFrame(
-        {'continuous': continuous & ~binary & ~useless & ~categorical,
-         'dirty_float': dirty_float,
-         'low_card_int': low_card_integers,
-         'categorical': categorical & ~useless,
-         'date': dates,
-         'free_string': free_strings, 'useless': useless,
-         })
-    # ensure we respected type hints
-    for k, v in type_hints.items():
-        res.loc[k, v] = True
-    res = res.fillna(False)
-    res['useless'] = res['useless'] | (res.sum(axis=1) == 0)
-    # reorder res to have the same order as X.columns
-    res = res.loc[X_org.columns]
-    assert (X_org.columns == res.index).all()
+    known_types = ['continuous', 'dirty_float', 'low_card_int', 'categorical',
+                   'date', 'free_string', 'useless']
+    if X.empty:
+        return pd.DataFrame(columns=known_types, dtype=bool)
+    res = pd.DataFrame({t: types_series == t for t in known_types})
+    assert (X.columns == res.index).all()
 
     assert np.all(res.sum(axis=1) == 1)
 
+    assert (types_series == res.idxmax(axis=1)).all()
+
     if verbose >= 1:
         print("Detected feature types:")
-        desc = "{} float, {} int, {} object, {} date, {} other".format(
-            floats.sum(), integers.sum(), objects.sum(), dates.sum(),
-            other.sum())
-        print(desc)
-        print("Interpreted as:")
         print(res.sum())
-    if verbose >= 2:
-        if dirty_float.any():
-            print("WARN Found dirty floats encoded as strings: {}".format(
-                dirty_float.index[dirty_float].tolist()
-            ))
-        if res.useless.sum() > 0:
-            print("WARN dropped useless columns: {}".format(
-                res.index[res.useless].tolist()
-            ))
     return res
 
 
@@ -421,10 +414,6 @@ def _apply_type_hints(X, type_hints):
 
 def _select_cont(X):
     return X.columns.str.endswith("_dabl_continuous")
-
-
-def _make_float(X):
-    return X.astype(np.float, copy=False)
 
 
 def clean(X, type_hints=None, return_types=False,
@@ -455,7 +444,7 @@ def clean(X, type_hints=None, return_types=False,
                                    target_col=target_col)
     # drop useless columns
     X = X.loc[:, ~types.useless].copy()
-    types = types[~types.useless]
+    types = types.loc[~types.useless, :]
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
 

@@ -42,17 +42,6 @@ Datasets
    load_ames
    load_titanic
 
-Model Search
-------------
-
-.. currentmodule:: dabl.search
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   GridSuccessiveHalving
-   RandomSuccessiveHalving
-
 
 Plotting
 --------

@@ -359,6 +359,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     if duplicated.any():
         raise ValueError("Duplicate Columns: {}".format(
             X.columns[duplicated]))
+
     if type_hints is None:
         type_hints = dict()
 
@@ -380,7 +381,8 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
 
     known_types = ['continuous', 'dirty_float', 'low_card_int', 'categorical',
                    'date', 'free_string', 'useless']
-
+    if X.empty:
+        return pd.DataFrame(columns=known_types)
     res = pd.DataFrame({t: types_series == t for t in known_types})
     assert (X.columns == res.index).all()
 
@@ -442,7 +444,7 @@ def clean(X, type_hints=None, return_types=False,
                                    target_col=target_col)
     # drop useless columns
     X = X.loc[:, ~types.useless].copy()
-    types = types[~types.useless]
+    types = types.loc[~types.useless, :]
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
 

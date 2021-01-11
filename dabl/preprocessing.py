@@ -268,15 +268,16 @@ def detect_type_series(series, *, dirty_float_threshold=0.9,
     # infer near-constant-values
     # fast-pass if n_distinct_values is high
     count = series.count()
+
+    if n_distinct_values == 1:
+        return 'useless'
+
     if (n_distinct_values < (1 - near_constant_threshold) * count
             and series.name != target_col):
         if series.value_counts().max() > near_constant_threshold * count:
             return 'useless'
-
     if n_distinct_values == 2:
         return 'categorical'
-    elif n_distinct_values == 1:
-        return 'useless'
 
     inferred_type = pd.api.types.infer_dtype(series)
     if inferred_type in _DATE_TYPES:

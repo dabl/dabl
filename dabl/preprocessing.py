@@ -382,7 +382,7 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     known_types = ['continuous', 'dirty_float', 'low_card_int', 'categorical',
                    'date', 'free_string', 'useless']
     if X.empty:
-        return pd.DataFrame(columns=known_types)
+        return pd.DataFrame(columns=known_types, dtype=bool)
     res = pd.DataFrame({t: types_series == t for t in known_types})
     assert (X.columns == res.index).all()
 

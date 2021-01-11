@@ -257,6 +257,15 @@ def test_detect_string_floats():
     res = clean(X)
 
 
+def test_detect_types_empty():
+    X = pd.DataFrame(index=range(100))
+    types = detect_types(X)
+    assert (types == bool).all(axis=None)
+    known_types = ['continuous', 'dirty_float', 'low_card_int', 'categorical',
+                   'date', 'free_string', 'useless']
+    assert (types.columns == known_types).all()
+
+
 def test_transform_dirty_float():
     dirty = make_dirty_float()
     dfc = DirtyFloatCleaner()

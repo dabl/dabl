@@ -169,6 +169,12 @@ def test_negative_ordinal():
     plot(data, target_col=1)
 
 
+def test_large_ordinal():
+    # check that large integers don't bring us down (bincount memory error)
+    # here some random phone numbers
+    assert not guess_ordinal(pd.Series([6786930208, 2142878625, 9106275431]))
+
+
 def test_plot_classification_continuous():
     data = fetch_openml('MiceProtein')
     df = data_df_from_bunch(data)

@@ -16,6 +16,8 @@ High-level API
    detect_types
    explain
    plot
+   set_config
+   get_config
 
 .. autosummary::
    :toctree: generated/

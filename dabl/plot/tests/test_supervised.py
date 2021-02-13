@@ -12,8 +12,9 @@ from dabl.preprocessing import clean, detect_types, guess_ordinal
 from dabl.plot.supervised import (
     plot, plot_classification_categorical,
     plot_classification_continuous, plot_regression_categorical,
-    plot_regression_continuous, _get_scatter_alpha, _get_scatter_size)
+    plot_regression_continuous)
 from dabl.utils import data_df_from_bunch
+from dabl import set_config
 
 
 # FIXME: check that target is not y but a column name
@@ -244,21 +245,15 @@ def test_na_vals_reg_plot_raise_warning():
     X = pd.DataFrame(X)
     y[::50] = np.NaN
     X['target_col'] = y
-    scatter_alpha = _get_scatter_alpha('auto', X['target_col'])
-    scatter_size = _get_scatter_size('auto', X['target_col'])
     with pytest.warns(UserWarning, match="Missing values in target_col have "
                                          "been removed for regression"):
         plot(X, 'target_col')
     with pytest.warns(UserWarning, match="Missing values in target_col have "
                                          "been removed for regression"):
-        plot_regression_continuous(X, 'target_col',
-                                   scatter_alpha=scatter_alpha,
-                                   scatter_size=scatter_size)
+        plot_regression_continuous(X, 'target_col')
     with pytest.warns(UserWarning, match="Missing values in target_col have "
                                          "been removed for regression"):
-        plot_regression_categorical(X, 'target_col',
-                                    scatter_alpha=scatter_alpha,
-                                    scatter_size=scatter_size)
+        plot_regression_categorical(X, 'target_col')
 
 
 def test_plot_regression_continuous_with_target_outliers():
@@ -269,8 +264,6 @@ def test_plot_regression_continuous_with_target_outliers():
             "target": np.random.randint(low=50, high=100, size=200)
             }
     )
-    scatter_alpha = _get_scatter_alpha('auto', df['target'])
-    scatter_size = _get_scatter_size('auto', df['target'])
     # append single outlier record with target value 0
     df = df.append({"feature": 50, "target": 0}, ignore_index=True)
 
@@ -278,7 +271,24 @@ def test_plot_regression_continuous_with_target_outliers():
         UserWarning,
         match="Dropped 1 outliers in column target."
     ):
-        plot_regression_continuous(df, 'target',
-                                   scatter_alpha=scatter_alpha,
-                                   scatter_size=scatter_size
-                                   )
+        plot_regression_continuous(df, 'target')
+
+
+def test_label_truncation():
+    a = ('a_really_long_name_that_would_mess_up_the_layout_a_lot'
+         '_by_just_being_very_long')
+    b = ('the_target_that_has_an_equally_long_name_which_would_'
+         'mess_up_everything_as_well_but_in_different_places')
+    df = pd.DataFrame({a: np.random.uniform(0, 1, 1000)})
+    df[b] = df[a] + np.random.uniform(0, 0.1, 1000)
+    res = plot_regression_continuous(df, target_col=b)
+
+    assert res[0, 0].get_ylabel() == 'the_target_that_h...'
+    assert res[0, 0].get_xlabel() == 'a_really_long_nam...'
+
+    set_config(truncate_labels=False)
+    res = plot_regression_continuous(df, target_col=b)
+
+    assert res[0, 0].get_ylabel() == b
+    assert res[0, 0].get_xlabel() == a
+    set_config(truncate_labels=True)

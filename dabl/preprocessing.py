@@ -145,6 +145,10 @@ def guess_ordinal(values):
         # we assume that negative numbers imply an ordering, not categories
         # probably needs testing
         return True
+    if values.max() > 100000:
+        # really large numbers are probably identifiers.
+        # also bincount will throw a memory error.
+        return False
     counts = np.bincount(values)
 
     def norm(x):

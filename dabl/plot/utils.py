@@ -282,7 +282,6 @@ def _get_n_top(features, name):
 
 
 def _prune_categories(series, max_categories=10):
-    series = series.astype('category')
     small_categories = series.value_counts()[max_categories:].index
     res = series.cat.remove_categories(small_categories)
     res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
@@ -291,15 +290,16 @@ def _prune_categories(series, max_categories=10):
 
 def _prune_category_make_X(X, col, target_col, max_categories=20):
     col_values = X[col]
+    X_new = X[[target_col]].copy()
+    col_values = col_values.astype('category')
+    if col_values.isna().any():
+        col_values = col_values.cat.add_categories(['dabl_missing'])
+        col_values = col_values.fillna("dabl_missing")
     if col_values.nunique() > max_categories:
         # keep only top 10 categories if there are more than 20
         col_values = _prune_categories(col_values,
                                        max_categories=min(10, max_categories))
-        X_new = X[[target_col]].copy()
-        X_new[col] = col_values
-    else:
-        X_new = X.copy()
-        X_new[col] = X_new[col].astype('category')
+    X_new[col] = col_values
     return X_new
 
 

@@ -282,3 +282,15 @@ def test_plot_regression_continuous_with_target_outliers():
                                    scatter_alpha=scatter_alpha,
                                    scatter_size=scatter_size
                                    )
+
+
+def test_plot_regression_categorical_missing_value():
+    df = pd.DataFrame({'y': np.random.normal(size=300)})
+    df.loc[100:200, 'y'] += 1
+    df.loc[200:300, 'y'] += 2
+    df['x'] = 'a'
+    df.loc[100:200, 'x'] = 'b'
+    df.loc[200:300, 'x'] = np.NaN
+    res = plot(df, target_col='y')
+    assert len(res[1][0, 0].get_yticklabels()) == 3
+    assert res[1][0, 0].get_yticklabels()[2].get_text() == 'dabl_mi...'

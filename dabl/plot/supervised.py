@@ -98,6 +98,7 @@ def plot_regression_continuous(X, target_col, types=None,
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
+    return axes
 
 
 def plot_regression_categorical(X, target_col, types=None, **kwargs):
@@ -162,6 +163,7 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
+    return axes
 
 
 def plot_classification_continuous(X, target_col, types=None, hue_order=None,
@@ -567,7 +569,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
             else:
                 types.loc[col, 'low_card_int'] = False
                 types.loc[col, 'categorical'] = True
-
+    res = []
     if types.continuous[target_col]:
         print("Target looks like regression")
         # FIXME we might be overwriting the original dataframe here?
@@ -582,10 +584,12 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
         scatter_size = _get_scatter_size(scatter_size, X[target_col])
 
-        plot_regression_continuous(X, target_col, types=types,
-                                   scatter_alpha=scatter_alpha,
-                                   scatter_size=scatter_size, **kwargs)
-        plot_regression_categorical(X, target_col, types=types, **kwargs)
+        res.append(plot_regression_continuous(
+            X, target_col, types=types,
+            scatter_alpha=scatter_alpha,
+            scatter_size=scatter_size, **kwargs))
+        res.append(plot_regression_categorical(
+            X, target_col, types=types, **kwargs))
     else:
         print("Target looks like classification")
         # regression
@@ -607,9 +611,11 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
             print("Not plotting anything for 50 classes or more."
                   "Current visualizations are quite useless for"
                   " this many classes. Try slicing the data.")
-        plot_classification_continuous(
+        res.append(plot_classification_continuous(
             X, target_col, types=types, hue_order=counts.index,
             scatter_alpha=scatter_alpha, scatter_size=scatter_size,
-            plot_pairwise=plot_pairwise, **kwargs)
-        plot_classification_categorical(X, target_col, types=types,
-                                        hue_order=counts.index, **kwargs)
+            plot_pairwise=plot_pairwise, **kwargs))
+        res.append(plot_classification_categorical(
+            X, target_col, types=types,
+            hue_order=counts.index, **kwargs))
+    return res

@@ -1,4 +1,4 @@
-.. title:: User guide : contents
+git@github.com:bhishanpdl/dabl.git.. title:: User guide : contents
 
 .. _user_guide:
 

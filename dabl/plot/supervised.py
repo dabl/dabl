@@ -81,9 +81,11 @@ def plot_regression_continuous(X, target_col, types=None,
 
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
+    scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
+    scatter_size = _get_scatter_size(scatter_size, X[target_col])
     for i, (col_idx, ax) in enumerate(zip(top_k, axes.ravel())):
         if i % axes.shape[1] == 0:
-            ax.set_ylabel(target_col)
+            ax.set_ylabel(_shortname(target_col))
         col = features.columns[col_idx]
         if drop_outliers:
             inliers = _find_inliers(features.loc[:, col])
@@ -98,6 +100,7 @@ def plot_regression_continuous(X, target_col, types=None,
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
+    return axes
 
 
 def plot_regression_categorical(X, target_col, types=None, **kwargs):
@@ -579,9 +582,6 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         plt.xlabel(_shortname(target_col))
         plt.ylabel("frequency")
         plt.title("Target distribution")
-        scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
-        scatter_size = _get_scatter_size(scatter_size, X[target_col])
-
         plot_regression_continuous(X, target_col, types=types,
                                    scatter_alpha=scatter_alpha,
                                    scatter_size=scatter_size, **kwargs)

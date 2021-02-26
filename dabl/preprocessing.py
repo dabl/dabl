@@ -27,7 +27,7 @@ def _float_matching(X_col, return_safe_col=False):
         all_castable = False
         try:
             # if we can convert them all to float we're done
-            rest.astype(np.float)
+            rest.astype(float)
             is_floaty[not_strings] = True
             all_castable = True
         except ValueError:
@@ -102,7 +102,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             nofloats = ~floats
             X_new_col = X_col.copy()
             X_new_col[nofloats] = np.NaN
-            X_new_col = X_new_col.astype(np.float)
+            X_new_col = X_new_col.astype(float)
             enc = self.encoders_[col]
             if enc is None:
                 if nofloats.any():
@@ -408,7 +408,7 @@ def _apply_type_hints(X, type_hints):
         X = X.copy()
         for k, v in type_hints.items():
             if v == "continuous":
-                X[k] = X[k].astype(np.float)
+                X[k] = X[k].astype(float)
             elif v == "categorical":
                 X[k] = X[k].astype('category')
             elif v == 'useless' and k in X.columns:

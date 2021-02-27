@@ -6,9 +6,6 @@ The data analysis baseline library.
 
 Find more information on the [website](https://dabl.github.io/).
 
-## State of the library
-Right now, this library is still a prototype. API might change, and you shouldn't rely on it in any critical settings.
-
 ## Try it out
 
 ```
@@ -27,15 +24,18 @@ to find strong models quickly.  In essence that boils down to a quick search
 over different gradient boosting models and other tree ensembles and
 potentially kernel methods.
 
+Check out the [the website](https://dabl.github.io/dev/) and [example gallery](https://dabl.github.io/0.1.9/auto_examples/index.html) to get an idea of the visualizations that are available.
+
 Stay Tuned!
 
-## Pandas Profiling package
-The Pandas Profiling package is useful for initial data analysis. Using Pandas Profiling can provide a thorough summary of the data in only a single line of code. Using the ```ProfileReport()``` method, you are able to access a HTML report of your data that can help you find correlations and identify missing data.
+## Related packages
 
-## Try it out
+### Pandas Profiling
+[Pandas Profiling](https://github.com/pandas-profiling/pandas-profiling) can
+provide a thorough summary of the data in only a single line of code. Using the
+```ProfileReport()``` method, you are able to access a HTML report of your data
+that can help you find correlations and identify missing data.
 
-```
-pip install pandas-profiling
-```
-
-or [https://github.com/pandas-profiling/pandas-profiling]
+`dabl` focuses less on statistical measures of individual columns, and more on
+providing a quick overview via visualizations, as well as convienient
+preprocessing and model search for machine learning.

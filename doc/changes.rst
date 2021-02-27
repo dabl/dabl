@@ -1,6 +1,10 @@
 Release History
 ===============
 
+dabl 0.2.1 (current development version
+---------------------------------------
+- nothing yet
+
 dabl 0.2.0
 -----------
 - Rely on the Successive Halving implementation from scikit-learn 0.24, removing the old implementation.

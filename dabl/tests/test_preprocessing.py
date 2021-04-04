@@ -187,6 +187,9 @@ def test_detect_types():
     assert (res_iris.sum(axis=1) == 1).all()
     assert res_iris.continuous.sum() == 4
 
+    for col in df_all.columns:
+        t = detect_types_series(df_all[col])
+        assert t = types['col']
 
 def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(

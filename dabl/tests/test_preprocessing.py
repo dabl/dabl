@@ -13,7 +13,7 @@ from sklearn.linear_model import LogisticRegression
 
 from dabl.preprocessing import (detect_types, EasyPreprocessor,
                                 DirtyFloatCleaner, clean, _FLOAT_REGEX,
-                                _float_matching)
+                                _float_matching, detect_type_series)
 from dabl.utils import data_df_from_bunch
 from dabl.datasets import load_titanic
 from dabl import plot
@@ -188,8 +188,8 @@ def test_detect_types():
     assert res_iris.continuous.sum() == 4
 
     for col in df_all.columns:
-        t = detect_types_series(df_all[col])
-        assert t = types['col']
+        t = detect_type_series(df_all[col])
+        assert t == types[col]
 
 def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(

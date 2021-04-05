@@ -227,6 +227,7 @@ def _get_max_cat_cardinality(n_samples, max_cat_cardinality="auto"):
             max_cat_cardinality = n_samples // 2
     return max_cat_cardinality
 
+
 def _type_detection_int(series, max_cat_cardinality='auto'):
     n_distinct_values = series.nunique()
     if n_distinct_values == len(series):
@@ -239,7 +240,8 @@ def _type_detection_int(series, max_cat_cardinality='auto'):
             if (series == np.arange(1, len(series) + 1)).all():
                 # definitely an index
                 return 'useless'
-    if n_distinct_values > _get_max_cat_cardinality(len(series), max_cat_cardinality):
+    if n_distinct_values > _get_max_cat_cardinality(len(series),
+                                                    max_cat_cardinality):
         return 'continuous'
     elif n_distinct_values <= 5:
         # weird hack / edge case
@@ -266,7 +268,8 @@ def _type_detection_object(series, *, dirty_float_threshold,
             series.astype(float), max_cat_cardinality=max_cat_cardinality)
     if _string_is_date(series):
         return 'date'
-    if series.nunique() <= _get_max_cat_cardinality(len(series), max_cat_cardinality):
+    if series.nunique() <= _get_max_cat_cardinality(len(series),
+                                                    max_cat_cardinality):
         return 'categorical'
     return "free_string"
 

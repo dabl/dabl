@@ -81,9 +81,11 @@ def plot_regression_continuous(X, target_col, types=None,
 
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
+    scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
+    scatter_size = _get_scatter_size(scatter_size, X[target_col])
     for i, (col_idx, ax) in enumerate(zip(top_k, axes.ravel())):
         if i % axes.shape[1] == 0:
-            ax.set_ylabel(target_col)
+            ax.set_ylabel(_shortname(target_col))
         col = features.columns[col_idx]
         if drop_outliers:
             inliers = _find_inliers(features.loc[:, col])

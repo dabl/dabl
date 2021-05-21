@@ -19,6 +19,7 @@ from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit
 
 
 from ..preprocessing import detect_types
+from .._config import get_config
 
 
 def find_pretty_grid(n_plots, max_cols=5):
@@ -180,6 +181,8 @@ def _shortname(some_string, maxlen=20):
         Output string of size ``min(len(some_string), maxlen)``.
     """
     some_string = str(some_string)
+    if not get_config()['truncate_labels']:
+        return some_string
     if len(some_string) > maxlen:
         return some_string[:maxlen - 3] + "..."
     else:

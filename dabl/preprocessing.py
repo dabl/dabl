@@ -27,7 +27,7 @@ def _float_matching(X_col, return_safe_col=False):
         all_castable = False
         try:
             # if we can convert them all to float we're done
-            rest.astype(np.float)
+            rest.astype(float)
             is_floaty[not_strings] = True
             all_castable = True
         except ValueError:
@@ -102,7 +102,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             nofloats = ~floats
             X_new_col = X_col.copy()
             X_new_col[nofloats] = np.NaN
-            X_new_col = X_new_col.astype(np.float)
+            X_new_col = X_new_col.astype(float)
             enc = self.encoders_[col]
             if enc is None:
                 if nofloats.any():
@@ -145,6 +145,10 @@ def guess_ordinal(values):
         # we assume that negative numbers imply an ordering, not categories
         # probably needs testing
         return True
+    if values.max() > 100000:
+        # really large numbers are probably identifiers.
+        # also bincount will throw a memory error.
+        return False
     counts = np.bincount(values)
 
     def norm(x):
@@ -215,7 +219,16 @@ _OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
 _CATEGORICAL_TYPES = ['categorical', 'boolean']
 
 
-def _type_detection_int(series, max_int_cardinality='auto'):
+def _get_max_cat_cardinality(n_samples, max_cat_cardinality="auto"):
+    if max_cat_cardinality == "auto":
+        max_cat_cardinality = max(42, n_samples / 100)
+        if n_samples <= 42:
+            # this is pretty hacky
+            max_cat_cardinality = n_samples // 2
+    return max_cat_cardinality
+
+
+def _type_detection_int(series, max_cat_cardinality='auto'):
     n_distinct_values = series.nunique()
     if n_distinct_values == len(series):
         # could be an index
@@ -227,7 +240,8 @@ def _type_detection_int(series, max_int_cardinality='auto'):
             if (series == np.arange(1, len(series) + 1)).all():
                 # definitely an index
                 return 'useless'
-    if n_distinct_values > max_int_cardinality:
+    if n_distinct_values > _get_max_cat_cardinality(len(series),
+                                                    max_cat_cardinality):
         return 'continuous'
     elif n_distinct_values <= 5:
         # weird hack / edge case
@@ -236,31 +250,32 @@ def _type_detection_int(series, max_int_cardinality='auto'):
         return 'low_card_int'
 
 
-def _type_detection_float(series, max_int_cardinality='auto'):
+def _type_detection_float(series, max_cat_cardinality='auto'):
     if _float_col_is_int(series):
         return _type_detection_int(
-            series, max_int_cardinality=max_int_cardinality)
+            series, max_cat_cardinality=max_cat_cardinality)
     return 'continuous'
 
 
 def _type_detection_object(series, *, dirty_float_threshold,
-                           max_int_cardinality='auto'):
+                           max_cat_cardinality='auto'):
     clean_float_string, dirty_float = _find_string_floats(
             series, dirty_float_threshold)
     if dirty_float.any():
         return 'dirty_float'
     elif clean_float_string.any():
         return _type_detection_float(
-            series.astype(float), max_int_cardinality=max_int_cardinality)
+            series.astype(float), max_cat_cardinality=max_cat_cardinality)
     if _string_is_date(series):
         return 'date'
-    if series.nunique() <= max_int_cardinality:
+    if series.nunique() <= _get_max_cat_cardinality(len(series),
+                                                    max_cat_cardinality):
         return 'categorical'
     return "free_string"
 
 
 def detect_type_series(series, *, dirty_float_threshold=0.9,
-                       max_int_cardinality='auto',
+                       max_cat_cardinality='auto',
                        near_constant_threshold=0.95, target_col=None):
     n_distinct_values = series.nunique()
     if series.isna().mean() > 0.99:
@@ -286,20 +301,20 @@ def detect_type_series(series, *, dirty_float_threshold=0.9,
         return 'categorical'
     elif inferred_type in _FLOAT_TYPES:
         return _type_detection_float(
-            series, max_int_cardinality=max_int_cardinality)
+            series, max_cat_cardinality=max_cat_cardinality)
     elif inferred_type in _INTEGER_TYPES:
         return _type_detection_int(
-            series, max_int_cardinality=max_int_cardinality)
+            series, max_cat_cardinality=max_cat_cardinality)
     elif inferred_type in _OBJECT_TYPES:
         return _type_detection_object(
-            series, max_int_cardinality=max_int_cardinality,
+            series, max_cat_cardinality=max_cat_cardinality,
             dirty_float_threshold=dirty_float_threshold
         )
     else:
         raise ValueError("WEEEEEIIIRRD")
 
 
-def detect_types(X, type_hints=None, max_int_cardinality='auto',
+def detect_types(X, type_hints=None, max_cat_cardinality='auto',
                  dirty_float_threshold=.9,
                  near_constant_threshold=0.95, target_col=None,
                  verbose=0):
@@ -325,11 +340,9 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
     X : dataframe
         input
 
-    max_int_cardinality: int or 'auto', default='auto'
-        Maximum number of distinct integers for an integer column
+    max_cat_cardinality: int or 'auto', default='auto'
+        Maximum number of distinct integer or string values for a column
         to be considered categorical. 'auto' is ``max(42, n_samples/100)``.
-        Integers are also always considered as continuous variables.
-        FIXME not true any more?
 
     dirty_float_threshold : float, default=.9
         The fraction of floats required in a dirty continuous
@@ -364,14 +377,9 @@ def detect_types(X, type_hints=None, max_int_cardinality='auto',
         type_hints = dict()
 
     n_samples, _ = X.shape
-    if max_int_cardinality == "auto":
-        max_int_cardinality = max(42, n_samples / 100)
-        if n_samples <= 42:
-            # this is pretty hacky
-            max_int_cardinality = n_samples // 2
 
     types_series = X.apply(lambda col: detect_type_series(
-        col, max_int_cardinality=max_int_cardinality,
+        col, max_cat_cardinality=max_cat_cardinality,
         near_constant_threshold=near_constant_threshold,
         target_col=target_col, dirty_float_threshold=dirty_float_threshold))
 
@@ -404,7 +412,7 @@ def _apply_type_hints(X, type_hints):
         X = X.copy()
         for k, v in type_hints.items():
             if v == "continuous":
-                X[k] = X[k].astype(np.float)
+                X[k] = X[k].astype(float)
             elif v == "categorical":
                 X[k] = X[k].astype('category')
             elif v == 'useless' and k in X.columns:

@@ -1,0 +1,52 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}, scikit-learn ${{ matrix.scikit-learn-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8"]
+        scikit-learn-version: ["0.24.*", "dev"]
+
+    runs-on: ubuntu-20.04
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          channels: conda-forge
+          channel-priority: true
+          activate-environment: testenv
+      - name: Install dependencies
+        run: |
+          conda install pip pytest matplotlib seaborn numpy scipy pandas
+      - name: Install scikit-learn
+        run: |
+          if [[ "$SKLEARN_VERSION" == "dev" ]]; then
+            pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
+          else
+            pip install scikit-learn==$SKLEARN_VERSION
+          fi
+        env:
+          SKLEARN_VERSION: ${{ matrix.scikit-learn-version }}
+      - name: Show versions and install dabl
+        run: |
+          python --version
+          python -c "import numpy; print('numpy %s' % numpy.__version__)"
+          python -c "import scipy; print('scipy %s' % scipy.__version__)"
+          python -c "import sklearn; print('sklearn %s' % sklearn.__version__)"
+          python setup.py develop
+      - name: Test dabl
+        run: |
+          TEST_DIR=/tmp/test_dir
+          mkdir -p $TEST_DIR
+          cd $TEST_DIR
+          pytest --pyargs dabl
+      - name: Test docs
+        run: pytest doc

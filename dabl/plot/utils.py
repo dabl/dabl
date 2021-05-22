@@ -370,7 +370,10 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
         Length of xlabel and ylabel
     ticklabel_length : int, default=10
         Length of each label in xticklabels and yticklabels
+
     """
+    ax.set_yticks(ax.get_yticks().tolist())
+    ax.set_xticks(ax.get_xticks().tolist())
     ax.set_xticklabels(
         [_shortname(t.get_text(), maxlen=ticklabel_length)
          for t in ax.get_xticklabels()]

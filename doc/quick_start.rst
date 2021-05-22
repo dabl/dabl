@@ -79,6 +79,8 @@ we can create plot of the features deemed most important for our task.
     >>> dabl.plot(titanic, 'survived')
     Target looks like classification
     Linear Discriminant Analysis training set score: 0.578
+    [[<Figure size 1500x1500 with 30 Axes>, <Figure size 1600x400 with 4 Axes>, <Figure size 640x480 with 1 Axes>], None]
+
 
 .. plot::
 
@@ -88,6 +90,8 @@ we can create plot of the features deemed most important for our task.
     >>> dabl.plot(titanic, 'survived')
     Target looks like classification
     Linear Discriminant Analysis training set score: 0.578
+    [[<Figure size 1500x1500 with 30 Axes>, <Figure size 1600x400 with 4 Axes>, <Figure size 640x480 with 1 Axes>], None]
+
     >>> import matplotlib.pyplot as plt; plt.show()
 
 

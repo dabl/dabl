@@ -156,7 +156,7 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
 
 
 def plot_sankey(data, target_col, value_cols=None, prune_percentile=.9,
-                show_top=5, max_categories=5, dpi=150):
+                show_top=5, max_categories=5, dpi=150, figure=None):
     """Plot sankey diagram based on categorical variable co-occurences.
 
     Actually an alluvian diagram.
@@ -189,7 +189,11 @@ def plot_sankey(data, target_col, value_cols=None, prune_percentile=.9,
         grouped into an "other" category.
 
     dpi : integer, default=150
-        Resolution for figure.
+        Resolution for figure. Ignored if figure is passed.
+
+    figure : matplotlib figure, default=None
+        If passed, dpi is ignored.
+
     """
     if value_cols is None:
         cats = detect_types(data).categorical
@@ -220,11 +224,11 @@ def plot_sankey(data, target_col, value_cols=None, prune_percentile=.9,
         smallest_allowed = vals.iloc[np.searchsorted(
             vals.cumsum(), prune_percentile * total)]
         sankey_data = sankey_data[sankey_data.weight > smallest_allowed]
-
-    plt.figure(dpi=dpi)
+    if figure is None:
+        plt.figure(dpi=dpi)
     # data_sorted = sankey_data.sort_values(target_col)
     value_cols = [x for x in data.columns if x != target_col]
 
     alluvian_diagram(sankey_data, value_cols=value_cols, by_col=target_col,
                      vertical_margin=.1, horizontal_margin=.2, width=.05,
-                     alpha=.4, ax=plt.gca())
+                     alpha=.4, ax=figure.gca())

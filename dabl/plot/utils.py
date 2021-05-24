@@ -464,7 +464,7 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
     if ax is None:
         ax = plt.gca()
     if legend == "first":
-        legend = (ax.get_geometry()[2] == 1)
+        legend = (ax.get_subplotspec().get_geometry()[2] == 1)
     if unique_c is None:
         unique_c = np.unique(c)
     for i in unique_c:

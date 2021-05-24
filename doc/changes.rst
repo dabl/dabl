@@ -3,7 +3,7 @@ Release History
 
 dabl 0.2.1 (current development version
 ---------------------------------------
-- nothing yet
+- Plot missing values as separate category, :issue:`289` by :user:`amueller`.
 
 dabl 0.2.0
 -----------

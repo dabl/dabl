@@ -123,6 +123,9 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
     coords = defaultdict(dict)
     for col in value_cols:
         top = 0
+        # compute blocks per category for each feature/value column
+        # weights is height of each individual category
+        # coords stores left and top for each value
         weights = source.groupby(col)[weight_col].sum()
         n_values = len(weights)
         this_margin = vertical_margin / (n_values - 1)

@@ -145,6 +145,8 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
         source[by_col].unique(),
         cycle(matplotlib.rcParams['axes.prop_cycle'].by_key()['color']))}
 
+    # coords has "top" for each category
+    # for each row in data, put in current position, increase top for that block.
     for i, row in source.iterrows():
         verts = []
         for col in value_cols:

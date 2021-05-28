@@ -6,6 +6,7 @@ import matplotlib.patches as patches
 from itertools import cycle
 from sklearn.feature_selection import mutual_info_classif
 import numpy as np
+from copy import deepcopy
 
 from ..preprocessing import detect_types
 from .utils import _prune_categories
@@ -22,7 +23,7 @@ def _get_top_features(data, target_col, show_top=5):
     return data.columns[top_k]
 
 
-def _make_alluvial_curve(verts, weight, width, color, alpha):
+def _make_alluvial_curve(verts, verts_out, weight, width, color, alpha):
     """A single flow corresponding to a combination of values for all variables.
 
 
@@ -42,8 +43,8 @@ def _make_alluvial_curve(verts, weight, width, color, alpha):
     path_points = []
     codes = []
     # vert is lower left hand corner of flow for each segment
-    for vert in verts:
-        if not len(path_points):
+    for i, vert in enumerate(verts):
+        if i == 0:
             codes.append(Path.MOVETO)
             path_points.append(vert)
         else:
@@ -56,10 +57,24 @@ def _make_alluvial_curve(verts, weight, width, color, alpha):
             path_points.append(((last_point[0] + vert[0]) / 2, vert[1]))
             # first point
             codes.append(Path.LINETO)
+            # codes.append(Path.LINETO)
             path_points.append(vert)
+        if i in [0, len(verts) - 1]:
+            # we don't have a separate out-vert for the first or last one
+            out_vert = vert
+        else:
+            out_vert = verts_out[i - 1]
         # second point in within block
+        # first bezier handle
+        out_vert = (out_vert[0] + width, out_vert[1])
+        codes.append(Path.CURVE4)
+        path_points.append(((out_vert[0] + vert[0]) / 2, vert[1]))
+        # second bezier handle
+        codes.append(Path.CURVE4)
+        path_points.append(((out_vert[0] + vert[0]) / 2, out_vert[1]))
+
         codes.append(Path.LINETO)
-        path_points.append((vert[0] + width, vert[1]))
+        path_points.append((out_vert[0], out_vert[1]))
 
     # go back, shift up by weight
     path_points.extend([(x, y + weight) for x, y in path_points[::-1]])
@@ -144,6 +159,7 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
         source[by_col].unique(),
         cycle(matplotlib.rcParams['axes.prop_cycle'].by_key()['color']))}
 
+    coords_backwards = deepcopy(coords)
     # coords has "top" for each category
     # for each row in data, put in current position, increase top for that block.
     verts = defaultdict(list)
@@ -155,15 +171,25 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
         for i, row in source.sort_values([by_col, sort_col]).iterrows():
             # start of block for value of row in thie columns
             coord = coords[col][row[col]]
-            # first column modifies coord, other columns modify offsets_within
             coords[col][row[col]] = (coord[0], coord[1] + row[weight_col])
             verts[i].append(coord)
             source.loc[i, coord_col_name] = coord[1]
         sort_col = coord_col_name
 
+    # now go backwards and change the "out" of each of the flows in the previous column
+    verts_backwards = defaultdict(list)
+    sort_col = f"coord_{value_cols[-1]}"
+    # start with second to last col, leave out first
+    for col in value_cols[-2:0:-1]:
+        for i, row in source.sort_values([by_col, sort_col]).iterrows():
+            coord = coords_backwards[col][row[col]]
+            coords_backwards[col][row[col]] = (coord[0], coord[1] + row[weight_col])
+            verts_backwards[i].append(coord)
+        sort_col = f"coord_{col}"
+
     for i, row in source.iterrows():
         patch = _make_alluvial_curve(
-            verts[i], row[weight_col], width, colors[row[by_col]], alpha=alpha)
+            verts[i], verts_backwards[i][::-1], row[weight_col], width, colors[row[by_col]], alpha=alpha)
         ax.add_patch(patch)
 
     ax.set_axis_off()

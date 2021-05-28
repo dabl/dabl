@@ -121,18 +121,12 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
     left = 0
 
     coords = defaultdict(dict)
-    offsets_within = {}
-    prev_col = None
     for col in value_cols:
         top = 0
         # compute blocks per category for each feature/value column
         # weights is height of each individual category
         # coords stores left and top for each value
         weights = source.groupby(col)[weight_col].sum()
-        if prev_col is not None:
-            offsets = source.groupby([prev_col, col])[weight_col].sum().unstack()
-            offsets = offsets.cumsum() - offsets
-            offsets_within[col] = offsets
         n_values = len(weights)
         this_margin = vertical_margin / (n_values - 1)
         ax.text(left, 0, col, rotation=90, horizontalalignment="right",
@@ -141,12 +135,10 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
             coords[col][val] = (left, top)
             patch = patches.Rectangle((left, top), width=width,
                                       height=this_weight, ec='k', fc='none')
-
             ax.text(left, top, val)
             top += this_weight + this_margin
             ax.add_patch(patch)
         left += width + horizontal_margin
-        prev_col = col
 
     colors = {val: col for val, col in zip(
         source[by_col].unique(),
@@ -154,26 +146,24 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
 
     # coords has "top" for each category
     # for each row in data, put in current position, increase top for that block.
-    for i, row in source.iterrows():
-        verts = []
-        prev_col = None
-        for col in value_cols:
+    verts = defaultdict(list)
+    # for first column, sort just by that column.
+    sort_col = value_cols[0]
+    for col in value_cols:
+        coord_col_name = f"coord_{col}"
+        source[coord_col_name] = 0
+        for i, row in source.sort_values([by_col, sort_col]).iterrows():
             # start of block for value of row in thie columns
             coord = coords[col][row[col]]
-            if prev_col is None:
-                # first column modifies coord, other columns modify offsets_within
-                coords[col][row[col]] = (coord[0], coord[1] + row[weight_col])
-            else:
-                # within each but the first column, rows / flows are grouped
-                # by the value of the previous column (to the left)
-                offset = offsets_within[col].loc[row[prev_col], row[col]]
-                coord = coord[0], coord[1] + offset
-                # update offsets
-                offsets_within[col].loc[row[prev_col], row[col]] += row[weight_col]
-            verts.append(coord)
-            prev_col = col
+            # first column modifies coord, other columns modify offsets_within
+            coords[col][row[col]] = (coord[0], coord[1] + row[weight_col])
+            verts[i].append(coord)
+            source.loc[i, coord_col_name] = coord[1]
+        sort_col = coord_col_name
+
+    for i, row in source.iterrows():
         patch = _make_alluvial_curve(
-            verts, row[weight_col], width, colors[row[by_col]], alpha=alpha)
+            verts[i], row[weight_col], width, colors[row[by_col]], alpha=alpha)
         ax.add_patch(patch)
 
     ax.set_axis_off()

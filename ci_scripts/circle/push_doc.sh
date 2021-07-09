@@ -23,7 +23,7 @@ fi
 # Absolute path needed because we use cd further down in this script
 GENERATED_DOC_DIR=$(readlink -f $GENERATED_DOC_DIR)
 
-if [ "$CIRCLE_BRANCH" = "master" ]
+if [ "$CIRCLE_BRANCH" = "main" ]
 then
     dir=dev
 else
@@ -35,7 +35,7 @@ MSG="Pushing the docs to $dir/ for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"
 
 cd $HOME
 if [ ! -d $DOC_REPO ];
-then git clone --depth 1  --branch master --no-checkout "git@github.com:dabl/"$DOC_REPO".git";
+then git clone --depth 1  --branch main --no-checkout "git@github.com:dabl/"$DOC_REPO".git";
 fi
 cd $DOC_REPO
 
@@ -49,8 +49,8 @@ then
 	touch $dir/index.html
 	git add $dir
 fi
-git checkout master
-git reset --hard origin/master
+git checkout main
+git reset --hard origin/main
 if [ -d $dir ]
 then
 	git rm -rf $dir/ && rm -rf $dir/

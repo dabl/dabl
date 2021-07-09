@@ -460,7 +460,7 @@ class AnyClassifier(_DablBaseEstimator, ClassifierMixin):
             estimator=pipe, param_grid=param_grid,
             min_resources=self.min_resources,
             verbose=self.verbose, cv=cv, error_score='raise',
-            scoring=self.scoring_, refit='recall_macro', n_jobs=self.n_jobs)
+            scoring=self.scoring_, refit=True, n_jobs=self.n_jobs)
         self.search_ = gs
         with sklearn.config_context(print_changed_only=True):
             gs.fit(X, y)

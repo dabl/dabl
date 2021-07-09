@@ -1,7 +1,11 @@
 Release History
 ===============
 
-dabl 0.2.1
+dabl 0.2.3 (current development version)
+----------------------------------------
+Nothing yet.
+
+dabl 0.2.2
 ---------------------------------------
 - Plot missing values as separate category, :issue:`289` by :user:`amueller`.
 - Don't import `dateutil.parser.ParserError` for more version flexibility.

@@ -5,7 +5,7 @@ from .explain import explain
 from . import datasets
 from ._config import set_config, get_config
 
-__version__ = "0.2.2"
+__version__ = "0.2.3-dev"
 
 __all__ = ['EasyPreprocessor', 'SimpleClassifier', 'AnyClassifier',
            'SimpleRegressor',

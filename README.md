@@ -12,7 +12,7 @@ Find more information on the [website](https://dabl.github.io/).
 pip install dabl
 ```
 
-or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dabl/dabl/master)
+or [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dabl/dabl/main)
 
 ## Current scope and upcoming features
 This library is very much still under development. Current code focuses mostly on exploratory visualization and preprocessing.

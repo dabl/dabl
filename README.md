@@ -30,9 +30,6 @@ Stay Tuned!
 
 ## Related packages
 
-## Lux
-[Lux](https://github.com/lux-org/lux) is an awesome project for easy interactive visualization of pandas dataframes within notebooks.
-
 ### Pandas Profiling
 [Pandas Profiling](https://github.com/pandas-profiling/pandas-profiling) can
 provide a thorough summary of the data in only a single line of code. Using the

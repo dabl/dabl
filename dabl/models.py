@@ -149,20 +149,23 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         rank_scoring = self._rank_scoring
         self.current_best_ = {rank_scoring: -np.inf}
         for est in estimators:
-            set_random_state(est, self.random_state)
-            scorers = _check_multimetric_scoring(est, self.scoring_)
-            scores = self._evaluate_one(est, data_preproc, scorers)
-            # make scoring configurable
-            if scores[rank_scoring] > self.current_best_[rank_scoring]:
-                if self.verbose:
-                    print("=== new best {} (using {}):".format(
-                        scores.name,
-                        rank_scoring))
-                    print(_format_scores(scores))
-                    print()
+            try:
+                set_random_state(est, self.random_state)
+                scorers = _check_multimetric_scoring(est, self.scoring_)
+                scores = self._evaluate_one(est, data_preproc, scorers)
+                # make scoring configurable
+                if scores[rank_scoring] > self.current_best_[rank_scoring]:
+                    if self.verbose:
+                        print("=== new best {} (using {}):".format(
+                            scores.name,
+                            rank_scoring))
+                        print(_format_scores(scores))
+                        print()
 
-                self.current_best_ = scores
-                best_est = est
+                    self.current_best_ = scores
+                    best_est = est
+            except KeyboardInterrupt:
+                break        
         if self.verbose:
             print("\nBest model:\n{}\nBest Scores:\n{}".format(
                   nice_repr(best_est), _format_scores(self.current_best_)))

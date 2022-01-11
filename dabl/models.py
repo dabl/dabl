@@ -1,3 +1,4 @@
+from enum import Flag
 import warnings
 import numpy as np
 import pandas as pd
@@ -148,8 +149,12 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         estimators = self._get_estimators()
         rank_scoring = self._rank_scoring
         self.current_best_ = {rank_scoring: -np.inf}
+        flag=False
         for est in estimators:
             try:
+                if(flag):
+                    break
+                
                 set_random_state(est, self.random_state)
                 scorers = _check_multimetric_scoring(est, self.scoring_)
                 scores = self._evaluate_one(est, data_preproc, scorers)
@@ -165,7 +170,9 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
                     self.current_best_ = scores
                     best_est = est
             except KeyboardInterrupt:
-                break        
+                print("Retraining best model found so far")
+                flag=True        
+        
         if self.verbose:
             print("\nBest model:\n{}\nBest Scores:\n{}".format(
                   nice_repr(best_est), _format_scores(self.current_best_)))

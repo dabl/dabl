@@ -170,7 +170,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
                     self.current_best_ = scores
                     best_est = est
             except KeyboardInterrupt:
-                print("Retraining best model found so far")
+                print("Retraining the best model found so far")
                 flag=True        
         
         if self.verbose:

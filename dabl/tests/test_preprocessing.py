@@ -96,6 +96,9 @@ def test_continuous_castable():
     types = detect_types(X)
     assert types.continuous['a']
 
+    X_new = clean(X)
+    assert X_new.dtypes['a'] == np.float64
+
 
 # @pytest.mark.parametrize("null_object", [np.nan, None]) FIXME in sklearn
 @pytest.mark.parametrize("null_object", [np.nan])

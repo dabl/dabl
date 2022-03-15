@@ -262,7 +262,7 @@ def test_na_vals_reg_plot_raise_warning():
         plot_regression_categorical(X, 'target_col')
 
 
-def test_plot_regression_continuous_with_target_outliers():
+def test_plot_regression_with_target_outliers():
     df = pd.DataFrame(
         data={
             "feature": np.random.randint(low=1, high=100, size=200),
@@ -278,6 +278,12 @@ def test_plot_regression_continuous_with_target_outliers():
         match="Dropped 1 outliers in column target."
     ):
         plot_regression_continuous(df, 'target')
+
+    with pytest.warns(
+        UserWarning,
+        match="Dropped 1 outliers in column target."
+    ):
+        plot_regression_categorical(df, 'target')
 
 
 def test_plot_regression_categorical_missing_value():

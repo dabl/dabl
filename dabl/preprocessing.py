@@ -118,6 +118,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(pd.DataFrame(
                     X_col[nofloats]))
+                cats = cats.copy()
             cats["{}_dabl_continuous".format(col)] = X_new_col
             result.append(cats)
         return pd.concat(result, axis=1)
@@ -453,6 +454,8 @@ def clean(X, type_hints=None, return_types=False,
     types = types.loc[~types.useless, :]
     for col in types.index[types.categorical]:
         X[col] = X[col].astype('category', copy=False)
+    for col in types.index[types.continuous]:
+        X[col] = X[col].astype(float, copy=False)
 
     if types['dirty_float'].any():
         # don't use ColumnTransformer that can't return dataframe yet

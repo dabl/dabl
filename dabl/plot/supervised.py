@@ -592,10 +592,12 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
             if n_outliers > 0:
                 warn(f"Discarding {n_outliers} outliers in target column.", UserWarning)
                 X = X.loc[inliers, :]
+        _, ax = plt.subplots()
         plt.hist(X[target_col], bins='auto')
         plt.xlabel(_shortname(target_col))
         plt.ylabel("frequency")
         plt.title("Target distribution")
+        res.append(ax)
         scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
         scatter_size = _get_scatter_size(scatter_size, X[target_col])
 

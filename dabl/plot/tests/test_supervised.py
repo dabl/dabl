@@ -277,14 +277,19 @@ def test_plot_regression_with_target_outliers():
         UserWarning,
         match="Dropped 1 outliers in column target."
     ):
-        plot_regression_continuous(df, 'target')
+        plot_regression_continuous(df, target_col='target')
 
     with pytest.warns(
         UserWarning,
         match="Dropped 1 outliers in column target."
     ):
-        plot_regression_categorical(df, 'target')
+        plot_regression_categorical(df, target_col='target')
 
+    res = plot(df, target_col='target')
+    assert len(res) == 3
+    ax = res[0]
+    # ensure outlier at 0 was removed
+    assert ax.get_xticks()[0] == 40
 
 def test_plot_regression_categorical_missing_value():
     df = pd.DataFrame({'y': np.random.normal(size=300)})

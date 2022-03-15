@@ -261,7 +261,7 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
 
 
 class SimpleRegressor(_BaseSimpleEstimator, RegressorMixin):
-    """Automagic anytime classifier.
+    """Automagic anytime regressor.
 
     Parameters
     ----------

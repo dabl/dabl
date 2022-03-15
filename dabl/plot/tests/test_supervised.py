@@ -291,6 +291,7 @@ def test_plot_regression_with_target_outliers():
     # ensure outlier at 0 was removed
     assert ax.get_xticks()[0] == 40
 
+
 def test_plot_regression_categorical_missing_value():
     df = pd.DataFrame({'y': np.random.normal(size=300)})
     df.loc[100:200, 'y'] += 1

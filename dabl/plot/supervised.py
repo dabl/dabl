@@ -103,7 +103,8 @@ def plot_regression_continuous(X, target_col, types=None,
     return axes
 
 
-def plot_regression_categorical(X, target_col, types=None, drop_outliers=True, **kwargs):
+def plot_regression_categorical(X, target_col, types=None, drop_outliers=True,
+                                **kwargs):
     """Plots for categorical features in regression.
 
     Creates box plots of target distribution for important categorical
@@ -503,8 +504,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
 
 
 def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
-         scatter_size='auto', drop_outliers=True, verbose=10, plot_pairwise=True,
-         **kwargs):
+         scatter_size='auto', drop_outliers=True, verbose=10,
+         plot_pairwise=True, **kwargs):
     """Automatic plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -590,7 +591,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
             inliers = _find_inliers(X.loc[:, target_col])
             n_outliers = len(X) - inliers.sum()
             if n_outliers > 0:
-                warn(f"Discarding {n_outliers} outliers in target column.", UserWarning)
+                warn(f"Discarding {n_outliers} outliers in target column.",
+                     UserWarning)
                 X = X.loc[inliers, :]
         _, ax = plt.subplots()
         plt.hist(X[target_col], bins='auto')

@@ -300,8 +300,8 @@ def test_plot_regression_categorical_missing_value():
     df.loc[100:200, 'x'] = 'b'
     df.loc[200:300, 'x'] = np.NaN
     res = plot(df, target_col='y')
-    assert len(res[1][0, 0].get_yticklabels()) == 3
-    assert res[1][0, 0].get_yticklabels()[2].get_text() == 'dabl_mi...'
+    assert len(res[2][0, 0].get_yticklabels()) == 3
+    assert res[2][0, 0].get_yticklabels()[2].get_text() == 'dabl_mi...'
 
 
 def test_label_truncation():

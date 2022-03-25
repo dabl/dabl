@@ -38,7 +38,7 @@ git remote --verbose
 
 # Travis does the git clone with a limited depth (50 at the time of
 # writing). This may not be enough to find the common ancestor with
-# $REMOTE/master so we unshallow the git checkout
+# $REMOTE/main so we unshallow the git checkout
 if [[ -a .git/shallow ]]; then
     echo -e '\nTrying to unshallow the repo:'
     echo '--------------------------------------------------------------------------------'
@@ -68,7 +68,7 @@ if [[ "$TRAVIS" == "true" ]]; then
 fi
 
 # If not using the commit range from Travis we need to find the common
-# ancestor between $LOCAL_BRANCH_REF and $REMOTE/master
+# ancestor between $LOCAL_BRANCH_REF and $REMOTE/main
 if [[ -z "$COMMIT_RANGE" ]]; then
     if [[ -z "$LOCAL_BRANCH_REF" ]]; then
         LOCAL_BRANCH_REF=$(git rev-parse --abbrev-ref HEAD)
@@ -77,7 +77,7 @@ if [[ -z "$COMMIT_RANGE" ]]; then
     echo '--------------------------------------------------------------------------------'
     git --no-pager log -2 $LOCAL_BRANCH_REF
 
-    REMOTE_MASTER_REF="$REMOTE/master"
+    REMOTE_MASTER_REF="$REMOTE/main"
     # Make sure that $REMOTE_MASTER_REF is a valid reference
     echo -e "\nFetching $REMOTE_MASTER_REF"
     echo '--------------------------------------------------------------------------------'

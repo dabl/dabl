@@ -49,7 +49,7 @@ def plot_regression_continuous(X, target_col, types=None,
     scatter_size : float, default='auto'
         Marker size for scatter plots. 'auto' is dirty hacks.
     drop_outliers : bool, default=True
-        Whether to drop outliers when plotting.
+        Whether to drop outliers (in the target column) when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
 
@@ -103,7 +103,8 @@ def plot_regression_continuous(X, target_col, types=None,
     return axes
 
 
-def plot_regression_categorical(X, target_col, types=None, **kwargs):
+def plot_regression_categorical(X, target_col, types=None, drop_outliers=True,
+                                **kwargs):
     """Plots for categorical features in regression.
 
     Creates box plots of target distribution for important categorical
@@ -121,9 +122,14 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
     types : dataframe of types, optional
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
+    drop_outliers : bool, default=True
+        Whether to drop outliers (in the target column) when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
 
+    if drop_outliers:
+        inliers = _find_inliers(X.loc[:, target_col])
+        X = X.loc[inliers, :]
     # drop nans from target column
     if np.isnan(X[target_col]).any():
         X = X.dropna(subset=[target_col])
@@ -498,8 +504,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
 
 
 def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
-         scatter_size='auto', verbose=10, plot_pairwise=True,
-         **kwargs):
+         scatter_size='auto', drop_outliers=True, verbose=10,
+         plot_pairwise=True, **kwargs):
     """Automatic plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -528,7 +534,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         These can be somewhat expensive to compute.
     verbose : int, default=10
         Controls the verbosity (output).
-
+    drop_outliers : bool, default=True
+        Whether to drop outliers in the target column for regression.
     See also
     --------
     plot_regression_continuous
@@ -579,10 +586,20 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         # regression
         # make sure we include the target column in X
         # even though it's not categorical
+
+        if drop_outliers:
+            inliers = _find_inliers(X.loc[:, target_col])
+            n_outliers = len(X) - inliers.sum()
+            if n_outliers > 0:
+                warn(f"Discarding {n_outliers} outliers in target column.",
+                     UserWarning)
+                X = X.loc[inliers, :]
+        _, ax = plt.subplots()
         plt.hist(X[target_col], bins='auto')
         plt.xlabel(_shortname(target_col))
         plt.ylabel("frequency")
         plt.title("Target distribution")
+        res.append(ax)
         scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
         scatter_size = _get_scatter_size(scatter_size, X[target_col])
 

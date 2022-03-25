@@ -1,9 +1,11 @@
 Release History
 ===============
 
-dabl 0.2.1 (current development version
+dabl 0.2.1
 ---------------------------------------
 - Plot missing values as separate category, :issue:`289` by :user:`amueller`.
+- Don't import `dateutil.parser.ParserError` for more version flexibility.
+- Fix error in computation of `max_int_cardinality`, :issue:`288` by :user:`amueller`.
 
 dabl 0.2.0
 -----------

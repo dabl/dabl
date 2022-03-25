@@ -2,8 +2,6 @@ from joblib import hash
 import warnings
 from warnings import warn
 
-from dateutil.parser import ParserError
-
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -163,12 +161,12 @@ def guess_ordinal(values):
 def _string_is_date(series):
     try:
         pd.to_datetime(series[:10])
-    except (ParserError, pd.errors.OutOfBoundsDatetime, ValueError,
+    except (pd.errors.OutOfBoundsDatetime, ValueError,
             TypeError, OverflowError):
         return False
     try:
         pd.to_datetime(series)
-    except (ParserError, pd.errors.OutOfBoundsDatetime, ValueError,
+    except (pd.errors.OutOfBoundsDatetime, ValueError,
             TypeError, OverflowError):
         return False
     return True

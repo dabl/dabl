@@ -285,6 +285,8 @@ def _get_n_top(features, name):
 
 
 def _prune_categories(series, max_categories=10):
+    if not pd.api.types.is_categorical_dtype(series):
+        series = series.astype("category")
     small_categories = series.value_counts()[max_categories:].index
     res = series.cat.remove_categories(small_categories)
     res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")

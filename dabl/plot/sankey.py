@@ -161,7 +161,8 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
 
     coords_backwards = deepcopy(coords)
     # coords has "top" for each category
-    # for each row in data, put in current position, increase top for that block.
+    # for each row in data, put in current position,
+    # and increase top for that block.
     verts = defaultdict(list)
     # for first column, sort just by that column.
     sort_col = value_cols[0]
@@ -176,20 +177,23 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
             source.loc[i, coord_col_name] = coord[1]
         sort_col = coord_col_name
 
-    # now go backwards and change the "out" of each of the flows in the previous column
+    # now go backwards and change the "out" of each of the flows
+    # in the previous column
     verts_backwards = defaultdict(list)
     sort_col = f"coord_{value_cols[-1]}"
     # start with second to last col, leave out first
     for col in value_cols[-2:0:-1]:
         for i, row in source.sort_values([by_col, sort_col]).iterrows():
             coord = coords_backwards[col][row[col]]
-            coords_backwards[col][row[col]] = (coord[0], coord[1] + row[weight_col])
+            coords_backwards[col][row[col]] = (
+                coord[0], coord[1] + row[weight_col])
             verts_backwards[i].append(coord)
         sort_col = f"coord_{col}"
 
     for i, row in source.iterrows():
         patch = _make_alluvial_curve(
-            verts[i], verts_backwards[i][::-1], row[weight_col], width, colors[row[by_col]], alpha=alpha)
+            verts[i], verts_backwards[i][::-1], row[weight_col], width,
+            colors[row[by_col]], alpha=alpha)
         ax.add_patch(patch)
 
     ax.set_axis_off()

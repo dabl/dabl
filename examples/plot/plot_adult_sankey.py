@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # load the adult census dataset
 # returns a plain dataframe
 data = load_adult()
-# visualize the joint distribution of the 5 most important categorical variables
+# visualize the interactions of the 5 most important categorical variables
 plot_sankey(data, 'income', figure=plt.figure(figsize=(12, 4), dpi=150))
 # compare to mosaic plots which show only univariate effects
 plot_classification_categorical(data, 'income')

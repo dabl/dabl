@@ -269,7 +269,7 @@ def plot_sankey(data, target_col, value_cols=None, prune_percentile=.9,
             vals.cumsum(), prune_percentile * total)]
         sankey_data = sankey_data[sankey_data.weight > smallest_allowed]
     if figure is None:
-        plt.figure(dpi=dpi)
+        figure = plt.figure(dpi=dpi, figsize=(len(value_cols) * 2, 6))
     # data_sorted = sankey_data.sort_values(target_col)
     value_cols = [x for x in data.columns if x != target_col]
 

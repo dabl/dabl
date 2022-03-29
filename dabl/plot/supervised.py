@@ -24,6 +24,8 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     class_hists, discrete_scatter, mosaic_plot,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
+from .sankey import plot_sankey
+
 from warnings import warn
 
 
@@ -456,33 +458,32 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
         ordinal_encoded, target,
         discrete_features=np.ones(X.shape[1], dtype=bool))
     top_k = np.argsort(f)[-show_top:][::-1]
+
+    if kind == 'sankey':
+        return plot_sankey(X, target_col,
+                           figure=kwargs.get('figure', None))
     # large number of categories -> taller plot
     row_height = 3 if features.nunique().max() <= 5 else 5
     fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
     plt.suptitle("Categorical Features vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[col_ind]
+        # how many categories make up at least 1% of data:
+        n_cats = (X[col].value_counts() / len(X) > 0.01).sum()
+        n_cats = np.minimum(n_cats, 20)
+        X_new = _prune_category_make_X(X, col, target_col,
+                                       max_categories=n_cats)
         if kind == 'proportion':
-            X_new = _prune_category_make_X(X, col, target_col)
-
             df = (X_new.groupby(col)[target_col]
                   .value_counts(normalize=True)
                   .unstack()
                   .sort_values(by=target[0]))  # hacky way to get a class name
             df.plot(kind='barh', stacked='True', ax=ax, legend=i == 0)
-            ax.set_title(col)
             ax.set_ylabel(None)
         elif kind == 'mosaic':
-            # how many categories make up at least 1% of data:
-            n_cats = (X[col].value_counts() / len(X) > 0.01).sum()
-            n_cats = np.minimum(n_cats, 20)
-            X_new = _prune_category_make_X(X, col, target_col,
-                                           max_categories=n_cats)
             mosaic_plot(X_new, col, target_col, ax=ax, legend=i == 0)
-            ax.set_title(col)
         elif kind == 'count':
             X_new = _prune_category_make_X(X, col, target_col)
-
             # absolute counts
             # FIXME show f value
             # FIXME shorten titles?
@@ -497,6 +498,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
         else:
             raise ValueError("Unknown plot kind {}".format(kind))
         _short_tick_names(ax)
+        ax.set_title(col)
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row

@@ -125,7 +125,8 @@ def test_dirty_float_single_warning():
         X = pd.DataFrame({'dirty3': dirty3})
         clean(X)
 
-        assert len(w) == 1
+        mixed_type_errors = sum(("Mixed type" in str(w2) for w2 in w))
+        assert mixed_type_errors == 1
 
 
 def test_detect_types():

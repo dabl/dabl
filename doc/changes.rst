@@ -1,6 +1,12 @@
 Release History
 ===============
 
+dabl 0.2.2
+----------
+- Added `plot_sankey`, :issue:`305` by :user:`amueller` for Sankey plots (or really alluvial flow diagrams).
+- Drop outliers in univariate target plots in regression. :issue:`304` by :user:`amueller`.
+
+
 dabl 0.2.1
 ---------------------------------------
 - Plot missing values as separate category, :issue:`289` by :user:`amueller`.

@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
-from dabl.preprocessing import (detect_types, EasyPreprocessor,
+from dabl.preprocessing import (USELESS_TYPES, detect_types, EasyPreprocessor,
                                 DirtyFloatCleaner, clean, _FLOAT_REGEX,
                                 _float_matching, detect_type_series)
 from dabl.utils import data_df_from_bunch
@@ -193,7 +193,17 @@ def test_detect_types():
 
     for col in df_all.columns:
         t = detect_type_series(df_all[col])
+        if t in USELESS_TYPES:
+            assert types[col] == 'useless'
+        else:
         assert t == types[col]
+
+    assert detect_type_series(df_all['constant_nan']) == 'missing'
+    assert detect_type_series(df_all['constant_string']) == 'constant'
+    assert detect_type_series(df_all['constant_float']) == 'constant'
+    assert detect_type_series(df_all['near_constant_float']) == 'near-constant'
+    assert detect_type_series(df_all['index_0_based']) == 'index'
+    assert detect_type_series(df_all['index_1_based']) == 'index'
 
 
 def test_detect_low_cardinality_int():

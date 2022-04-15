@@ -217,6 +217,8 @@ _DATE_TYPES = ['datetime64', 'datetime', 'date',
 _OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
 _CATEGORICAL_TYPES = ['categorical', 'boolean']
 
+USELESS_TYPES = {'missing', 'unique', 'constant', 'near-constant', 'index'}
+
 
 def _get_max_cat_cardinality(n_samples, max_cat_cardinality="auto"):
     if max_cat_cardinality == "auto":
@@ -234,11 +236,11 @@ def _type_detection_int(series, max_cat_cardinality='auto'):
         if series.iloc[0] == 0:
             if (series == np.arange(len(series))).all():
                 # definitely an index
-                return 'useless'
+                return 'index'
         elif series.iloc[0] == 1:
             if (series == np.arange(1, len(series) + 1)).all():
                 # definitely an index
-                return 'useless'
+                return 'index'
     if n_distinct_values > _get_max_cat_cardinality(len(series),
                                                     max_cat_cardinality):
         return 'continuous'
@@ -278,18 +280,18 @@ def detect_type_series(series, *, dirty_float_threshold=0.9,
                        near_constant_threshold=0.95, target_col=None):
     n_distinct_values = series.nunique()
     if series.isna().mean() > 0.99:
-        return 'useless'
+        return "missing"
     # infer near-constant-values
     # fast-pass if n_distinct_values is high
     count = series.count()
 
     if n_distinct_values == 1:
-        return 'useless'
+        return 'constant'
 
     if (n_distinct_values < (1 - near_constant_threshold) * count
             and series.name != target_col):
         if series.value_counts().max() > near_constant_threshold * count:
-            return 'useless'
+            return 'near-constant'
     if n_distinct_values == 2:
         return 'categorical'
 
@@ -375,12 +377,12 @@ def detect_types(X, type_hints=None, max_cat_cardinality='auto',
     if type_hints is None:
         type_hints = dict()
 
-    n_samples, _ = X.shape
-
     types_series = X.apply(lambda col: detect_type_series(
         col, max_cat_cardinality=max_cat_cardinality,
         near_constant_threshold=near_constant_threshold,
         target_col=target_col, dirty_float_threshold=dirty_float_threshold))
+
+    types_series[types_series.isin(USELESS_TYPES)] = 'useless'
 
     for t in type_hints:
         if t in X.columns:

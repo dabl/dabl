@@ -196,12 +196,12 @@ def test_detect_types():
         if t in USELESS_TYPES:
             assert types[col] == 'useless'
         else:
-        assert t == types[col]
+            assert t == types[col]
 
     assert detect_type_series(df_all['constant_nan']) == 'missing'
     assert detect_type_series(df_all['constant_string']) == 'constant'
     assert detect_type_series(df_all['constant_float']) == 'constant'
-    assert detect_type_series(df_all['near_constant_float']) == 'near-constant'
+    assert detect_type_series(df_all['near_constant_float']) == 'near_constant'
     assert detect_type_series(df_all['index_0_based']) == 'index'
     assert detect_type_series(df_all['index_1_based']) == 'index'
 
@@ -446,6 +446,8 @@ def test_simple_preprocessor_imputed_features():
 
 
 def test_dirty_float_target_regression():
+    import matplotlib
+    matplotlib.use("agg")
     titanic_data = load_titanic()
     data = pd.DataFrame({'one': np.repeat(np.arange(50), 2)})
     dirty = make_dirty_float()

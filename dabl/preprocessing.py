@@ -217,7 +217,7 @@ _DATE_TYPES = ['datetime64', 'datetime', 'date',
 _OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
 _CATEGORICAL_TYPES = ['categorical', 'boolean']
 
-USELESS_TYPES = {'missing', 'unique', 'constant', 'near-constant', 'index'}
+USELESS_TYPES = {'missing', 'unique', 'constant', 'near_constant', 'index'}
 
 
 def _get_max_cat_cardinality(n_samples, max_cat_cardinality="auto"):
@@ -291,7 +291,7 @@ def detect_type_series(series, *, dirty_float_threshold=0.9,
     if (n_distinct_values < (1 - near_constant_threshold) * count
             and series.name != target_col):
         if series.value_counts().max() > near_constant_threshold * count:
-            return 'near-constant'
+            return 'near_constant'
     if n_distinct_values == 2:
         return 'categorical'
 

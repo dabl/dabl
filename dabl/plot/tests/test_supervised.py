@@ -304,6 +304,18 @@ def test_plot_regression_categorical_missing_value():
     assert res[2][0, 0].get_yticklabels()[2].get_text() == 'dabl_mi...'
 
 
+def test_plot_regression_missing_categories():
+    df = pd.DataFrame({'cat_col': np.random.choice(['a', 'b', 'c', 'd'],
+                                                   size=100)})
+    df['target'] = np.NaN
+    counts = df.cat_col.value_counts()
+    df.loc[df.cat_col == "a", 'target'] = np.random.normal(size=counts['a'])
+    df.loc[df.cat_col == "b", 'target'] = np.random.normal(1, size=counts['b'])
+    axes = plot(df, target_col="target")
+    ticklabels = axes[-1][0, 0].get_yticklabels()
+    assert [label.get_text() for label in ticklabels] == ['a', 'b']
+
+
 def test_label_truncation():
     a = ('a_really_long_name_that_would_mess_up_the_layout_a_lot'
          '_by_just_being_very_long')
@@ -314,7 +326,8 @@ def test_label_truncation():
     res = plot_regression_continuous(df, target_col=b)
 
     assert res[0, 0].get_ylabel() == 'the_target_that_h...'
-    assert res[0, 0].get_xlabel() == 'a_really_long_nam...'
+    assert (res[0, 0].get_xlabel()
+            == 'a_really_long_name_that_would_mess_up_the_layou...')
 
     set_config(truncate_labels=False)
     res = plot_regression_continuous(df, target_col=b)

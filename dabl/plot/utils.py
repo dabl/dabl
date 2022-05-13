@@ -304,6 +304,7 @@ def _prune_category_make_X(X, col, target_col, max_categories=20):
         # keep only top 10 categories if there are more than 20
         col_values = _prune_categories(col_values,
                                        max_categories=min(10, max_categories))
+    col_values = col_values.cat.remove_unused_categories()
     X_new[col] = col_values
     return X_new
 

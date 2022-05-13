@@ -97,7 +97,7 @@ def plot_regression_continuous(X, target_col, types=None,
         else:
             ax.scatter(features.loc[:, col], target,
                        alpha=scatter_alpha, s=scatter_size)
-        ax.set_xlabel(_shortname(col))
+        ax.set_xlabel(_shortname(col, maxlen=50))
         ax.set_title("F={:.2E}".format(correlations[col]))
 
     for j in range(i + 1, axes.size):
@@ -169,7 +169,7 @@ def plot_regression_categorical(X, target_col, types=None, drop_outliers=True,
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
         ax.set_title("F={:.2E}".format(f[col_ind]))
         # shorten long ticks and labels
-        _short_tick_names(ax)
+        _short_tick_names(ax, label_length=row_height * 12)
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row

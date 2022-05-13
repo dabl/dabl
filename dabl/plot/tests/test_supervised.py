@@ -326,7 +326,8 @@ def test_label_truncation():
     res = plot_regression_continuous(df, target_col=b)
 
     assert res[0, 0].get_ylabel() == 'the_target_that_h...'
-    assert res[0, 0].get_xlabel() == 'a_really_long_nam...'
+    assert (res[0, 0].get_xlabel()
+            == 'a_really_long_name_that_would_mess_up_the_layou...')
 
     set_config(truncate_labels=False)
     res = plot_regression_continuous(df, target_col=b)

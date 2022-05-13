@@ -28,7 +28,7 @@ def _float_matching(X_col, return_safe_col=False):
             rest.astype(float)
             is_floaty[not_strings] = True
             all_castable = True
-        except ValueError:
+        except (ValueError, TypeError):
             pass
         if not all_castable:
             if X_col.name not in _MIXED_TYPE_WARNINGS:

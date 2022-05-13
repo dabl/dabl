@@ -7,8 +7,7 @@ import seaborn as sns
 import pandas as pd
 
 
-from sklearn.feature_selection import (f_regression,
-                                       mutual_info_regression,
+from sklearn.feature_selection import (mutual_info_regression,
                                        mutual_info_classif,
                                        f_classif)
 from sklearn.impute import SimpleImputer
@@ -31,7 +30,8 @@ from warnings import warn
 
 def plot_regression_continuous(X, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
-                               drop_outliers=True, **kwargs):
+                               drop_outliers=True, correlation="spearman",
+                               **kwargs):
     """Plots for continuous features in regression.
 
     Creates plots of all the continuous features vs the target.
@@ -52,6 +52,10 @@ def plot_regression_continuous(X, target_col, types=None,
         Marker size for scatter plots. 'auto' is dirty hacks.
     drop_outliers : bool, default=True
         Whether to drop outliers (in the target column) when plotting.
+    correlation : str, default="spearman"
+        Correlation to use for ranking plots, passed to ``pd.DataFrame.corrwith``.
+        Valid values are `'pearson'`, `'kendall'`, `'spearman'`.
+
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
 
@@ -73,22 +77,18 @@ def plot_regression_continuous(X, target_col, types=None,
     show_top = _get_n_top(features, "continuous")
 
     target = X[target_col]
-    # HACK we should drop them per column before feeding them into f_regression
-    # FIXME
-    features_imp = SimpleImputer().fit_transform(features)
-    f, p = f_regression(features_imp, target)
-    top_k = np.argsort(f)[-show_top:][::-1]
-    # we could do better lol
+
+    correlations = features.corrwith(target, method=correlation)
+    top_k = correlations.abs().sort_values().dropna().index[-show_top:][::-1]
     fig, axes = _make_subplots(n_plots=show_top)
 
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
     scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
     scatter_size = _get_scatter_size(scatter_size, X[target_col])
-    for i, (col_idx, ax) in enumerate(zip(top_k, axes.ravel())):
+    for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
         if i % axes.shape[1] == 0:
             ax.set_ylabel(_shortname(target_col))
-        col = features.columns[col_idx]
         if drop_outliers:
             inliers = _find_inliers(features.loc[:, col])
             ax.scatter(features.loc[inliers, col], target[inliers],
@@ -97,7 +97,7 @@ def plot_regression_continuous(X, target_col, types=None,
             ax.scatter(features.loc[:, col], target,
                        alpha=scatter_alpha, s=scatter_size)
         ax.set_xlabel(_shortname(col))
-        ax.set_title("F={:.2E}".format(f[col_idx]))
+        ax.set_title("F={:.2E}".format(correlations[col]))
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row

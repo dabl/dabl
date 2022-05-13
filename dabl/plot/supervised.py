@@ -53,7 +53,8 @@ def plot_regression_continuous(X, target_col, types=None,
     drop_outliers : bool, default=True
         Whether to drop outliers (in the target column) when plotting.
     correlation : str, default="spearman"
-        Correlation to use for ranking plots, passed to ``pd.DataFrame.corrwith``.
+        Correlation to use for ranking plots, passed to
+        ``pd.DataFrame.corrwith``.
         Valid values are `'pearson'`, `'kendall'`, `'spearman'`.
 
     """

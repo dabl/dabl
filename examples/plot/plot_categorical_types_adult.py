@@ -8,10 +8,8 @@ which are 'count', 'proportion', 'mosaic' and 'sankey'.
 
 from dabl.plot import plot_classification_categorical
 from dabl.datasets import load_adult
-import matplotlib.pyplot as plt
 
 data = load_adult()
-
 
 # %%
 #
@@ -24,11 +22,11 @@ plot_classification_categorical(data, 'income', kind="count")
 
 # %%
 #
-# The 'proportion' plot on the other hand *only* shows the proportion, so we can
-# see that the proportions in state-government, government, and self-employed
-# are nearly the same. However, 'proportion' does not show how many samples are
-# in each category. How much each category is actually present in the data can be
-# very important, though.
+# The 'proportion' plot on the other hand *only* shows the proportion, so we
+# can see that the proportions in state-government, government, and
+# self-employed are nearly the same. However, 'proportion' does not show how
+# many samples are in each category. How much each category is actually
+# present in the data can be very important, though.
 plot_classification_categorical(data, 'income', kind="proportion")
 
 # %%
@@ -42,7 +40,7 @@ plot_classification_categorical(data, 'income', kind="mosaic")
 #
 # The 'sankey' plot is even busier, as it combines the features of the 'count'
 # plot with an alluvial flow diagram of interactions.
-# By default, only the 5 most common features are included in the sankey diagram,
-# which can be adjusted by calling the plot_sankey function directly.
+# By default, only the 5 most common features are included in the sankey
+# diagram, which can be adjusted by calling the plot_sankey function directly.
 
 plot_classification_categorical(data, 'income', kind="sankey")

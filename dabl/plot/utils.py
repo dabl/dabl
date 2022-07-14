@@ -289,7 +289,8 @@ def _prune_categories(series, max_categories=10):
         series = series.astype("category")
     small_categories = series.value_counts()[max_categories:].index
     res = series.cat.remove_categories(small_categories)
-    res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
+    if res.isnull().any():
+        res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
     return res
 
 

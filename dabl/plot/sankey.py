@@ -147,6 +147,8 @@ def alluvian_diagram(source, value_cols, by_col, weight_col='weight',
         ax.text(left, 0, col, rotation=90, horizontalalignment="right",
                 verticalalignment="bottom")
         for val, this_weight in weights.items():
+            if this_weight == 0:
+                continue
             coords[col][val] = (left, top)
             patch = patches.Rectangle((left, top), width=width,
                                       height=this_weight, ec='k', fc='none')
@@ -267,12 +269,11 @@ def plot_sankey(data, target_col, value_cols=None, prune_percentile=.9,
         vals = sankey_data.weight.sort_values(ascending=False)
         smallest_allowed = vals.iloc[np.searchsorted(
             vals.cumsum(), prune_percentile * total)]
-        sankey_data = sankey_data[sankey_data.weight > smallest_allowed]
+        sankey_data = sankey_data[sankey_data.weight >= smallest_allowed]
     if figure is None:
         figure = plt.figure(dpi=dpi, figsize=(len(value_cols) * 2, 6))
     # data_sorted = sankey_data.sort_values(target_col)
     value_cols = [x for x in data.columns if x != target_col]
-
     alluvian_diagram(sankey_data, value_cols=value_cols, by_col=target_col,
                      vertical_margin=.1, horizontal_margin=.2, width=.05,
                      alpha=.4, ax=figure.gca())

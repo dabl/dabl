@@ -550,16 +550,12 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=True,
     bottom = counts.max().max() * 1.1
     for i, name in enumerate(counts.columns):
         if ordinal:
-            ax.bar(range(counts.shape[0]), counts[name], width=.9,
-                   bottom=bottom * i, tick_label=counts.index, linewidth=2,
-                   edgecolor='k', label=name)
-            xmin, xmax = 0 - .5, counts.shape[0] - .5
+            ax.stairs(counts[name] + bottom * i, range(counts.shape[0] + 1),
+                      baseline=bottom * i,
+                      edgecolor='k', label=name, fill=True)
         else:
-            ax.bar(bin_edges[:-1], counts[name], bottom=bottom * i, label=name,
-                   align='edge', width=(bin_edges[1] - bin_edges[0]) * .9)
-            xmin, xmax = bin_edges[0], bin_edges[-1]
-        ax.hlines(bottom * i, xmin=xmin, xmax=xmax,
-                  linewidth=1)
+            ax.stairs(counts[name] + bottom * i, bin_edges, baseline=bottom * i,
+                      label=name, edgecolor='k', fill=True)
     if legend:
         ax.legend()
     ax.set_yticks(())

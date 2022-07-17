@@ -5,7 +5,6 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.experimental import enable_hist_gradient_boosting
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.svm import SVC
 
@@ -15,8 +14,6 @@ from .portfolios.portfolio_hgb import portfolio_hgb
 from .portfolios.portfolio_svc import portfolio_svc
 from .portfolios.portfolio_rf import portfolio_rf
 from .portfolios.portfolio_lr import portfolio_lr
-
-enable_hist_gradient_boosting
 
 
 def get_fast_classifiers(n_classes):

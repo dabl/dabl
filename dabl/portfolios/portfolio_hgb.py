@@ -1,7 +1,4 @@
-from sklearn.experimental import enable_hist_gradient_boosting
 from sklearn.ensemble import HistGradientBoostingClassifier
-
-enable_hist_gradient_boosting
 
 
 def portfolio_hgb():

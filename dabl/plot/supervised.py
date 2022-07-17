@@ -607,11 +607,11 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         scatter_size = _get_scatter_size(scatter_size, X[target_col])
 
         res.append(plot_regression_continuous(
-            X, target_col, types=types,
+            X, target_col=target_col, types=types,
             scatter_alpha=scatter_alpha,
             scatter_size=scatter_size, **kwargs))
         res.append(plot_regression_categorical(
-            X, target_col, types=types, **kwargs))
+            X, target_col=target_col, types=types, **kwargs))
     else:
         print("Target looks like classification")
         # regression

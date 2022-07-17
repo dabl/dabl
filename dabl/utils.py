@@ -1,9 +1,7 @@
-import re
 import pandas as pd
 
 from scipy.sparse import issparse
 from inspect import signature
-from sklearn.base import _pprint
 from .preprocessing import clean
 
 
@@ -57,12 +55,3 @@ def _changed_params(est):
                 continue
             filtered_params[k] = v
     return filtered_params
-
-
-def nice_repr(est):
-    class_name = est.__class__.__name__
-    changed_params = _changed_params(est)
-    name = ('%s(%s)' % (class_name, _pprint(changed_params,
-                                            offset=len(class_name))))
-    name, _ = re.subn(r"\s+", " ", name)
-    return name

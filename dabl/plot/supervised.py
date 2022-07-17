@@ -106,8 +106,8 @@ def plot_regression_continuous(X, *, target_col, types=None,
     return axes
 
 
-def plot_regression_categorical(X, *, target_col, types=None, drop_outliers=True,
-                                **kwargs):
+def plot_regression_categorical(
+        X, *, target_col, types=None, drop_outliers=True, **kwargs):
     """Plots for categorical features in regression.
 
     Creates box plots of target distribution for important categorical
@@ -177,12 +177,13 @@ def plot_regression_categorical(X, *, target_col, types=None, drop_outliers=True
     return axes
 
 
-def plot_classification_continuous(X, *, target_col, types=None, hue_order=None,
-                                   scatter_alpha='auto', scatter_size="auto",
-                                   univariate_plot='histogram',
-                                   drop_outliers=True, plot_pairwise=True,
-                                   top_k_interactions=10, random_state=None,
-                                   **kwargs):
+def plot_classification_continuous(
+        X, *, target_col, types=None, hue_order=None,
+        scatter_alpha='auto', scatter_size="auto",
+        univariate_plot='histogram',
+        drop_outliers=True, plot_pairwise=True,
+        top_k_interactions=10, random_state=None,
+        **kwargs):
     """Plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.

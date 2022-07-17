@@ -4,9 +4,7 @@ from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.svm import SVC
+
 
 from .portfolios.portfolio_base import portfolio_base
 from .portfolios.portfolio_mixed import portfolio_mixed

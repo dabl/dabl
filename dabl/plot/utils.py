@@ -554,7 +554,8 @@ def class_hists(data, column, target, bins="auto", ax=None, legend=True,
                       baseline=bottom * i,
                       edgecolor='k', label=name, fill=True)
         else:
-            ax.stairs(counts[name] + bottom * i, bin_edges, baseline=bottom * i,
+            ax.stairs(counts[name] + bottom * i, bin_edges,
+                      baseline=bottom * i,
                       label=name, edgecolor='k', fill=True)
     if legend:
         ax.legend()

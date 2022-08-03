@@ -17,7 +17,11 @@ _MIXED_TYPE_WARNINGS = {}
 
 
 def _float_matching(X_col, return_safe_col=False):
-    is_floaty = X_col.str.match(_FLOAT_REGEX)
+    try:
+        is_floaty = X_col.str.match(_FLOAT_REGEX)
+    except TypeError as e:
+        warn(f"Error in string parsing:{str(e)}")
+        return pd.Series(False, index=X_col.index)
     # things that weren't strings
     not_strings = is_floaty.isna()
     if not_strings.any():

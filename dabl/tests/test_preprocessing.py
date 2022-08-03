@@ -191,6 +191,7 @@ def test_detect_types():
         t = detect_type_series(df_all[col])
         assert t == types[col]
 
+
 def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(
         {'binary_int': np.random.randint(0, 2, size=1000),
@@ -382,6 +383,13 @@ def test_titanic_feature_names():
     # assert ep.get_feature_names() == expected_names_no_clean
 
     assert not np.isnan(X).any()
+
+
+def test_type_detection_bytes():
+    import os
+    df = pd.DataFrame({'a': [os.urandom(5) for io in range(100)]})
+    types = detect_types(df)
+    assert types.T.idxmax()['a'] == 'free_string'
 
 
 def test_digits_type_hints():

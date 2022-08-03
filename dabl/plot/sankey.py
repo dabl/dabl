@@ -24,7 +24,7 @@ def _get_top_features(data, target_col, show_top=5):
 
 
 def _make_alluvial_curve(verts, verts_out, weight, width, color, alpha):
-    """A single flow corresponding to a combination of values for all variables.
+    """A single flow for a combination of values for all variables.
 
 
     Parameters

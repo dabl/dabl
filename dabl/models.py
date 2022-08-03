@@ -31,7 +31,7 @@ from sklearn.model_selection import HalvingGridSearchCV
 from .preprocessing import EasyPreprocessor, detect_types
 from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
-from .utils import nice_repr, _validate_Xyt
+from .utils import _validate_Xyt
 
 
 def _format_scores(scores):
@@ -85,9 +85,9 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         res_mean = pd.DataFrame(res).mean(axis=0)
         try:
             # show only last step of pipeline for simplicity
-            name = nice_repr(estimator.steps[-1][1])
+            name = repr(estimator.steps[-1][1])
         except AttributeError:
-            name = nice_repr(estimator)
+            name = repr(estimator)
 
         if self.verbose:
             print("Running {}".format(name))
@@ -165,7 +165,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
                 best_est = est
         if self.verbose:
             print("\nBest model:\n{}\nBest Scores:\n{}".format(
-                  nice_repr(best_est), _format_scores(self.current_best_)))
+                  repr(best_est), _format_scores(self.current_best_)))
         if self.refit:
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', UserWarning)

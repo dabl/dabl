@@ -138,8 +138,6 @@ if [[ "$MODIFIED_FILES" == "no_match" ]]; then
     echo "No file outside sklearn/externals and doc/sphinxext/sphinx_gallery has been modified"
 else
 
-    check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)"
-    check_files "$(echo "$MODIFIED_FILES" | grep ^examples)" \
-        --config ./examples/.flake8
+    check_files "$(echo "$MODIFIED_FILES")"
 fi
 echo -e "No problem detected by flake8\n"

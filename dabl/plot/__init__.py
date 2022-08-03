@@ -5,6 +5,7 @@ from .supervised import (plot, plot_classification_categorical,
                          class_hists)
 from .utils import (find_pretty_grid, mosaic_plot, discrete_scatter,
                     plot_coefficients)
+from .sankey import plot_sankey
 
 
 __all__ = [
@@ -12,4 +13,4 @@ __all__ = [
     'find_pretty_grid', 'mosaic_plot', 'plot',
     'plot_classification_categorical', 'plot_classification_continuous',
     'plot_regression_categorical', 'plot_regression_continuous',
-    'plot_coefficients']
+    'plot_coefficients', 'plot_sankey']

@@ -285,9 +285,12 @@ def _get_n_top(features, name):
 
 
 def _prune_categories(series, max_categories=10):
+    if not pd.api.types.is_categorical_dtype(series):
+        series = series.astype("category")
     small_categories = series.value_counts()[max_categories:].index
     res = series.cat.remove_categories(small_categories)
-    res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
+    if res.isnull().any():
+        res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
     return res
 
 
@@ -302,6 +305,7 @@ def _prune_category_make_X(X, col, target_col, max_categories=20):
         # keep only top 10 categories if there are more than 20
         col_values = _prune_categories(col_values,
                                        max_categories=min(10, max_categories))
+    col_values = col_values.cat.remove_unused_categories()
     X_new[col] = col_values
     return X_new
 
@@ -370,7 +374,10 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
         Length of xlabel and ylabel
     ticklabel_length : int, default=10
         Length of each label in xticklabels and yticklabels
+
     """
+    ax.set_yticks(ax.get_yticks().tolist())
+    ax.set_xticks(ax.get_xticks().tolist())
     ax.set_xticklabels(
         [_shortname(t.get_text(), maxlen=ticklabel_length)
          for t in ax.get_xticklabels()]

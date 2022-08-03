@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
 
-from dabl.preprocessing import (detect_types, EasyPreprocessor,
+from dabl.preprocessing import (USELESS_TYPES, detect_types, EasyPreprocessor,
                                 DirtyFloatCleaner, clean, _FLOAT_REGEX,
                                 _float_matching, detect_type_series)
 from dabl.utils import data_df_from_bunch
@@ -96,6 +96,9 @@ def test_continuous_castable():
     types = detect_types(X)
     assert types.continuous['a']
 
+    X_new = clean(X)
+    assert X_new.dtypes['a'] == np.float64
+
 
 # @pytest.mark.parametrize("null_object", [np.nan, None]) FIXME in sklearn
 @pytest.mark.parametrize("null_object", [np.nan])
@@ -122,7 +125,8 @@ def test_dirty_float_single_warning():
         X = pd.DataFrame({'dirty3': dirty3})
         clean(X)
 
-        assert len(w) == 1
+        mixed_type_errors = sum(("Mixed type" in str(w2) for w2 in w))
+        assert mixed_type_errors == 1
 
 
 def test_detect_types():
@@ -189,7 +193,18 @@ def test_detect_types():
 
     for col in df_all.columns:
         t = detect_type_series(df_all[col])
-        assert t == types[col]
+        if t in USELESS_TYPES:
+            assert types[col] == 'useless'
+        else:
+            assert t == types[col]
+
+    assert detect_type_series(df_all['constant_nan']) == 'missing'
+    assert detect_type_series(df_all['constant_string']) == 'constant'
+    assert detect_type_series(df_all['constant_float']) == 'constant'
+    assert detect_type_series(df_all['near_constant_float']) == 'near_constant'
+    assert detect_type_series(df_all['index_0_based']) == 'index'
+    assert detect_type_series(df_all['index_1_based']) == 'index'
+
 
 
 def test_detect_low_cardinality_int():
@@ -277,7 +292,6 @@ def test_transform_dirty_float():
     res = dfc.transform(dirty)
     # TODO test for new values in test etc
     assert res.shape == (100, 3)
-    assert (res.dtypes == float).all()
     assert res.a_column_missing.sum() == 9
     assert res.a_column_garbage.sum() == 1
     assert (dfc.get_feature_names() == res.columns).all()
@@ -375,7 +389,15 @@ def test_titanic_feature_names():
         'boat_6', 'boat_7', 'boat_8', 'boat_8 10', 'boat_9', 'boat_?',
         'boat_A', 'boat_B', 'boat_C', 'boat_C D', 'boat_D', 'age_?_0.0',
         'age_?_1.0', 'body_?_0.0', 'body_?_1.0']
-    assert ep.get_feature_names() == expected_names
+    try:
+        assert ep.get_feature_names() == expected_names
+    except AssertionError:
+        # OHE uses int in newer versions
+        expected_names[57] = 'age_?_0'
+        expected_names[58] = 'age_?_1'
+        expected_names[59] = 'body_?_0'
+        expected_names[60] = 'body_?_1'
+        assert ep.get_feature_names() == expected_names
 
     # without clean
     X = ep.fit_transform(titanic.drop('survived', axis=1))
@@ -432,6 +454,8 @@ def test_simple_preprocessor_imputed_features():
 
 
 def test_dirty_float_target_regression():
+    import matplotlib
+    matplotlib.use("agg")
     titanic_data = load_titanic()
     data = pd.DataFrame({'one': np.repeat(np.arange(50), 2)})
     dirty = make_dirty_float()

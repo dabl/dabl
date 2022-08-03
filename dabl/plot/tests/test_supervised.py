@@ -262,7 +262,7 @@ def test_na_vals_reg_plot_raise_warning():
         plot_regression_categorical(X, 'target_col')
 
 
-def test_plot_regression_continuous_with_target_outliers():
+def test_plot_regression_with_target_outliers():
     df = pd.DataFrame(
         data={
             "feature": np.random.randint(low=1, high=100, size=200),
@@ -277,7 +277,19 @@ def test_plot_regression_continuous_with_target_outliers():
         UserWarning,
         match="Dropped 1 outliers in column target."
     ):
-        plot_regression_continuous(df, 'target')
+        plot_regression_continuous(df, target_col='target')
+
+    with pytest.warns(
+        UserWarning,
+        match="Dropped 1 outliers in column target."
+    ):
+        plot_regression_categorical(df, target_col='target')
+
+    res = plot(df, target_col='target')
+    assert len(res) == 3
+    ax = res[0]
+    # ensure outlier at 0 was removed
+    assert ax.get_xticks()[0] == 40
 
 
 def test_plot_regression_categorical_missing_value():
@@ -288,8 +300,20 @@ def test_plot_regression_categorical_missing_value():
     df.loc[100:200, 'x'] = 'b'
     df.loc[200:300, 'x'] = np.NaN
     res = plot(df, target_col='y')
-    assert len(res[1][0, 0].get_yticklabels()) == 3
-    assert res[1][0, 0].get_yticklabels()[2].get_text() == 'dabl_mi...'
+    assert len(res[2][0, 0].get_yticklabels()) == 3
+    assert res[2][0, 0].get_yticklabels()[2].get_text() == 'dabl_mi...'
+
+
+def test_plot_regression_missing_categories():
+    df = pd.DataFrame({'cat_col': np.random.choice(['a', 'b', 'c', 'd'],
+                                                   size=100)})
+    df['target'] = np.NaN
+    counts = df.cat_col.value_counts()
+    df.loc[df.cat_col == "a", 'target'] = np.random.normal(size=counts['a'])
+    df.loc[df.cat_col == "b", 'target'] = np.random.normal(1, size=counts['b'])
+    axes = plot(df, target_col="target")
+    ticklabels = axes[-1][0, 0].get_yticklabels()
+    assert [label.get_text() for label in ticklabels] == ['a', 'b']
 
 
 def test_label_truncation():
@@ -302,7 +326,8 @@ def test_label_truncation():
     res = plot_regression_continuous(df, target_col=b)
 
     assert res[0, 0].get_ylabel() == 'the_target_that_h...'
-    assert res[0, 0].get_xlabel() == 'a_really_long_nam...'
+    assert (res[0, 0].get_xlabel()
+            == 'a_really_long_name_that_would_mess_up_the_layou...')
 
     set_config(truncate_labels=False)
     res = plot_regression_continuous(df, target_col=b)

@@ -7,8 +7,7 @@ import seaborn as sns
 import pandas as pd
 
 
-from sklearn.feature_selection import (f_regression,
-                                       mutual_info_regression,
+from sklearn.feature_selection import (mutual_info_regression,
                                        mutual_info_classif,
                                        f_classif)
 from sklearn.impute import SimpleImputer
@@ -24,12 +23,15 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     class_hists, discrete_scatter, mosaic_plot,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size)
+from .sankey import plot_sankey
+
 from warnings import warn
 
 
 def plot_regression_continuous(X, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
-                               drop_outliers=True, **kwargs):
+                               drop_outliers=True, correlation="spearman",
+                               **kwargs):
     """Plots for continuous features in regression.
 
     Creates plots of all the continuous features vs the target.
@@ -49,7 +51,12 @@ def plot_regression_continuous(X, target_col, types=None,
     scatter_size : float, default='auto'
         Marker size for scatter plots. 'auto' is dirty hacks.
     drop_outliers : bool, default=True
-        Whether to drop outliers when plotting.
+        Whether to drop outliers (in the target column) when plotting.
+    correlation : str, default="spearman"
+        Correlation to use for ranking plots, passed to
+        ``pd.DataFrame.corrwith``.
+        Valid values are `'pearson'`, `'kendall'`, `'spearman'`.
+
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
 
@@ -71,22 +78,18 @@ def plot_regression_continuous(X, target_col, types=None,
     show_top = _get_n_top(features, "continuous")
 
     target = X[target_col]
-    # HACK we should drop them per column before feeding them into f_regression
-    # FIXME
-    features_imp = SimpleImputer().fit_transform(features)
-    f, p = f_regression(features_imp, target)
-    top_k = np.argsort(f)[-show_top:][::-1]
-    # we could do better lol
+
+    correlations = features.corrwith(target, method=correlation)
+    top_k = correlations.abs().sort_values().dropna().index[-show_top:][::-1]
     fig, axes = _make_subplots(n_plots=show_top)
 
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
     scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
     scatter_size = _get_scatter_size(scatter_size, X[target_col])
-    for i, (col_idx, ax) in enumerate(zip(top_k, axes.ravel())):
+    for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
         if i % axes.shape[1] == 0:
             ax.set_ylabel(_shortname(target_col))
-        col = features.columns[col_idx]
         if drop_outliers:
             inliers = _find_inliers(features.loc[:, col])
             ax.scatter(features.loc[inliers, col], target[inliers],
@@ -94,8 +97,8 @@ def plot_regression_continuous(X, target_col, types=None,
         else:
             ax.scatter(features.loc[:, col], target,
                        alpha=scatter_alpha, s=scatter_size)
-        ax.set_xlabel(_shortname(col))
-        ax.set_title("F={:.2E}".format(f[col_idx]))
+        ax.set_xlabel(_shortname(col, maxlen=50))
+        ax.set_title("F={:.2E}".format(correlations[col]))
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
@@ -103,7 +106,8 @@ def plot_regression_continuous(X, target_col, types=None,
     return axes
 
 
-def plot_regression_categorical(X, target_col, types=None, **kwargs):
+def plot_regression_categorical(X, target_col, types=None, drop_outliers=True,
+                                **kwargs):
     """Plots for categorical features in regression.
 
     Creates box plots of target distribution for important categorical
@@ -121,9 +125,14 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
     types : dataframe of types, optional
         Output of detect_types on X. Can be used to avoid recomputing the
         types.
+    drop_outliers : bool, default=True
+        Whether to drop outliers (in the target column) when plotting.
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
 
+    if drop_outliers:
+        inliers = _find_inliers(X.loc[:, target_col])
+        X = X.loc[inliers, :]
     # drop nans from target column
     if np.isnan(X[target_col]).any():
         X = X.dropna(subset=[target_col])
@@ -160,7 +169,7 @@ def plot_regression_categorical(X, target_col, types=None, **kwargs):
         sns.boxplot(x=target_col, y=col, data=X_new, order=order, ax=ax)
         ax.set_title("F={:.2E}".format(f[col_ind]))
         # shorten long ticks and labels
-        _short_tick_names(ax)
+        _short_tick_names(ax, label_length=row_height * 12)
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
@@ -450,33 +459,32 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
         ordinal_encoded, target,
         discrete_features=np.ones(X.shape[1], dtype=bool))
     top_k = np.argsort(f)[-show_top:][::-1]
+
+    if kind == 'sankey':
+        return plot_sankey(X, target_col,
+                           figure=kwargs.get('figure', None))
     # large number of categories -> taller plot
     row_height = 3 if features.nunique().max() <= 5 else 5
     fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
     plt.suptitle("Categorical Features vs Target", y=1.02)
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[col_ind]
+        # how many categories make up at least 1% of data:
+        n_cats = (X[col].value_counts() / len(X) > 0.01).sum()
+        n_cats = np.minimum(n_cats, 20)
+        X_new = _prune_category_make_X(X, col, target_col,
+                                       max_categories=n_cats)
         if kind == 'proportion':
-            X_new = _prune_category_make_X(X, col, target_col)
-
             df = (X_new.groupby(col)[target_col]
                   .value_counts(normalize=True)
                   .unstack()
                   .sort_values(by=target[0]))  # hacky way to get a class name
             df.plot(kind='barh', stacked='True', ax=ax, legend=i == 0)
-            ax.set_title(col)
             ax.set_ylabel(None)
         elif kind == 'mosaic':
-            # how many categories make up at least 1% of data:
-            n_cats = (X[col].value_counts() / len(X) > 0.01).sum()
-            n_cats = np.minimum(n_cats, 20)
-            X_new = _prune_category_make_X(X, col, target_col,
-                                           max_categories=n_cats)
             mosaic_plot(X_new, col, target_col, ax=ax, legend=i == 0)
-            ax.set_title(col)
         elif kind == 'count':
             X_new = _prune_category_make_X(X, col, target_col)
-
             # absolute counts
             # FIXME show f value
             # FIXME shorten titles?
@@ -491,6 +499,7 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
         else:
             raise ValueError("Unknown plot kind {}".format(kind))
         _short_tick_names(ax)
+        ax.set_title(col)
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
@@ -498,8 +507,8 @@ def plot_classification_categorical(X, target_col, types=None, kind='auto',
 
 
 def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
-         scatter_size='auto', verbose=10, plot_pairwise=True,
-         **kwargs):
+         scatter_size='auto', drop_outliers=True, verbose=10,
+         plot_pairwise=True, **kwargs):
     """Automatic plots for classification and regression.
 
     Determines whether the target is categorical or continuous and plots the
@@ -528,7 +537,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         These can be somewhat expensive to compute.
     verbose : int, default=10
         Controls the verbosity (output).
-
+    drop_outliers : bool, default=True
+        Whether to drop outliers in the target column for regression.
     See also
     --------
     plot_regression_continuous
@@ -579,10 +589,20 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         # regression
         # make sure we include the target column in X
         # even though it's not categorical
+
+        if drop_outliers:
+            inliers = _find_inliers(X.loc[:, target_col])
+            n_outliers = len(X) - inliers.sum()
+            if n_outliers > 0:
+                warn(f"Discarding {n_outliers} outliers in target column.",
+                     UserWarning)
+                X = X.loc[inliers, :]
+        _, ax = plt.subplots()
         plt.hist(X[target_col], bins='auto')
         plt.xlabel(_shortname(target_col))
         plt.ylabel("frequency")
         plt.title("Target distribution")
+        res.append(ax)
         scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
         scatter_size = _get_scatter_size(scatter_size, X[target_col])
 

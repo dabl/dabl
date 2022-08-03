@@ -71,6 +71,9 @@ def get_fast_regressors():
     return [
         DummyRegressor(),
         DecisionTreeRegressor(max_depth=1),
+        DecisionTreeRegressor(max_leaf_nodes=8),
+        DecisionTreeRegressor(max_leaf_nodes=16),
+        DecisionTreeRegressor(max_leaf_nodes=32),
         DecisionTreeRegressor(max_depth=5),
         Ridge(alpha=10),
         Lasso(alpha=10)

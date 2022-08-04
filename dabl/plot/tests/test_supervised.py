@@ -218,7 +218,7 @@ def test_plot_classification_continuous():
     assert len(axes) == 4
     # known result
     assert axes[0].get_xlabel() == "SOD1_N"
-    assert axes[0].get_ylabel() == 'S6_N'
+    assert axes[0].get_ylabel() == 'pS6_N'
 
     # PCA
     axes = figures[2].get_axes()
@@ -232,7 +232,7 @@ def test_plot_classification_continuous():
     assert len(axes) == 4
     # known result
     assert axes[0].get_xlabel() == "LDA 0"
-    assert axes[0].get_ylabel() == 'LDA 1'
+    assert axes[0].get_ylabel() == 'LDA 3'
 
 
 def test_plot_string_target():

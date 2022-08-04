@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import warnings
 
 import itertools
 
@@ -314,6 +315,23 @@ def test_plot_regression_missing_categories():
     axes = plot(df, target_col="target")
     ticklabels = axes[-1][0, 0].get_yticklabels()
     assert [label.get_text() for label in ticklabels] == ['a', 'b']
+
+
+def test_plot_regression_correlation():
+    df = pd.DataFrame({'y': np.random.normal(size=1000)})
+    df['x1'] = df['y'] + np.random.normal(scale=.1, size=1000)
+    df['x2'] = df['x1'] + np.random.normal(scale=.1, size=1000)
+    with pytest.warns(
+        UserWarning,
+        match=r"Not plotting highly correlated \(0.*\) feature x2"
+    ):
+        res = plot_regression_continuous(df, target_col="y")
+    assert res.shape == (1, 1)
+    with warnings.catch_warnings(record=True) as w:
+        res = plot_regression_continuous(
+            df, target_col="y", prune_correlations_threshold=0)
+        assert len(w) == 0
+    assert res.shape == (1, 2)
 
 
 def test_label_truncation():

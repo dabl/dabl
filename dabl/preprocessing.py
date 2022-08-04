@@ -221,7 +221,8 @@ _DATE_TYPES = ['datetime64', 'datetime', 'date',
 _OBJECT_TYPES = ['string', 'bytes', 'mixed', 'mixed-integer']
 _CATEGORICAL_TYPES = ['categorical', 'boolean']
 
-USELESS_TYPES = {'missing', 'unique', 'constant', 'near_constant', 'index'}
+USELESS_TYPES = {'missing', 'unique', 'constant', 'near_constant',
+                 'index', 'mixed-unhashable', 'list', 'dict'}
 
 
 def _get_max_cat_cardinality(n_samples, max_cat_cardinality="auto"):
@@ -282,7 +283,14 @@ def _type_detection_object(series, *, dirty_float_threshold,
 def detect_type_series(series, *, dirty_float_threshold=0.9,
                        max_cat_cardinality='auto',
                        near_constant_threshold=0.95, target_col=None):
-    n_distinct_values = series.nunique()
+    try:
+        n_distinct_values = series.nunique()
+    except TypeError:
+        types = series.dropna().map(lambda x: type(x).__name__)
+        if types.nunique() == 1:
+            return types.iloc[0]
+        else:
+            return 'mixed-unhashable'
     if series.isna().mean() > 0.99:
         return "missing"
     # infer near-constant-values

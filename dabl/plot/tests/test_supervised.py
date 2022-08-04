@@ -91,12 +91,12 @@ def test_float_classification_target():
     # check we can plot even if we do classification with a float target
     X, y = make_blobs()
     data = pd.DataFrame(X)
-    data['target'] = y.astype(np.float)
+    data['target'] = y.astype(float)
     types = detect_types(data)
     assert types.categorical['target']
     plot(data, target_col='target')
     # same with "actual float" - we need to specify classification for that :-/
-    data['target'] = y.astype(np.float) + .2
+    data['target'] = y.astype(float) + .2
     plot(data, target_col='target', type_hints={'target': 'categorical'})
     plt.close("all")
 

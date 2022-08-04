@@ -5,7 +5,6 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression, Ridge, Lasso
 
-
 from .portfolios.portfolio_base import portfolio_base
 from .portfolios.portfolio_mixed import portfolio_mixed
 from .portfolios.portfolio_hgb import portfolio_hgb

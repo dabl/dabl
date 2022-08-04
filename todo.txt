@@ -25,3 +25,24 @@ select pdp plot features by some measure of variable importance?
 refactor finding "interesting features" in a model-agnostic way?
 
 partial dependence plot can't take advantage of fast method for now :(
+
+categorical plot for regression: maybe use histogram thing instead of bar plots by default?
+move examples all into one folder.
+
+categorical, categorical, continuous.
+How do I plot it?!
+Can I plot it lol? mosaic is basically "just" two categorical and already tricky...
+categorical vs continuous is stacked bar charts
+quadrants of bar charts? (small multiple plot kinda)
+
+interactivity:
+for each plot, pick one of the equivalent plot types
+allow dropping a plot
+continuous vs categorical vs ordinal for a feature
+for regression plots, pick categorical for hue
+logarithmic axis vs not
+size and alpha?
+
+
+Website: focus on vis stuff, show example of changing parameters for exploration
+add docs to plot for kwargs that get handed through?

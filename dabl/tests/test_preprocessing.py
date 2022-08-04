@@ -57,7 +57,7 @@ def test_duplicate_columns():
 
 def test_duplicate_index():
     X = X_cat.copy()
-    X.index = np.ones(len(X), np.int)
+    X.index = np.ones(len(X), np.int64)
     assert not X.index.is_unique
     with pytest.raises(ValueError):
         detect_types(X)
@@ -142,10 +142,10 @@ def test_detect_types():
          'binary_int': np.random.randint(0, 2, size=100),
          'categorical_int': np.random.randint(0, 4, size=100),
          'low_card_float_int': np.random.randint(
-             0, 4, size=100).astype(np.float),
+             0, 4, size=100).astype(float),
          'low_card_float': np.random.randint(
-             0, 4, size=100).astype(np.float) + 0.1,
-         'binary_float': np.random.randint(0, 2, size=100).astype(np.float),
+             0, 4, size=100).astype(float) + 0.1,
+         'binary_float': np.random.randint(0, 2, size=100).astype(float),
          'cont_int': np.repeat(np.arange(50), 2),
          'unique_string': [random_str() for i in range(100)],
          'continuous_float': np.random.normal(size=100),
@@ -155,8 +155,14 @@ def test_detect_types():
          'near_constant_float': near_constant_float,
          'index_0_based': np.arange(100),
          'index_1_based': np.arange(1, 101),
-         'index_shuffled': np.random.permutation(100)
+         'index_shuffled': np.random.permutation(100),
+         'some_lists': [[random_str() for i in range(3)] for j in range(100)],
+         'some_dicts': [{random_str(): random_str() for i in range(3)}
+                        for j in range(100)]
          })
+    df_all.loc[0, 'some_lists'] = np.NaN
+    df_all['mixed_structured'] = df_all['some_lists']
+    df_all.loc[::2, 'mixed_structured'] = df_all.loc[::2, 'some_dicts']
     res = detect_types(df_all)
     types = res.T.idxmax()
     assert types['categorical_string'] == 'categorical'
@@ -178,6 +184,9 @@ def test_detect_types():
     assert types['index_1_based'] == 'useless'
     # Not detecting a shuffled index right now :-/
     assert types['index_shuffled'] == 'continuous'
+    assert types['some_lists'] == 'useless'
+    assert types['some_dicts'] == 'useless'
+    assert types['mixed_structured'] == 'useless'
 
     res = detect_types(X_cat)
     assert len(res) == 3
@@ -204,8 +213,9 @@ def test_detect_types():
     assert detect_type_series(df_all['near_constant_float']) == 'near_constant'
     assert detect_type_series(df_all['index_0_based']) == 'index'
     assert detect_type_series(df_all['index_1_based']) == 'index'
-
-
+    assert detect_type_series(df_all['some_lists']) == 'list'
+    assert detect_type_series(df_all['some_dicts']) == 'dict'
+    assert detect_type_series(df_all['mixed_structured']) == 'mixed-unhashable'
 
 def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(
@@ -317,7 +327,7 @@ def test_type_hints(type_hints):
         assert types.T.idxmax()[k] == v
         # conversion successful
         if v == 'continuous':
-            assert X_clean[k].dtype == np.float
+            assert X_clean[k].dtype == float
         elif v == 'categorical':
             assert X_clean[k].dtype == 'category'
 
@@ -468,7 +478,7 @@ def test_dirty_float_target_regression():
         plot(data, target_col="target")
 
     # check if works for non dirty_float targets
-    plot(titanic_data, 'survived')
+    plot(titanic_data, target_col='survived')
 
 
 def test_string_types_detection():

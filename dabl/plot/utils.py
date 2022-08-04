@@ -521,7 +521,7 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         props = {}
         if len(unique_c) > 15:
             props['size'] = 6
-        legend = ax.legend(prop=props)
+        legend = ax.legend(prop=props, title=getattr(c, 'name', None))
         for handle in legend.legendHandles:
             handle.set_alpha(1)
             handle.set_sizes((100,))

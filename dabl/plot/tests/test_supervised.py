@@ -334,6 +334,17 @@ def test_plot_regression_correlation():
     assert res.shape == (1, 2)
 
 
+def test_plot_regression_categoricals_scatter():
+    data = pd.DataFrame(np.random.normal(scale=4, size=(1000, 2)),
+                        columns=["cont1", "cont2"])
+    data['cat1'] = 1 - 2 * np.random.randint(0, 2, size=1000)
+    data['cat2'] = 1 - 2 * np.random.randint(0, 2, size=1000)
+    data['y'] = (data.cat1 * (data.cont1 + 2) ** 2 - 10 * data.cat1
+                 + data.cont1 * 0.5 + data.cat2 * data.cont2 * 3)
+    plot(data, target_col="y", find_scatter_categoricals=True)
+    assert False  # FIXME add some tests
+
+
 def test_label_truncation():
     a = ('a_really_long_name_that_would_mess_up_the_layout_a_lot'
          '_by_just_being_very_long')

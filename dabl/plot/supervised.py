@@ -28,7 +28,7 @@ from .sankey import plot_sankey
 from warnings import warn
 
 
-def plot_regression_continuous(X, target_col, types=None,
+def plot_regression_continuous(X, *, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
                                drop_outliers=True, correlation="spearman",
                                **kwargs):
@@ -106,8 +106,8 @@ def plot_regression_continuous(X, target_col, types=None,
     return axes
 
 
-def plot_regression_categorical(X, target_col, types=None, drop_outliers=True,
-                                **kwargs):
+def plot_regression_categorical(
+        X, *, target_col, types=None, drop_outliers=True, **kwargs):
     """Plots for categorical features in regression.
 
     Creates box plots of target distribution for important categorical
@@ -177,12 +177,13 @@ def plot_regression_categorical(X, target_col, types=None, drop_outliers=True,
     return axes
 
 
-def plot_classification_continuous(X, target_col, types=None, hue_order=None,
-                                   scatter_alpha='auto', scatter_size="auto",
-                                   univariate_plot='histogram',
-                                   drop_outliers=True, plot_pairwise=True,
-                                   top_k_interactions=10, random_state=None,
-                                   **kwargs):
+def plot_classification_continuous(
+        X, *, target_col, types=None, hue_order=None,
+        scatter_alpha='auto', scatter_size="auto",
+        univariate_plot='histogram',
+        drop_outliers=True, plot_pairwise=True,
+        top_k_interactions=10, random_state=None,
+        **kwargs):
     """Plots for continuous features in classification.
 
     Selects important continuous features according to F statistics.
@@ -404,7 +405,7 @@ def _plot_univariate_classification(features, features_imp, target,
     return f
 
 
-def plot_classification_categorical(X, target_col, types=None, kind='auto',
+def plot_classification_categorical(X, *, target_col, types=None, kind='auto',
                                     hue_order=None, **kwargs):
     """Plots for categorical features in classification.
 
@@ -607,11 +608,11 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         scatter_size = _get_scatter_size(scatter_size, X[target_col])
 
         res.append(plot_regression_continuous(
-            X, target_col, types=types,
+            X, target_col=target_col, types=types,
             scatter_alpha=scatter_alpha,
             scatter_size=scatter_size, **kwargs))
         res.append(plot_regression_categorical(
-            X, target_col, types=types, **kwargs))
+            X, target_col=target_col, types=types, **kwargs))
     else:
         print("Target looks like classification")
         # regression
@@ -634,10 +635,10 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
                   "Current visualizations are quite useless for"
                   " this many classes. Try slicing the data.")
         res.append(plot_classification_continuous(
-            X, target_col, types=types, hue_order=counts.index,
+            X, target_col=target_col, types=types, hue_order=counts.index,
             scatter_alpha=scatter_alpha, scatter_size=scatter_size,
             plot_pairwise=plot_pairwise, **kwargs))
         res.append(plot_classification_categorical(
-            X, target_col, types=types,
+            X, target_col=target_col, types=types,
             hue_order=counts.index, **kwargs))
     return res

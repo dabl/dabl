@@ -1,10 +1,7 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.experimental import enable_hist_gradient_boosting
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.svm import SVC
-
-enable_hist_gradient_boosting
 
 
 def portfolio_mixed():

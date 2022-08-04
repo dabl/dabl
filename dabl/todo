@@ -1,6 +1,5 @@
 document all attributes
 how to do train/test split for explanation?
-remove nice_repr, we have that now
 find fixmes
 remove plot_tree
 multi-class roc curve plot?

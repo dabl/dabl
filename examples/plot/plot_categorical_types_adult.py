@@ -18,7 +18,7 @@ data = load_adult()
 # However, it makes it hard to make comparisons between different categories.
 # For example, for workclass, it is hard to see the differences in proportions
 # among the categories.
-plot_classification_categorical(data, 'income', kind="count")
+plot_classification_categorical(data, target_col='income', kind="count")
 
 # %%
 #
@@ -27,7 +27,7 @@ plot_classification_categorical(data, 'income', kind="count")
 # self-employed are nearly the same. However, 'proportion' does not show how
 # many samples are in each category. How much each category is actually
 # present in the data can be very important, though.
-plot_classification_categorical(data, 'income', kind="proportion")
+plot_classification_categorical(data, target_col='income', kind="proportion")
 
 # %%
 #
@@ -35,7 +35,7 @@ plot_classification_categorical(data, 'income', kind="proportion")
 # (on the x axis) as well as the proportion of the category in the data
 # (on the y axis). The 'mosaic' plot can be a bit busy; in particular if
 # there are many classes and many catgories, it becomes harder to interpret.
-plot_classification_categorical(data, 'income', kind="mosaic")
+plot_classification_categorical(data, target_col='income', kind="mosaic")
 # %%
 #
 # The 'sankey' plot is even busier, as it combines the features of the 'count'
@@ -43,4 +43,4 @@ plot_classification_categorical(data, 'income', kind="mosaic")
 # By default, only the 5 most common features are included in the sankey
 # diagram, which can be adjusted by calling the plot_sankey function directly.
 
-plot_classification_categorical(data, 'income', kind="sankey")
+plot_classification_categorical(data, target_col='income', kind="sankey")

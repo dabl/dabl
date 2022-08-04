@@ -217,6 +217,7 @@ def test_detect_types():
     assert detect_type_series(df_all['some_dicts']) == 'dict'
     assert detect_type_series(df_all['mixed_structured']) == 'mixed-unhashable'
 
+
 def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(
         {'binary_int': np.random.randint(0, 2, size=1000),

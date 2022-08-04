@@ -33,6 +33,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
                                drop_outliers=True, correlation="spearman",
                                prune_correlations_threshold=0.95,
+                               find_scatter_categoricals=False,
                                **kwargs):
     """Plots for continuous features in regression.
 
@@ -61,6 +62,8 @@ def plot_regression_continuous(X, *, target_col, types=None,
     prune_correlations_threshold : float, default=.95
         Whether to prune highly correlated features from the plot.
         Set to 0 to disable pruning.
+    find_scatter_categoricals : boolean, default=False
+        Whether to find categorical features to use as hue in scatter plots.
 
     """
     types = _check_X_target_col(X, target_col, types, task="regression")
@@ -109,7 +112,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
     for cat_col in X.columns[types.categorical]:
         X[cat_col] = _prune_categories(X[cat_col])
 
-    if kwargs.pop("find_scatter_categoricals", False):
+    if find_scatter_categoricals:
         best_categorical = _find_categorical_for_regression(
             X, types, target_col, top_cont=top_k, random_state=None)
     else:
@@ -548,6 +551,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
     target distribution. Then calls the relevant plotting functions
     accordingly.
 
+    See the functions in the "see also" section for more parameters that can be passed as kwargs.
+
 
     Parameters
     ----------
@@ -572,6 +577,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         Controls the verbosity (output).
     drop_outliers : bool, default=True
         Whether to drop outliers in the target column for regression.
+
     See also
     --------
     plot_regression_continuous

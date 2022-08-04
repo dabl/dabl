@@ -10,5 +10,5 @@ import matplotlib.pyplot as plt
 # load the adult census dataset
 # returns a plain dataframe
 data = load_adult()
-plot(data, 'income', scatter_alpha=.1)
+plot(data, target_col='income', scatter_alpha=.1)
 plt.show()

@@ -517,7 +517,7 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         ax.set_xlim(max(x_low, xlims[0]), min(x_high, xlims[1]))
         ax.set_ylim(max(y_low, ylims[0]), min(y_high, ylims[1]))
 
-    if legend:
+    if legend and c is not None:
         props = {}
         if len(unique_c) > 15:
             props['size'] = 6

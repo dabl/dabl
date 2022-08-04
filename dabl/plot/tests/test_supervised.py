@@ -117,15 +117,15 @@ def test_plot_wrong_target_type():
     X = pd.DataFrame(X)
     X['target'] = y
     with pytest.raises(ValueError, match="need continuous"):
-        plot_regression_categorical(X, 'target')
+        plot_regression_categorical(X, target_col='target')
     with pytest.raises(ValueError, match="need continuous"):
-        plot_regression_continuous(X, 'target')
+        plot_regression_continuous(X, target_col='target')
 
     X['target'] = X[0]
     with pytest.raises(ValueError, match="need categorical"):
-        plot_classification_categorical(X, 'target')
+        plot_classification_categorical(X, target_col='target')
     with pytest.raises(ValueError, match="need categorical"):
-        plot_classification_continuous(X, 'target')
+        plot_classification_continuous(X, target_col='target')
 
 
 def test_plot_target_low_card_int():
@@ -256,10 +256,10 @@ def test_na_vals_reg_plot_raise_warning():
         plot(X, 'target_col')
     with pytest.warns(UserWarning, match="Missing values in target_col have "
                                          "been removed for regression"):
-        plot_regression_continuous(X, 'target_col')
+        plot_regression_continuous(X, target_col='target_col')
     with pytest.warns(UserWarning, match="Missing values in target_col have "
                                          "been removed for regression"):
-        plot_regression_categorical(X, 'target_col')
+        plot_regression_categorical(X, target_col='target_col')
 
 
 def test_plot_regression_with_target_outliers():

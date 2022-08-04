@@ -107,9 +107,9 @@ def test_plot_classification_n_classes():
     X = pd.DataFrame(X)
     X['target'] = 0
     with pytest.raises(ValueError, match="Less than two classes"):
-        plot_classification_categorical(X, 'target')
+        plot_classification_categorical(X, target_col='target')
     with pytest.raises(ValueError, match="Less than two classes"):
-        plot_classification_continuous(X, 'target')
+        plot_classification_continuous(X, target_col='target')
 
 
 def test_plot_wrong_target_type():

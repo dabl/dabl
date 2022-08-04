@@ -26,6 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           conda install pip pytest matplotlib>=3.5 seaborn numpy scipy pandas
+          conda list
       - name: Install scikit-learn
         run: |
           if [[ "$SKLEARN_VERSION" == "dev" ]]; then

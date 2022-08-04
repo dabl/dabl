@@ -40,6 +40,7 @@ jobs:
           python --version
           python -c "import numpy; print('numpy %s' % numpy.__version__)"
           python -c "import scipy; print('scipy %s' % scipy.__version__)"
+          ython -c "import matplotlib; print('scipy %s' % matplotlib.__version__)"
           python -c "import sklearn; print('sklearn %s' % sklearn.__version__)"
           python setup.py develop
       - name: Test dabl

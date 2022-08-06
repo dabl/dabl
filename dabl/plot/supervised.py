@@ -551,7 +551,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
     target distribution. Then calls the relevant plotting functions
     accordingly.
 
-    See the functions in the "see also" section for more parameters that can be passed as kwargs.
+    See the functions in the "see also" section for more parameters that
+    can be passed as kwargs.
 
 
     Parameters

@@ -594,6 +594,11 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         # check for missing values
         # scale etc
         steps_categorical = []
+        
+        if X.columns.isna().any(axis=None):
+            steps_categorical.append(
+                SimpleImputer(missing_values=np.nan, strategy='constant', add_indicator=True))
+        
         if (self.force_imputation
                 or X.loc[:, types.categorical].isna().any(axis=None)):
             steps_categorical.append(
@@ -604,6 +609,11 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         pipe_categorical = make_pipeline(*steps_categorical)
 
         steps_continuous = []
+         
+        if X.columns.isna().any(axis=None):
+            steps_continuous.append(
+                SimpleImputer(missing_values=np.nan, strategy='constant', add_indicator=True))
+        
         if (self.force_imputation
                 or X.loc[:, types.continuous].isna().any(axis=None)
                 or types['dirty_float'].any()):

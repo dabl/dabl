@@ -236,6 +236,15 @@ def test_plot_classification_continuous():
     assert axes[0].get_ylabel() == 'LDA 3'
 
 
+def test_plot_classification_many_classes():
+    X, y = make_blobs(n_samples=200)
+    data = pd.DataFrame(X)
+    y = pd.Series(y)
+    y[:20] = np.arange(20)
+    data['target'] = y
+    plot(data, target_col='target')
+
+
 def test_plot_string_target():
     X, y = make_blobs(n_samples=30)
     data = pd.DataFrame(X)

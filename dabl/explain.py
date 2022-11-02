@@ -8,7 +8,7 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
 from sklearn.feature_selection import f_classif
 from sklearn.impute import SimpleImputer
 
@@ -197,7 +197,7 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
             n_rows, n_cols = find_pretty_grid(len(features))
             try:
                 if n_classes <= 2:
-                    plot = plot_partial_dependence(
+                    plot = PartialDependenceDisplay.from_estimator(
                         estimator, X_val, features=features,
                         feature_names=np.array(feature_names), n_cols=n_cols)
                     plot.figure_.suptitle("Partial Dependence")
@@ -205,7 +205,7 @@ def explain(estimator, X_val=None, y_val=None, target_col=None,
                         ax.set_ylabel('')
                 else:
                     for c in estimator.classes_:
-                        plot = plot_partial_dependence(
+                        plot = PartialDependenceDisplay.from_estimator(
                             estimator, X_val, features=features,
                             feature_names=np.array(feature_names),
                             target=c, n_cols=n_cols)
@@ -232,10 +232,10 @@ def _extract_inner_estimator(estimator, feature_names):
         # *cries in scikit-learn roadmap*
         final_est = inner_estimator._final_estimator
         try:
-            feature_names = inner_estimator.steps[0][1].get_feature_names(
+            feature_names = inner_estimator.steps[0][1].get_feature_names_out(
                 feature_names)
         except TypeError:
-            feature_names = inner_estimator.steps[0][1].get_feature_names()
+            feature_names = inner_estimator.steps[0][1].get_feature_names_out()
 
         # now we have input feature names for the final step
         inner_estimator = final_est

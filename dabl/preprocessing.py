@@ -118,7 +118,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
                 result.append(X_new_col)
                 continue
             cats = pd.DataFrame(0, index=X.index,
-                                columns=enc.get_feature_names([str(col)]))
+                                columns=enc.get_feature_names_out([str(col)]))
             if nofloats.any():
                 cats.loc[nofloats, :] = enc.transform(pd.DataFrame(
                     X_col[nofloats]))
@@ -127,11 +127,11 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             result.append(cats)
         return pd.concat(result, axis=1)
 
-    def get_feature_names(self, input_features=None):
+    def get_feature_names_out(self, input_features=None):
         feature_names = []
         for col in self.columns_:
             enc = self.encoders_[col]
-            feature_names.extend(enc.get_feature_names([str(col)]))
+            feature_names.extend(enc.get_feature_names_out([str(col)]))
             feature_names.append("{}_dabl_continuous".format(col))
         return feature_names
 
@@ -213,7 +213,7 @@ def _float_col_is_int(series):
     return True
 
 
-_FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
+_FLOAT_TYPES = ['floating', 'mixed-integer-float', 'decimal']
 _INTEGER_TYPES = ['integer']
 _DATE_TYPES = ['datetime64', 'datetime', 'date',
                'timedelta64', 'timedelta', 'time', 'period']
@@ -646,7 +646,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         # Return the transformer
         return self
 
-    def get_feature_names(self):
+    def get_feature_names_out(self):
         # this can go soon hopefully
         feature_names = []
         for name, trans, cols in self.ct_.transformers_:
@@ -669,7 +669,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
                 ohe_cols = ohe_cols.to_list()
                 ohe_cols.extend(added_cols)
 
-                feature_names.extend(ohe.get_feature_names(ohe_cols))
+                feature_names.extend(ohe.get_feature_names_out(ohe_cols))
             elif name == "remainder":
                 assert trans == "drop"
             elif name == "dirty_float":

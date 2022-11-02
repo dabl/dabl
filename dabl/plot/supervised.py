@@ -516,6 +516,9 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
     target distribution. Then calls the relevant plotting functions
     accordingly.
 
+    See the functions in the "see also" section for more parameters that
+    can be passed as kwargs.
+
 
     Parameters
     ----------
@@ -540,6 +543,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         Controls the verbosity (output).
     drop_outliers : bool, default=True
         Whether to drop outliers in the target column for regression.
+
     See also
     --------
     plot_regression_continuous
@@ -586,7 +590,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
     if types.continuous[target_col]:
         print("Target looks like regression")
         # FIXME we might be overwriting the original dataframe here?
-        X[target_col] = X[target_col].astype(np.float)
+        X[target_col] = X[target_col].astype(float)
         # regression
         # make sure we include the target column in X
         # even though it's not categorical

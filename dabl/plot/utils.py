@@ -286,7 +286,7 @@ def _get_n_top(features, name):
 
 def _prune_categories(series, max_categories=10):
     if not pd.api.types.is_categorical_dtype(series):
-        series = series.astype("category")
+        series = pd.Series(series).astype("category")
     small_categories = series.value_counts()[max_categories:].index
     res = series.cat.remove_categories(small_categories)
     if res.isnull().any():
@@ -473,7 +473,9 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
     if legend == "first":
         legend = (ax.get_subplotspec().get_geometry()[2] == 1)
     if unique_c is None:
-        unique_c = np.unique(c)
+        unique_c = c.unique() if c is not None else []
+    if len(unique_c) == 0:
+        ax.scatter(x, y, s=s, alpha=alpha, **kwargs)
     for i in unique_c:
         mask = c == i
         ax.scatter(x[mask], y[mask], label=i, s=s, alpha=alpha, **kwargs)
@@ -485,11 +487,11 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         ax.set_xlim(max(x_low, xlims[0]), min(x_high, xlims[1]))
         ax.set_ylim(max(y_low, ylims[0]), min(y_high, ylims[1]))
 
-    if legend:
+    if legend and c is not None:
         props = {}
         if len(unique_c) > 15:
             props['size'] = 6
-        legend = ax.legend(prop=props)
+        legend = ax.legend(prop=props, title=getattr(c, 'name', None))
         for handle in legend.legendHandles:
             handle.set_alpha(1)
             handle.set_sizes((100,))

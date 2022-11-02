@@ -284,12 +284,17 @@ def _get_n_top(features, name):
     return show_top
 
 
-def _prune_categories(series, max_categories=10):
+def _prune_categories(series, max_categories=10, min_samples=None, replace=True):
     if not pd.api.types.is_categorical_dtype(series):
         series = pd.Series(series).astype("category")
-    small_categories = series.value_counts()[max_categories:].index
-    res = series.cat.remove_categories(small_categories)
-    if res.isnull().any():
+    category_counts = series.value_counts()
+    drop = pd.Series(False, index=category_counts.index)
+    drop.iloc[max_categories:] = True
+    drop[category_counts < .01 * category_counts.median()] = True
+    if min_samples is not None:
+        drop[category_counts < min_samples] = True
+    res = series.cat.remove_categories(drop[drop].index)
+    if res.isnull().any() and replace:
         res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
     return res
 
@@ -404,16 +409,17 @@ def _score_triple(X, cont1, cont2, cat, random_state):
         # cat is an integer array
         this_X = X[:, [cont1, cont2]]
         target = cat
-    target = _prune_categories(target)
-    category_counts = target.value_counts() / len(target)
-    uncommon_categories = category_counts.index[category_counts <= .1]
-    if len(uncommon_categories):
-        mask = target.isin(uncommon_categories)
+    n_splits = 3
+    target = _prune_categories(target, replace=False, min_samples=n_splits)
+    if target.isna().any():
+        mask = target.isna()
         target = target[~mask]
         this_X = this_X[~mask]
     # limit to 2000 training points for speed?
     train_size = min(2000, int(.9 * this_X.shape[0]))
-    cv = StratifiedShuffleSplit(n_splits=3, train_size=train_size,
+    if train_size == 0:
+        return 0
+    cv = StratifiedShuffleSplit(n_splits=n_splits, train_size=train_size,
                                 random_state=random_state)
     tree = DecisionTreeClassifier(max_leaf_nodes=8)
     return np.mean(cross_val_score(

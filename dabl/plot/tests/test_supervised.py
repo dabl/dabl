@@ -242,7 +242,7 @@ def test_plot_classification_many_classes():
     y = pd.Series(y)
     y[:20] = np.arange(20)
     data['target'] = y
-    plot(data, target_col='target')
+    plot(data, target_col='target', type_hints={'target': 'categorical'})
 
 
 def test_plot_string_target():

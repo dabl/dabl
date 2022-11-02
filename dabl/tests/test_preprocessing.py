@@ -217,6 +217,7 @@ def test_detect_types():
     assert detect_type_series(df_all['some_dicts']) == 'dict'
     assert detect_type_series(df_all['mixed_structured']) == 'mixed-unhashable'
 
+
 def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(
         {'binary_int': np.random.randint(0, 2, size=1000),
@@ -304,7 +305,7 @@ def test_transform_dirty_float():
     assert res.shape == (100, 3)
     assert res.a_column_missing.sum() == 9
     assert res.a_column_garbage.sum() == 1
-    assert (dfc.get_feature_names() == res.columns).all()
+    assert (dfc.get_feature_names_out() == res.columns).all()
 
 
 @pytest.mark.parametrize(
@@ -400,19 +401,19 @@ def test_titanic_feature_names():
         'boat_A', 'boat_B', 'boat_C', 'boat_C D', 'boat_D', 'age_?_0.0',
         'age_?_1.0', 'body_?_0.0', 'body_?_1.0']
     try:
-        assert ep.get_feature_names() == expected_names
+        assert ep.get_feature_names_out() == expected_names
     except AssertionError:
         # OHE uses int in newer versions
         expected_names[57] = 'age_?_0'
         expected_names[58] = 'age_?_1'
         expected_names[59] = 'body_?_0'
         expected_names[60] = 'body_?_1'
-        assert ep.get_feature_names() == expected_names
+        assert ep.get_feature_names_out() == expected_names
 
     # without clean
     X = ep.fit_transform(titanic.drop('survived', axis=1))
     # FIXME can't do that yet
-    # assert ep.get_feature_names() == expected_names_no_clean
+    # assert ep.get_feature_names_out() == expected_names_no_clean
 
     assert not np.isnan(X).any()
 
@@ -460,7 +461,7 @@ def test_simple_preprocessor_imputed_features():
     ep.fit(data)
 
     expected_names = ['A_0', 'A_1', 'A_2', 'A_imputed_False', 'A_imputed_True']
-    assert ep.get_feature_names() == expected_names
+    assert ep.get_feature_names_out() == expected_names
 
 
 def test_dirty_float_target_regression():

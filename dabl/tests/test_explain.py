@@ -19,10 +19,10 @@ def test_explain_smoke_titanic():
     ep = EasyPreprocessor()
     preprocessed = ep.fit_transform(X)
     tree = DecisionTreeClassifier().fit(preprocessed, y)
-    explain(tree, feature_names=ep.get_feature_names())
+    explain(tree, feature_names=ep.get_feature_names_out())
     pipe = make_pipeline(EasyPreprocessor(), LogisticRegression())
     pipe.fit(X, y)
-    explain(pipe, feature_names=pipe[0].get_feature_names())
+    explain(pipe, feature_names=pipe[0].get_feature_names_out())
 
 
 @pytest.mark.parametrize("model", [LogisticRegression(C=0.1),

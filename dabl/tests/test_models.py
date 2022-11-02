@@ -56,11 +56,12 @@ def test_any_classifier_titanic(monkeypatch):
 
 
 def test_regression_boston():
-    data = fetch_openml('boston', as_frame=True).frame
+    boston = fetch_openml('boston', as_frame=True)
+    data = boston.frame
     er = SimpleRegressor()
-    er.fit(data, target_col='target')
+    er.fit(data, target_col='MEDV')
 
-    # test nupmy array
+    # test numpy array
     er = SimpleRegressor()
     er.fit(boston.data, boston.target)
 

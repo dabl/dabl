@@ -66,6 +66,12 @@ def plot_regression_continuous(X, *, target_col, types=None,
         Whether to find categorical features to use as hue in scatter plots.
 
     """
+    X = X.copy()
+    X.columns = X.columns.astype(str)
+    if types is not None:
+        types = types.copy()
+        types.index = types.index.astype(str)
+
     types = _check_X_target_col(X, target_col, types, task="regression")
 
     if np.isnan(X[target_col]).any():
@@ -108,7 +114,6 @@ def plot_regression_continuous(X, *, target_col, types=None,
 
         top_k = corrs[:show_top]
 
-    X = X.copy()
     for cat_col in X.columns[types.categorical]:
         X[cat_col] = _prune_categories(X[cat_col])
 

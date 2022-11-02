@@ -2,14 +2,13 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from sklearn.datasets import load_iris, make_blobs, load_boston, load_digits
+from sklearn.datasets import load_iris, make_blobs, load_digits, fetch_openml
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.dummy import DummyClassifier
 
 from dabl.datasets import load_titanic
 from dabl.models import SimpleClassifier, SimpleRegressor, AnyClassifier
-from dabl.utils import data_df_from_bunch
 
 iris = load_iris()
 X_blobs, y_blobs = make_blobs(centers=2, random_state=0)
@@ -57,8 +56,7 @@ def test_any_classifier_titanic(monkeypatch):
 
 
 def test_regression_boston():
-    boston = load_boston()
-    data = data_df_from_bunch(boston)
+    data = fetch_openml('boston', as_frame=True).frame
     er = SimpleRegressor()
     er.fit(data, target_col='target')
 

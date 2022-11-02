@@ -256,6 +256,17 @@ def test_plot_string_target():
     plot(data, target_col='target')
 
 
+def test_plot_mixed_column_name_types():
+    X, y = make_blobs(n_samples=100, n_features=10)
+    data = pd.DataFrame(X)
+    y = pd.Series(y)
+    y[y == 0] = 'a'
+    y[y == 1] = 'b'
+    y[y == 2] = 'c'
+    data['target'] = y
+    plot(data, target_col='target')
+
+
 def test_na_vals_reg_plot_raise_warning():
     X, y = load_diabetes(return_X_y=True)
     X = pd.DataFrame(X)

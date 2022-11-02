@@ -213,7 +213,7 @@ def _float_col_is_int(series):
     return True
 
 
-_FLOAT_TYPES = ['floating', 'mixed-interger-float', 'decimal']
+_FLOAT_TYPES = ['floating', 'mixed-integer-float', 'decimal']
 _INTEGER_TYPES = ['integer']
 _DATE_TYPES = ['datetime64', 'datetime', 'date',
                'timedelta64', 'timedelta', 'time', 'period']

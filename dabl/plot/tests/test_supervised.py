@@ -45,7 +45,7 @@ def test_plots_smoke(continuous_features, categorical_features, task):
         X_df = pd.concat([df_cont, df_cat], axis=1)
     else:
         X_df = df_cont
-    assert(X_df.shape[1] == continuous_features + categorical_features)
+    assert X_df.shape[1] == continuous_features + categorical_features
     X_clean = clean(X_df.copy())
     y = y_cont + y_cat
     if X_df.shape[1] == 0:

@@ -27,6 +27,8 @@ refactor finding "interesting features" in a model-agnostic way?
 partial dependence plot can't take advantage of fast method for now :(
 
 categorical plot for regression: maybe use histogram thing instead of bar plots by default?
+problem currently: some categories can be really small!
+
 move examples all into one folder.
 
 categorical, categorical, continuous.

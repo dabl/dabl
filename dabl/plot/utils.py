@@ -284,12 +284,17 @@ def _get_n_top(features, name):
     return show_top
 
 
-def _prune_categories(series, max_categories=10):
+def _prune_categories(series, max_categories=10, min_samples=None, replace=True):
     if not pd.api.types.is_categorical_dtype(series):
         series = pd.Series(series).astype("category")
-    small_categories = series.value_counts()[max_categories:].index
-    res = series.cat.remove_categories(small_categories)
-    if res.isnull().any():
+    category_counts = series.value_counts()
+    drop = pd.Series(False, index=category_counts.index)
+    drop.iloc[max_categories:] = True
+    drop[category_counts < .01 * category_counts.median()] = True
+    if min_samples is not None:
+        drop[category_counts < min_samples] = True
+    res = series.cat.remove_categories(drop[drop].index)
+    if res.isnull().any() and replace:
         res = res.cat.add_categories(['dabl_other']).fillna("dabl_other")
     return res
 
@@ -390,27 +395,62 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=label_length))
 
 
+def _score_triple(X, cont1, cont2, cat, random_state):
+    # score how well you can predict a category from two continuous features
+    # assume this tree is simple enough so not be able to overfit in 2d
+    # so we don't bother with train/test split
+    if hasattr(X, "loc"):
+        # we passed column names in a pandas dataframe
+        X = X.dropna(subset=[cont1, cont2, cat])
+        this_X = X.loc[:, [cont1, cont2]]
+        target = X.loc[:, cat].cat.codes
+    else:
+        # we passed indices into a numpy array,
+        # cat is an integer array
+        this_X = X[:, [cont1, cont2]]
+        target = cat
+    n_splits = 3
+    target = _prune_categories(target, replace=False, min_samples=n_splits)
+    if target.isna().any():
+        mask = target.isna()
+        target = target[~mask]
+        this_X = this_X[~mask]
+    # limit to 2000 training points for speed?
+    train_size = min(2000, int(.9 * this_X.shape[0]))
+    if train_size == 0:
+        return 0
+    cv = StratifiedShuffleSplit(n_splits=n_splits, train_size=train_size,
+                                random_state=random_state)
+    tree = DecisionTreeClassifier(max_leaf_nodes=8)
+    return np.mean(cross_val_score(
+        tree, this_X, target, cv=cv, scoring='recall_macro'))
+
+
+def _find_categorical_for_regression(
+        X, types, target_col, top_cont, random_state=None):
+    categorical_features = X.columns[types.categorical]
+    scores = [(cont, cat, _score_triple(
+                X, target_col, cont, cat, random_state=random_state))
+              for cont, cat in itertools.product(
+                top_cont, categorical_features)]
+    scores_df = pd.DataFrame(scores, columns=['cont', 'cat', 'score'])
+    scores = scores_df.pivot(index='cat', columns='cont', values='score')
+    if len(scores) == 0:
+        return []
+    best_categorical = scores.idxmax()
+    # Scores are macro recall, < .5 means uninformative, so we don't plot it
+    best_categorical[scores.max() < .5] = None
+    return best_categorical
+
+
 def _find_scatter_plots_classification(X, target, how_many=3,
                                        random_state=None):
     # input is continuous
     # look at all pairs of features, find most promising ones
-    # dummy = DummyClassifier(strategy='prior').fit(X, target)
-    # baseline_score = recall_score(target, dummy.predict(X), average='macro')
-    scores = []
     # converting to int here might save some time
     _, target = np.unique(target, return_inverse=True)
-    # limit to 2000 training points for speed?
-    train_size = min(2000, int(.9 * X.shape[0]))
-    cv = StratifiedShuffleSplit(n_splits=3, train_size=train_size,
-                                random_state=random_state)
-    for i, j in itertools.combinations(np.arange(X.shape[1]), 2):
-        this_X = X[:, [i, j]]
-        # assume this tree is simple enough so not be able to overfit in 2d
-        # so we don't bother with train/test split
-        tree = DecisionTreeClassifier(max_leaf_nodes=8)
-        scores.append((i, j, np.mean(cross_val_score(
-            tree, this_X, target, cv=cv, scoring='recall_macro'))))
-
+    scores = [(i, j, _score_triple(X, i, j, target, random_state=random_state))
+              for i, j in itertools.combinations(np.arange(X.shape[1]), 2)]
     scores = pd.DataFrame(scores, columns=['feature0', 'feature1', 'score'])
     top = scores.sort_values(by='score').iloc[-how_many:][::-1]
     return top

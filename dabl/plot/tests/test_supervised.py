@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import warnings
 
 import itertools
 
@@ -235,8 +236,28 @@ def test_plot_classification_continuous():
     assert axes[0].get_ylabel() == 'LDA 1'
 
 
+def test_plot_classification_many_classes():
+    X, y = make_blobs(n_samples=200)
+    data = pd.DataFrame(X)
+    y = pd.Series(y)
+    y[:20] = np.arange(20)
+    data['target'] = y
+    plot(data, target_col='target', type_hints={'target': 'categorical'})
+
+
 def test_plot_string_target():
     X, y = make_blobs(n_samples=30)
+    data = pd.DataFrame(X)
+    y = pd.Series(y)
+    y[y == 0] = 'a'
+    y[y == 1] = 'b'
+    y[y == 2] = 'c'
+    data['target'] = y
+    plot(data, target_col='target')
+
+
+def test_plot_mixed_column_name_types():
+    X, y = make_blobs(n_samples=100, n_features=10)
     data = pd.DataFrame(X)
     y = pd.Series(y)
     y[y == 0] = 'a'
@@ -314,6 +335,38 @@ def test_plot_regression_missing_categories():
     axes = plot(df, target_col="target")
     ticklabels = axes[-1][0, 0].get_yticklabels()
     assert [label.get_text() for label in ticklabels] == ['a', 'b']
+
+
+def test_plot_regression_correlation():
+    df = pd.DataFrame({'y': np.random.normal(size=1000)})
+    df['x1'] = df['y'] + np.random.normal(scale=.1, size=1000)
+    df['x2'] = df['x1'] + np.random.normal(scale=.1, size=1000)
+    with pytest.warns(
+        UserWarning,
+        match=r"Not plotting highly correlated \(0.*\) feature x2"
+    ):
+        res = plot_regression_continuous(df, target_col="y")
+    assert res.shape == (1, 1)
+    with warnings.catch_warnings(record=True) as w:
+        res = plot_regression_continuous(
+            df, target_col="y", prune_correlations_threshold=0)
+        assert len(w) == 0
+    assert res.shape == (1, 2)
+
+
+def test_plot_regression_categoricals_scatter():
+    data = pd.DataFrame(np.random.normal(scale=4, size=(1000, 2)),
+                        columns=["cont1", "cont2"])
+    data['cat1'] = 1 - 2 * np.random.randint(0, 2, size=1000)
+    data['cat2'] = 1 - 2 * np.random.randint(0, 2, size=1000)
+    data['y'] = (data.cat1 * (data.cont1 + 2) ** 2 - 10 * data.cat1
+                 + data.cont1 * 0.5 + data.cat2 * data.cont2 * 3)
+    figs = plot(data, target_col="y", find_scatter_categoricals=True)
+    ax1, ax2 = figs[1][0]
+    assert ax1.get_xlabel() == 'cont1'
+    assert ax2.get_xlabel() == 'cont2'
+    assert ax1.get_legend().get_title().get_text() == "cat1"
+    assert ax2.get_legend().get_title().get_text() == "cat2"
 
 
 def test_label_truncation():

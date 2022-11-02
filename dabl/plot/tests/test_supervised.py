@@ -350,8 +350,12 @@ def test_plot_regression_categoricals_scatter():
     data['cat2'] = 1 - 2 * np.random.randint(0, 2, size=1000)
     data['y'] = (data.cat1 * (data.cont1 + 2) ** 2 - 10 * data.cat1
                  + data.cont1 * 0.5 + data.cat2 * data.cont2 * 3)
-    plot(data, target_col="y", find_scatter_categoricals=True)
-    assert False  # FIXME add some tests
+    figs = plot(data, target_col="y", find_scatter_categoricals=True)
+    ax1, ax2 = figs[1][0]
+    assert ax1.get_xlabel() == 'cont1'
+    assert ax2.get_xlabel() == 'cont2'
+    assert ax1.get_legend().get_title().get_text() == "cat1"
+    assert ax2.get_legend().get_title().get_text() == "cat2"
 
 
 def test_label_truncation():

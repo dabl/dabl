@@ -435,6 +435,8 @@ def _find_categorical_for_regression(
                 top_cont, categorical_features)]
     scores_df = pd.DataFrame(scores, columns=['cont', 'cat', 'score'])
     scores = scores_df.pivot(index='cat', columns='cont', values='score')
+    if len(scores) == 0:
+        return []
     best_categorical = scores.idxmax()
     # Scores are macro recall, < .5 means uninformative, so we don't plot it
     best_categorical[scores.max() < .5] = None

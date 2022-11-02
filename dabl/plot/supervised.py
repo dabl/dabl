@@ -33,7 +33,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
                                scatter_alpha='auto', scatter_size='auto',
                                drop_outliers=True, correlation="spearman",
                                prune_correlations_threshold=0.95,
-                               find_scatter_categoricals=False,
+                               find_scatter_categoricals=True,
                                **kwargs):
     """Plots for continuous features in regression.
 
@@ -62,7 +62,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
     prune_correlations_threshold : float, default=.95
         Whether to prune highly correlated features from the plot.
         Set to 0 to disable pruning.
-    find_scatter_categoricals : boolean, default=False
+    find_scatter_categoricals : boolean, default=True
         Whether to find categorical features to use as hue in scatter plots.
 
     """
@@ -127,7 +127,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
     for i, (col, ax) in enumerate(zip(top_k, axes.ravel())):
         if i % axes.shape[1] == 0:
             ax.set_ylabel(_shortname(target_col))
-        c = X.loc[:, best_categorical[col]] if len(best_categorical) else None
+        c = X.loc[:, best_categorical[col]] if len(best_categorical) and best_categorical[col] is not None else None
         discrete_scatter(features.loc[:, col], target,
                          c=c,
                          clip_outliers=drop_outliers, alpha=scatter_alpha,

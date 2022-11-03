@@ -1,7 +1,7 @@
 Release History
 ===============
 
-dabl 0.2.3
+dabl 0.2.4
 --------------
 - Added pruning of correlated features and detecting of interactions with categorical features to regression plots, :issue:`316` by :user:`amueller`.
 - Add detection of lists and dicts in `detect_type_series`. :issue:`317` by :user:`amueller`.

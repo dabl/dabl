@@ -1,11 +1,12 @@
 Release History
 ===============
 
-dabl 0.2.3-dev
+dabl 0.2.3
 --------------
 - Added pruning of correlated features and detecting of interactions with categorical features to regression plots, :issue:`316` by :user:`amueller`.
 - Add detection of lists and dicts in `detect_type_series`. :issue:`317` by :user:`amueller`.
 - Use matplotlib's `stairs` for faster histograms.  :issue:`313` by :user:`amueller`.
+- Add jitter to ordinal features in regression scatter plots. :issue:`` by :user:`amueller`.
 
 dabl 0.2.2
 ----------

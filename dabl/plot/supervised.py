@@ -34,6 +34,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
                                drop_outliers=True, correlation="spearman",
                                prune_correlations_threshold=0.95,
                                find_scatter_categoricals=True,
+                               jitter_ordinal=True,
                                **kwargs):
     """Plots for continuous features in regression.
 
@@ -59,6 +60,8 @@ def plot_regression_continuous(X, *, target_col, types=None,
         Correlation to use for ranking plots, passed to
         ``pd.DataFrame.corrwith``.
         Valid values are `'pearson'`, `'kendall'`, `'spearman'`.
+    jitter_ordinal : bool, default=True
+        Whether to add jitter, i.e. apply noise, to ordinal features, to reduce overlap.
     prune_correlations_threshold : float, default=.95
         Whether to prune highly correlated features from the plot.
         Set to 0 to disable pruning.
@@ -133,11 +136,17 @@ def plot_regression_continuous(X, *, target_col, types=None,
         if i % axes.shape[1] == 0:
             ax.set_ylabel(_shortname(target_col))
         c = X.loc[:, best_categorical[col]] if len(best_categorical) and best_categorical[col] is not None else None
-        discrete_scatter(features.loc[:, col], target,
+        values = features.loc[:, col]
+        col_name = _shortname(col, maxlen=50)
+        # FIXME we should know low-card-int here but we overwrote it unfortunately in plot
+        if jitter_ordinal and X[col].nunique() < 20:
+            values = values + np.random.normal(0, .1, size=len(features))
+            col_name = col_name + " (jittered)"
+        discrete_scatter(values, target,
                          c=c,
                          clip_outliers=drop_outliers, alpha=scatter_alpha,
                          s=scatter_size, ax=ax, legend=True, **kwargs)
-        ax.set_xlabel(_shortname(col, maxlen=50))
+        ax.set_xlabel(col_name)
         ax.set_title("F={:.2E}".format(correlations[col]))
 
     for j in range(i + 1, axes.size):

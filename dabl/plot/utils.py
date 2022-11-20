@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Patch
+from matplotlib.ticker import EngFormatter
 from seaborn.utils import despine
 
 
@@ -739,3 +740,25 @@ def plot_multiclass_roc_curve(estimator, X_val, y_val):
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate (recall)")
         ax.set_title("ROC curve for class {}".format(c))
+
+def _apply_eng_formatter(ax, which):
+    """Apply engineering format to axis ticks.
+
+    Parameters
+    ----------
+    ax : Axes
+        Matplotlib Axes object.
+    which : str, {"x", "y"}
+        The axis to apply the format to.
+    """
+    if which == "x":
+        axis = ax.xaxis
+        current_min, current_max = ax.get_xlim()
+    elif which == "y":
+        axis = ax.yaxis
+        current_min, current_max = ax.get_ylim()
+    else:
+        raise ValueError(f"Can only format x-axis or y-axis, not {which}")
+
+    if current_max > 4000 or current_min < -1000:
+        axis.set_major_formatter(EngFormatter())

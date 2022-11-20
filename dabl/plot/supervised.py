@@ -126,7 +126,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
     else:
         best_categorical = []
 
-    fig, axes = _make_subplots(n_plots=len(top_k))
+    fig, axes = _make_subplots(n_plots=len(top_k), sharey=True)
 
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
@@ -208,7 +208,7 @@ def plot_regression_categorical(
 
     # large number of categories -> taller plot
     row_height = 3 if X.nunique().max() <= 5 else 5
-    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
+    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height, sharex=True)
     plt.suptitle("Categorical Feature vs Target")
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]

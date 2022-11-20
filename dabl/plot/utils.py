@@ -328,13 +328,14 @@ def _fill_missing_categorical(X):
     return X
 
 
-def _make_subplots(n_plots, max_cols=5, row_height=3):
+def _make_subplots(n_plots, max_cols=5, row_height=3, sharex=False, sharey=False):
     """Create a harmonious subplot grid.
     """
     n_rows, n_cols = find_pretty_grid(n_plots, max_cols=max_cols)
     fig, axes = plt.subplots(n_rows, n_cols,
                              figsize=(4 * n_cols, row_height * n_rows),
-                             constrained_layout=True)
+                             constrained_layout=True,
+                             sharex=sharex, sharey=sharey)
     # we don't want ravel to fail, this is awkward!
     axes = np.atleast_2d(axes)
     return fig, axes

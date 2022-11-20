@@ -741,6 +741,7 @@ def plot_multiclass_roc_curve(estimator, X_val, y_val):
         ax.set_ylabel("True Positive Rate (recall)")
         ax.set_title("ROC curve for class {}".format(c))
 
+
 def _apply_eng_formatter(ax, which):
     """Apply engineering format to axis ticks.
 

@@ -395,7 +395,7 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=label_length))
 
 
-def _score_triple(X, cont1, cont2, cat, random_state):
+def _score_triple(X, cont1, cont2, cat, random_state, scoring="recall_macro", vs_univariate=False):
     # score how well you can predict a category from two continuous features
     # assume this tree is simple enough so not be able to overfit in 2d
     # so we don't bother with train/test split
@@ -421,16 +421,20 @@ def _score_triple(X, cont1, cont2, cat, random_state):
         return 0
     cv = StratifiedShuffleSplit(n_splits=n_splits, train_size=train_size,
                                 random_state=random_state)
-    tree = DecisionTreeClassifier(max_leaf_nodes=8)
-    return np.mean(cross_val_score(
-        tree, this_X, target, cv=cv, scoring='recall_macro'))
+    tree = DecisionTreeClassifier(max_leaf_nodes=12)
+    scores = np.mean(cross_val_score(tree, this_X, target, cv=cv, scoring=scoring))
+    if vs_univariate:
+        feature1_scores = np.mean(cross_val_score(tree, this_X.iloc[:, [0]], target, cv=cv, scoring=scoring))
+        feature2_scores = np.mean(cross_val_score(tree, this_X.iloc[:, [1]], target, cv=cv, scoring=scoring))
+        scores -= 2 * feature1_scores * feature2_scores / (feature1_scores + feature2_scores)
+    return scores
 
 
 def _find_categorical_for_regression(
         X, types, target_col, top_cont, random_state=None):
     categorical_features = X.columns[types.categorical]
     scores = [(cont, cat, _score_triple(
-                X, target_col, cont, cat, random_state=random_state))
+                X, target_col, cont, cat, random_state=random_state, scoring="recall_weighted", vs_univariate=True))
               for cont, cat in itertools.product(
                 top_cont, categorical_features)]
     scores_df = pd.DataFrame(scores, columns=['cont', 'cat', 'score'])
@@ -439,7 +443,7 @@ def _find_categorical_for_regression(
         return []
     best_categorical = scores.idxmax()
     # Scores are macro recall, < .5 means uninformative, so we don't plot it
-    best_categorical[scores.max() < .5] = None
+    best_categorical[scores.max() < .01] = None
     return best_categorical
 
 
@@ -535,6 +539,7 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         for handle in legend.legendHandles:
             handle.set_alpha(1)
             handle.set_sizes((100,))
+    return ax
 
 
 def class_hists(data, column, target, bins="auto", ax=None, legend=True,

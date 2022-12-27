@@ -23,7 +23,7 @@ from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     class_hists, discrete_scatter, mosaic_plot,
                     _find_inliers, pairplot, _get_scatter_alpha,
                     _get_scatter_size, _find_categorical_for_regression,
-                    _prune_categories)
+                    _prune_categories, _apply_eng_formatter)
 from .sankey import plot_sankey
 
 from warnings import warn
@@ -126,7 +126,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
     else:
         best_categorical = []
 
-    fig, axes = _make_subplots(n_plots=len(top_k))
+    fig, axes = _make_subplots(n_plots=len(top_k), sharey=True)
 
     # FIXME this could be a function or maybe using seaborn
     plt.suptitle("Continuous Feature vs Target")
@@ -148,6 +148,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
                          s=scatter_size, ax=ax, legend=True, **kwargs)
         ax.set_xlabel(col_name)
         ax.set_title("F={:.2E}".format(correlations[col]))
+        _apply_eng_formatter(ax, which="y")
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
@@ -208,7 +209,7 @@ def plot_regression_categorical(
 
     # large number of categories -> taller plot
     row_height = 3 if X.nunique().max() <= 5 else 5
-    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height)
+    fig, axes = _make_subplots(n_plots=show_top, row_height=row_height, sharex=True)
     plt.suptitle("Categorical Feature vs Target")
     for i, (col_ind, ax) in enumerate(zip(top_k, axes.ravel())):
         col = features.columns[i]
@@ -219,6 +220,7 @@ def plot_regression_categorical(
         ax.set_title("F={:.2E}".format(f[col_ind]))
         # shorten long ticks and labels
         _short_tick_names(ax, label_length=row_height * 12)
+        _apply_eng_formatter(ax, which="x")
 
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
@@ -299,6 +301,9 @@ def plot_classification_continuous(
         plt.suptitle(title, y=1.02)
 
         fig = plt.gcf()
+        for ax in fig.axes:
+            _apply_eng_formatter(ax, which="x")
+            _apply_eng_formatter(ax, which="y")
     else:
         # univariate plots
         f = _plot_univariate_classification(features, features_imp, target,
@@ -652,10 +657,12 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
                      UserWarning)
                 X = X.loc[inliers, :]
         _, ax = plt.subplots()
-        plt.hist(X[target_col], bins='auto')
-        plt.xlabel(_shortname(target_col))
-        plt.ylabel("frequency")
-        plt.title("Target distribution")
+        ax.hist(X[target_col], bins='auto')
+        ax.set(xlabel=_shortname(target_col),
+               ylabel="frequency",
+               title="Target distribution")
+        _apply_eng_formatter(ax, which="x")
+        _apply_eng_formatter(ax, which="y")
         res.append(ax)
         scatter_alpha = _get_scatter_alpha(scatter_alpha, X[target_col])
         scatter_size = _get_scatter_size(scatter_size, X[target_col])
@@ -681,7 +688,8 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         # but melt destroys it:
         # https://github.com/pandas-dev/pandas/issues/15853
         melted['class'] = melted['class'].astype('category')
-        sns.barplot(y='class', x='count', data=melted)
+        ax = sns.barplot(y='class', x='count', data=melted)
+        _apply_eng_formatter(ax, which="x")
         plt.title("Target distribution")
         if len(counts) >= 50:
             print("Not plotting anything for 50 classes or more."

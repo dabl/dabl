@@ -397,7 +397,7 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
     ax.set_ylabel(_shortname(ax.get_ylabel(), maxlen=label_length))
 
 
-def _score_triple(X, cont1, cont2, cat, random_state, scoring="recall_macro", vs_univariate=False):
+def _score_triple(X, cont1, cont2, cat, *, random_state, scoring="recall_macro", vs_univariate=False, **kwargs):
     # score how well you can predict a category from two continuous features
     # assume this tree is simple enough so not be able to overfit in 2d
     # so we don't bother with train/test split
@@ -423,7 +423,8 @@ def _score_triple(X, cont1, cont2, cat, random_state, scoring="recall_macro", vs
         return 0
     cv = StratifiedShuffleSplit(n_splits=n_splits, train_size=train_size,
                                 random_state=random_state)
-    tree = DecisionTreeClassifier(max_leaf_nodes=12)
+    class_weight = kwargs.get("class_weight", None)
+    tree = DecisionTreeClassifier(max_leaf_nodes=12, class_weight=class_weight)
     scores = np.mean(cross_val_score(tree, this_X, target, cv=cv, scoring=scoring))
     if vs_univariate:
         feature1_scores = np.mean(cross_val_score(tree, this_X.iloc[:, [0]], target, cv=cv, scoring=scoring))
@@ -433,10 +434,11 @@ def _score_triple(X, cont1, cont2, cat, random_state, scoring="recall_macro", vs
 
 
 def _find_categorical_for_regression(
-        X, types, target_col, top_cont, random_state=None):
+        X, types, target_col, top_cont, random_state=None, **kwargs):
     categorical_features = X.columns[types.categorical]
+    score_triple_args = kwargs.get('score_triple_args', {})
     scores = [(cont, cat, _score_triple(
-                X, target_col, cont, cat, random_state=random_state, scoring="recall_weighted", vs_univariate=True))
+                X, target_col, cont, cat, random_state=random_state, scoring="recall_weighted", vs_univariate=True, **score_triple_args))
               for cont, cat in itertools.product(
                 top_cont, categorical_features)]
     scores_df = pd.DataFrame(scores, columns=['cont', 'cat', 'score'])
@@ -444,7 +446,6 @@ def _find_categorical_for_regression(
     if len(scores) == 0:
         return []
     best_categorical = scores.idxmax()
-    # Scores are macro recall, < .5 means uninformative, so we don't plot it
     best_categorical[scores.max() < .01] = None
     return best_categorical
 

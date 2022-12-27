@@ -122,7 +122,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
 
     if find_scatter_categoricals:
         best_categorical = _find_categorical_for_regression(
-            X, types, target_col, top_cont=top_k, random_state=None)
+            X, types, target_col, top_cont=top_k, random_state=None, **kwargs)
     else:
         best_categorical = []
 
@@ -145,7 +145,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
         discrete_scatter(values, target,
                          c=c,
                          clip_outliers=drop_outliers, alpha=scatter_alpha,
-                         s=scatter_size, ax=ax, legend=True, **kwargs)
+                         s=scatter_size, ax=ax, legend=True)
         ax.set_xlabel(col_name)
         ax.set_title("F={:.2E}".format(correlations[col]))
         _apply_eng_formatter(ax, which="y")

@@ -415,8 +415,8 @@ def _plot_top_pairs(features, target, *, types=None, scatter_alpha='auto',
         discrete_scatter(features[:, x], features[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
                          s=scatter_size, jitter_x=jitter_x, jitter_y=jitter_y)
-        ax.set_xlabel(_shortname(feature_names[x] + ("(jittered)" if jitter_x else "")))
-        ax.set_ylabel(_shortname(feature_names[y] + ("(jittered)" if jitter_y else "")))
+        ax.set_xlabel(_shortname(feature_names[x]) + ("(jittered)" if jitter_x else ""))
+        ax.set_ylabel(_shortname(feature_names[y]) + ("(jittered)" if jitter_y else ""))
         ax.set_title("{:.3f}".format(score))
     return fig, axes
 

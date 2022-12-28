@@ -164,9 +164,9 @@ def test_negative_ordinal():
     data = pd.DataFrame([np.random.randint(0, 10, size=1000) - 5,
                          np.random.randint(0, 2, size=1000)]).T
     # ensure first column is low_card_int
+    # FIXME this is a weird example for ordinal, as it's uniform?
     assert (detect_types(data).T.idxmax()
-            == ['low_card_int', 'categorical']).all()
-    assert guess_ordinal(data[0])
+            == ['low_card_int_ordinal', 'categorical']).all()
     # smoke test
     plot(data, target_col=1)
 

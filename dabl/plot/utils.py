@@ -357,7 +357,8 @@ def _check_X_target_col(X, target_col, types=None, type_hints=None, task=None):
                          " for classification.".format(X.loc[0, target_col]))
     # FIXME we get target types here with detect_types,
     # but in the estimator with type_of_target
-    if task == "classification" and not types.loc[target_col, 'categorical']:
+    if task == "classification" and not (types.loc[target_col, 'categorical'] or types.loc[target_col, 'low_card_int_categorical']
+                                         or types.loc[target_col, 'low_card_int_ordinal']):
         raise ValueError("Type for target column {} detected as {},"
                          " need categorical for classification.".format(
                              target_col, types.T.idxmax()[target_col]))

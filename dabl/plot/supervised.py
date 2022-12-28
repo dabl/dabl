@@ -142,7 +142,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
         discrete_scatter(values, target,
                          c=c,
                          clip_outliers=drop_outliers, alpha=scatter_alpha,
-                         s=scatter_size, ax=ax, legend=True, jitter_x=jitter_x,**kwargs)
+                         s=scatter_size, ax=ax, legend=True, jitter_x=jitter_x, **kwargs)
         ax.set_xlabel(f"{col_name} (jittered)" if jitter_x else col_name)
         ax.set_title("F={:.2E}".format(correlations[col]))
         _apply_eng_formatter(ax, which="y")
@@ -279,8 +279,6 @@ def plot_classification_continuous(
 
     types = _check_X_target_col(X, target_col, types, task='classification')
 
-    jitter_ordinal = kwargs.pop('jitter_ordinal', True)
-
     features = X.loc[:, types.continuous + types.low_card_int_ordinal]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
@@ -292,8 +290,8 @@ def plot_classification_continuous(
     figures = []
     if features.shape[1] <= 5:
         axes = pairplot(X, target_col=target_col, columns=features.columns,
-                 scatter_alpha=scatter_alpha,
-                 scatter_size=scatter_size)
+                        scatter_alpha=scatter_alpha,
+                        scatter_size=scatter_size)
         title = "Continuous features"
         if features.shape[1] > 1:
             title = title + " pairplot"
@@ -336,8 +334,8 @@ def plot_classification_continuous(
     figures.append(plt.gcf())
     # LDA
     fig = _plot_lda_classification(features_scaled, target, top_k_interactions,
-                             scatter_alpha=scatter_alpha, scatter_size=scatter_size,
-                             random_state=random_state)
+                                   scatter_alpha=scatter_alpha, scatter_size=scatter_size,
+                                   random_state=random_state)
     figures.append(fig)
     return figures
 
@@ -392,6 +390,7 @@ def _plot_lda_classification(features, target, top_k_interactions, *,
                              random_state=random_state)
     fig.suptitle("Discriminating LDA directions")
     return fig
+
 
 def _plot_top_pairs(features, target, *, types=None, scatter_alpha='auto',
                     scatter_size='auto',
@@ -567,6 +566,7 @@ def plot_classification_categorical(X, *, target_col, types=None, kind='auto',
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
     return axes
+
 
 def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
          scatter_size='auto', drop_outliers=True, verbose=10,

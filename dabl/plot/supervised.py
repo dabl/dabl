@@ -16,7 +16,7 @@ from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.metrics import recall_score
 
-from ..preprocessing import detect_types, clean, guess_ordinal
+from ..preprocessing import detect_types, clean
 from .utils import (_check_X_target_col, _get_n_top, _make_subplots,
                     _short_tick_names, _shortname, _prune_category_make_X,
                     find_pretty_grid, _find_scatter_plots_classification,
@@ -86,7 +86,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
         inliers = _find_inliers(X.loc[:, target_col])
         X = X.loc[inliers, :]
 
-    features = X.loc[:, types.continuous]
+    features = X.loc[:, types.continuous + types.low_card_int_ordinal]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
     if features.shape[1] == 0:
@@ -138,15 +138,12 @@ def plot_regression_continuous(X, *, target_col, types=None,
         c = X.loc[:, best_categorical[col]] if len(best_categorical) and best_categorical[col] is not None else None
         values = features.loc[:, col]
         col_name = _shortname(col, maxlen=50)
-        # FIXME we should know low-card-int here but we overwrote it unfortunately in plot
-        if jitter_ordinal and X[col].nunique() < 20:
-            values = values + np.random.normal(0, .1, size=len(features))
-            col_name = col_name + " (jittered)"
+        jitter_x = jitter_ordinal and (types[col].low_card_int_ordinal or X[col].nunique() < 20)
         discrete_scatter(values, target,
                          c=c,
                          clip_outliers=drop_outliers, alpha=scatter_alpha,
-                         s=scatter_size, ax=ax, legend=True, **kwargs)
-        ax.set_xlabel(col_name)
+                         s=scatter_size, ax=ax, legend=True, jitter_x=jitter_x,**kwargs)
+        ax.set_xlabel(f"{col_name} (jittered)" if jitter_x else col_name)
         ax.set_title("F={:.2E}".format(correlations[col]))
         _apply_eng_formatter(ax, which="y")
 
@@ -282,7 +279,9 @@ def plot_classification_continuous(
 
     types = _check_X_target_col(X, target_col, types, task='classification')
 
-    features = X.loc[:, types.continuous]
+    jitter_ordinal = kwargs.pop('jitter_ordinal', True)
+
+    features = X.loc[:, types.continuous + types.low_card_int_ordinal]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
     if features.shape[1] == 0:
@@ -316,8 +315,8 @@ def plot_classification_continuous(
         if not plot_pairwise:
             return figures
         top_k = np.argsort(f)[-top_k_interactions:][::-1]
-        fig, axes = _plot_top_pairs(features_imp[:, top_k], target,
-                                    scatter_alpha, scatter_size,
+        fig, axes = _plot_top_pairs(features_imp[:, top_k], target, types,
+                                    scatter_alpha=scatter_alpha, scatter_size=scatter_size,
                                     feature_names=features.columns[top_k],
                                     how_many=4, random_state=random_state)
         fig.suptitle("Top feature interactions")
@@ -332,26 +331,28 @@ def plot_classification_continuous(
     if n_components < 2:
         return figures
     features_scaled = _plot_pca_classification(
-        n_components, features_imp, target, scatter_alpha, scatter_size,
+        n_components, features_imp, target, types, scatter_alpha=scatter_alpha,
+        scatter_size=scatter_size,
         random_state=random_state)
     figures.append(plt.gcf())
     # LDA
-    _plot_lda_classification(features_scaled, target, top_k_interactions,
-                             scatter_alpha, scatter_size,
+    fig = _plot_lda_classification(features_scaled, target, types, top_k_interactions,
+                             scatter_alpha=scatter_alpha, scatter_size=scatter_size,
                              random_state=random_state)
-    figures.append(plt.gcf())
+    figures.append(fig)
     return figures
 
 
-def _plot_pca_classification(n_components, features_imp, target,
+def _plot_pca_classification(n_components, features_imp, target, types, *,
                              scatter_alpha='auto', scatter_size='auto',
                              random_state=None):
     pca = PCA(n_components=n_components)
     features_scaled = scale(features_imp)
     features_pca = pca.fit_transform(features_scaled)
     feature_names = ['PCA {}'.format(i) for i in range(n_components)]
-    fig, axes = _plot_top_pairs(features_pca, target, scatter_alpha,
-                                scatter_size,
+    fig, axes = _plot_top_pairs(features_pca, target, types,
+                                scatter_alpha=scatter_alpha,
+                                scatter_size=scatter_size,
                                 feature_names=feature_names,
                                 how_many=3, additional_axes=1,
                                 random_state=random_state)
@@ -365,7 +366,7 @@ def _plot_pca_classification(n_components, features_imp, target,
     return features_scaled
 
 
-def _plot_lda_classification(features, target, top_k_interactions,
+def _plot_lda_classification(features, target, types, top_k_interactions, *,
                              scatter_alpha='auto', scatter_size='auto',
                              random_state=None):
     # assume features are scaled
@@ -378,21 +379,22 @@ def _plot_lda_classification(features, target, top_k_interactions,
           recall_score(target, lda.predict(features), average='macro')))
     if features_lda.shape[1] < 2:
         # Do a single plot and exit
-        plt.figure()
+        fig = plt.figure()
         single_lda = pd.DataFrame({'feature': features_lda.ravel(),
                                    'target': target})
         class_hists(single_lda, 'feature', 'target', legend=True)
         plt.title("Linear Discriminant")
-        return
+        return fig
     feature_names = ['LDA {}'.format(i) for i in range(n_components)]
 
-    fig, _ = _plot_top_pairs(features_lda, target, scatter_alpha, scatter_size,
+    fig, _ = _plot_top_pairs(features_lda, target, types, scatter_alpha=scatter_alpha,
+                             scatter_size=scatter_size,
                              feature_names=feature_names,
                              random_state=random_state)
     fig.suptitle("Discriminating LDA directions")
+    return fig
 
-
-def _plot_top_pairs(features, target, scatter_alpha='auto',
+def _plot_top_pairs(features, target, types, *, scatter_alpha='auto',
                     scatter_size='auto',
                     feature_names=None, how_many=4, additional_axes=0,
                     random_state=None):
@@ -404,11 +406,13 @@ def _plot_top_pairs(features, target, scatter_alpha='auto',
     fig, axes = _make_subplots(len(top_pairs) + additional_axes, row_height=4)
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
+        jitter_x = types[feature_names[x]].low_card_int_ordinal
+        jitter_y = types[feature_names[y]].low_card_int_ordinal
         discrete_scatter(features[:, x], features[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
-                         s=scatter_size)
-        ax.set_xlabel(_shortname(feature_names[x]))
-        ax.set_ylabel(_shortname(feature_names[y]))
+                         s=scatter_size, jitter_x=jitter_x, jitter_y=jitter_y)
+        ax.set_xlabel(_shortname(feature_names[x] + ("(jittered)" if jitter_x else "")))
+        ax.set_ylabel(_shortname(feature_names[y] + ("(jittered)" if jitter_y else "")))
         ax.set_title("{:.3f}".format(score))
     return fig, axes
 
@@ -628,18 +632,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
     X, types = clean(X, type_hints=type_hints, return_types=True,
                      target_col=target_col)
     types = _check_X_target_col(X, target_col, types=types)
-    # low_cardinality integers plot better as categorical
-    # FIXME the logic should be down in the plotting functions maybe
-    # or at least passed on so we can do better.
-    if types.low_card_int.any():
-        for col in types.index[types.low_card_int]:
-            # kinda hacky for now
-            if guess_ordinal(X[col]):
-                types.loc[col, 'low_card_int'] = False
-                types.loc[col, 'continuous'] = True
-            else:
-                types.loc[col, 'low_card_int'] = False
-                types.loc[col, 'categorical'] = True
+
     res = []
     if types.continuous[target_col]:
         print("Target looks like regression")

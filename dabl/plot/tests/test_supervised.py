@@ -177,7 +177,7 @@ def test_large_ordinal():
     assert not guess_ordinal(pd.Series([6786930208, 2142878625, 9106275431]))
 
 
-def test_detect_low_cardinality_int_classification():
+def test_detect_low_cardinality_int():
     df_all = pd.DataFrame(
         {'binary_int': np.random.randint(0, 2, size=1000),
          'categorical_int': np.random.randint(0, 4, size=1000),
@@ -199,6 +199,10 @@ def test_detect_low_cardinality_int_classification():
     # scatter matrix of two continuous features
     assert classification_plots[1][0][0, 0].get_ylabel() == "low_card_int_binomial"
     assert classification_plots[1][0][1, 0].get_ylabel() == "cont_int"
+    assert classification_plots[2].shape == (1, 2)
+    assert classification_plots[2][0, 0].get_title() == "low_card_int_uniform"
+    assert classification_plots[2][0, 1].get_title() == "categorical_int"
+
     regression_plots = plot(df_all, target_col='binary_int')
 
 

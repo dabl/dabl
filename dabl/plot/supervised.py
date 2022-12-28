@@ -503,7 +503,7 @@ def plot_classification_categorical(X, *, target_col, types=None, kind='auto',
         else:
             kind = 'mosaic'
 
-    features = X.loc[:, types.categorical]
+    features = X.loc[:, types.categorical + types.low_card_int_categorical]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
 

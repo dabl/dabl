@@ -138,7 +138,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
         c = X.loc[:, best_categorical[col]] if len(best_categorical) and best_categorical[col] is not None else None
         values = features.loc[:, col]
         col_name = _shortname(col, maxlen=50)
-        jitter_x = jitter_ordinal and (types[col].low_card_int_ordinal or X[col].nunique() < 20)
+        jitter_x = jitter_ordinal and (types.low_card_int_ordinal[col] or X[col].nunique() < 20)
         discrete_scatter(values, target,
                          c=c,
                          clip_outliers=drop_outliers, alpha=scatter_alpha,
@@ -315,7 +315,7 @@ def plot_classification_continuous(
         if not plot_pairwise:
             return figures
         top_k = np.argsort(f)[-top_k_interactions:][::-1]
-        fig, axes = _plot_top_pairs(features_imp[:, top_k], target, types,
+        fig, axes = _plot_top_pairs(features_imp[:, top_k], target, types=types,
                                     scatter_alpha=scatter_alpha, scatter_size=scatter_size,
                                     feature_names=features.columns[top_k],
                                     how_many=4, random_state=random_state)
@@ -331,26 +331,26 @@ def plot_classification_continuous(
     if n_components < 2:
         return figures
     features_scaled = _plot_pca_classification(
-        n_components, features_imp, target, types, scatter_alpha=scatter_alpha,
+        n_components, features_imp, target, scatter_alpha=scatter_alpha,
         scatter_size=scatter_size,
         random_state=random_state)
     figures.append(plt.gcf())
     # LDA
-    fig = _plot_lda_classification(features_scaled, target, types, top_k_interactions,
+    fig = _plot_lda_classification(features_scaled, target, top_k_interactions,
                              scatter_alpha=scatter_alpha, scatter_size=scatter_size,
                              random_state=random_state)
     figures.append(fig)
     return figures
 
 
-def _plot_pca_classification(n_components, features_imp, target, types, *,
+def _plot_pca_classification(n_components, features_imp, target, *,
                              scatter_alpha='auto', scatter_size='auto',
                              random_state=None):
     pca = PCA(n_components=n_components)
     features_scaled = scale(features_imp)
     features_pca = pca.fit_transform(features_scaled)
     feature_names = ['PCA {}'.format(i) for i in range(n_components)]
-    fig, axes = _plot_top_pairs(features_pca, target, types,
+    fig, axes = _plot_top_pairs(features_pca, target,
                                 scatter_alpha=scatter_alpha,
                                 scatter_size=scatter_size,
                                 feature_names=feature_names,
@@ -366,7 +366,7 @@ def _plot_pca_classification(n_components, features_imp, target, types, *,
     return features_scaled
 
 
-def _plot_lda_classification(features, target, types, top_k_interactions, *,
+def _plot_lda_classification(features, target, top_k_interactions, *,
                              scatter_alpha='auto', scatter_size='auto',
                              random_state=None):
     # assume features are scaled
@@ -387,14 +387,14 @@ def _plot_lda_classification(features, target, types, top_k_interactions, *,
         return fig
     feature_names = ['LDA {}'.format(i) for i in range(n_components)]
 
-    fig, _ = _plot_top_pairs(features_lda, target, types, scatter_alpha=scatter_alpha,
+    fig, _ = _plot_top_pairs(features_lda, target, scatter_alpha=scatter_alpha,
                              scatter_size=scatter_size,
                              feature_names=feature_names,
                              random_state=random_state)
     fig.suptitle("Discriminating LDA directions")
     return fig
 
-def _plot_top_pairs(features, target, types, *, scatter_alpha='auto',
+def _plot_top_pairs(features, target, *, types=None, scatter_alpha='auto',
                     scatter_size='auto',
                     feature_names=None, how_many=4, additional_axes=0,
                     random_state=None):
@@ -406,8 +406,12 @@ def _plot_top_pairs(features, target, types, *, scatter_alpha='auto',
     fig, axes = _make_subplots(len(top_pairs) + additional_axes, row_height=4)
     for x, y, score, ax in zip(top_pairs.feature0, top_pairs.feature1,
                                top_pairs.score, axes.ravel()):
-        jitter_x = types[feature_names[x]].low_card_int_ordinal
-        jitter_y = types[feature_names[y]].low_card_int_ordinal
+        if types is not None:
+            jitter_x = types.low_card_int_ordinal[feature_names[x]]
+            jitter_y = types.low_card_int_ordinal[feature_names[y]]
+        else:
+            jitter_x = False
+            jitter_y = False
         discrete_scatter(features[:, x], features[:, y],
                          c=target, ax=ax, alpha=scatter_alpha,
                          s=scatter_size, jitter_x=jitter_x, jitter_y=jitter_y)

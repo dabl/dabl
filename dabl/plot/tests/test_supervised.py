@@ -177,6 +177,31 @@ def test_large_ordinal():
     assert not guess_ordinal(pd.Series([6786930208, 2142878625, 9106275431]))
 
 
+def test_detect_low_cardinality_int_classification():
+    df_all = pd.DataFrame(
+        {'binary_int': np.random.randint(0, 2, size=1000),
+         'categorical_int': np.random.randint(0, 4, size=1000),
+         'low_card_int_uniform': np.random.randint(0, 20, size=1000),
+         'low_card_int_binomial': np.random.binomial(20, .3, size=1000),
+         'cont_int': np.repeat(np.arange(500), 2),
+         })
+
+    res = detect_types(df_all)
+    types = res.T.idxmax()
+    # This is duplicated from a preprocessing test, but let's make sure this behavior is as expected
+    assert types['binary_int'] == 'categorical'
+    assert types['categorical_int'] == 'categorical'
+    assert types['low_card_int_uniform'] == 'low_card_int_categorical'
+    assert types['low_card_int_binomial'] == 'low_card_int_ordinal'
+    assert types['cont_int'] == 'continuous'
+    classification_plots = plot(df_all, target_col="binary_int", plot_pairwise=False)
+    assert len(classification_plots) == 3
+    # scatter matrix of two continuous features
+    assert classification_plots[1][0][0, 0].get_ylabel() == "low_card_int_binomial"
+    assert classification_plots[1][0][1, 0].get_ylabel() == "cont_int"
+    regression_plots = plot(df_all, target_col='binary_int')
+
+
 def test_plot_classification_continuous():
     data = fetch_openml('MiceProtein')
     df = data_df_from_bunch(data)

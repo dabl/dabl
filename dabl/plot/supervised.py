@@ -291,7 +291,7 @@ def plot_classification_continuous(
     target = X[target_col]
     figures = []
     if features.shape[1] <= 5:
-        pairplot(X, target_col=target_col, columns=features.columns,
+        axes = pairplot(X, target_col=target_col, columns=features.columns,
                  scatter_alpha=scatter_alpha,
                  scatter_size=scatter_size)
         title = "Continuous features"
@@ -299,8 +299,7 @@ def plot_classification_continuous(
             title = title + " pairplot"
         plt.suptitle(title, y=1.02)
 
-        fig = plt.gcf()
-        for ax in fig.axes:
+        for ax in axes.ravel():
             _apply_eng_formatter(ax, which="x")
             _apply_eng_formatter(ax, which="y")
     else:
@@ -320,7 +319,7 @@ def plot_classification_continuous(
                                     feature_names=features.columns[top_k],
                                     how_many=4, random_state=random_state)
         fig.suptitle("Top feature interactions")
-    figures.append(fig)
+    figures.append(axes)
     if not plot_pairwise:
         return figures
     # get some PCA directions
@@ -567,7 +566,7 @@ def plot_classification_categorical(X, *, target_col, types=None, kind='auto',
     for j in range(i + 1, axes.size):
         # turn off axis if we didn't fill last row
         axes.ravel()[j].set_axis_off()
-
+    return axes
 
 def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
          scatter_size='auto', drop_outliers=True, verbose=10,
@@ -686,6 +685,7 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         # https://github.com/pandas-dev/pandas/issues/15853
         melted['class'] = melted['class'].astype('category')
         ax = sns.barplot(y='class', x='count', data=melted)
+        res.append(ax)
         _apply_eng_formatter(ax, which="x")
         plt.title("Target distribution")
         if len(counts) >= 50:

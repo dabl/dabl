@@ -188,7 +188,7 @@ def plot_regression_categorical(
 
     if types is None:
         types = detect_types(X)
-    features = X.loc[:, types.categorical]
+    features = X.loc[:, types.categorical + types.low_card_int_categorical]
     if target_col in features.columns:
         features = features.drop(target_col, axis=1)
     if features.shape[1] == 0:

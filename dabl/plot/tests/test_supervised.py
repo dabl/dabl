@@ -203,7 +203,14 @@ def test_detect_low_cardinality_int():
     assert classification_plots[2][0, 0].get_title() == "low_card_int_uniform"
     assert classification_plots[2][0, 1].get_title() == "categorical_int"
 
-    regression_plots = plot(df_all, target_col='binary_int')
+    regression_plots = plot(df_all, target_col="cont_int")
+    assert len(regression_plots) == 3
+    assert regression_plots[1].shape == (1, 1)
+    assert regression_plots[1][0, 0].get_xlabel() == "low_card_int_binomial (jittered)"
+    assert regression_plots[2].shape == (1, 3)
+    assert regression_plots[2][0, 0].get_ylabel() == "binary_int"
+    assert regression_plots[2][0, 1].get_ylabel() == "categorical_int"
+    assert regression_plots[2][0, 2].get_ylabel() == "low_card_int_uniform"
 
 
 def test_plot_classification_continuous():
@@ -228,8 +235,7 @@ def test_plot_classification_continuous():
                                              target_col='target',
                                              plot_pairwise=False)
     assert len(figures) == 1
-    # diagonal has twin axes
-    assert len(figures[0].get_axes()) == 5 * 5 + 5
+    assert figures[0].size == 5 * 5
 
     # also do pairwise plots
     figures = plot_classification_continuous(df, target_col='target',
@@ -244,7 +250,7 @@ def test_plot_classification_continuous():
     # bar plot never has ylabel
     assert axes[0].get_ylabel() == ""
     # pairwise
-    axes = figures[1].get_axes()
+    axes = figures[1].ravel()
     assert len(axes) == 4
     # known result
     assert axes[0].get_xlabel() == "SOD1_N"

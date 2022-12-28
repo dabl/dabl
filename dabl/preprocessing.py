@@ -252,8 +252,10 @@ def _type_detection_int(series, max_cat_cardinality='auto'):
     elif n_distinct_values <= 5:
         # weird hack / edge case
         return 'categorical'
+    elif guess_ordinal(series):
+        return 'low_card_int_ordinal'
     else:
-        return 'low_card_int'
+        return 'low_card_int_categorical'
 
 
 def _type_detection_float(series, max_cat_cardinality='auto'):
@@ -400,10 +402,12 @@ def detect_types(X, type_hints=None, max_cat_cardinality='auto',
         if t in X.columns:
             types_series[t] = type_hints[t]
 
-    known_types = ['continuous', 'dirty_float', 'low_card_int', 'categorical',
+    known_types = ['continuous', 'dirty_float', 'low_card_int_ordinal', 'low_card_int_categorical', 'categorical',
                    'date', 'free_string', 'useless']
     if X.empty:
         return pd.DataFrame(columns=known_types, dtype=bool)
+    if not set(np.array(types_series)).issubset(known_types):
+        raise RuntimeError("Unexpected types.")
     res = pd.DataFrame({t: types_series == t for t in known_types})
     assert (X.columns == res.index).all()
 
@@ -586,9 +590,8 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             types = self.types
 
         types = types.copy()
-        # low card int encoded as categorical and continuous for now:
-        types.loc[types.low_card_int, 'continuous'] = True
-        types.loc[types.low_card_int, 'categorical'] = True
+        types.loc[types.low_card_int_ordinal, 'continuous'] = True
+        types.loc[types.low_card_int_categorical, 'categorical'] = True
 
         # go over variable blocks
         # check for missing values

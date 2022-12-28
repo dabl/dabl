@@ -232,8 +232,8 @@ def test_detect_low_cardinality_int():
 
     assert types['binary_int'] == 'categorical'
     assert types['categorical_int'] == 'categorical'
-    assert types['low_card_int_uniform'] == 'low_card_int'
-    assert types['low_card_int_binomial'] == 'low_card_int'
+    assert types['low_card_int_uniform'] == 'low_card_int_categorical'
+    assert types['low_card_int_binomial'] == 'low_card_int_ordinal'
     assert types['cont_int'] == 'continuous'
 
 
@@ -291,7 +291,9 @@ def test_detect_types_empty():
     X = pd.DataFrame(index=range(100))
     types = detect_types(X)
     assert (types == bool).all(axis=None)
-    known_types = ['continuous', 'dirty_float', 'low_card_int', 'categorical',
+
+    known_types = ['continuous', 'dirty_float', 'low_card_int_ordinal',
+                   'low_card_int_categorical', 'categorical',
                    'date', 'free_string', 'useless']
     assert (types.columns == known_types).all()
 
@@ -366,7 +368,7 @@ def test_titanic_detection():
     types_table = detect_types(titanic)
     types = types_table.T.idxmax()
     true_types = ['categorical', 'categorical', 'free_string', 'categorical',
-                  'dirty_float', 'low_card_int', 'low_card_int', 'free_string',
+                  'dirty_float', 'low_card_int_ordinal', 'low_card_int_ordinal', 'free_string',
                   'dirty_float', 'free_string', 'categorical', 'categorical',
                   'dirty_float', 'free_string']
 
@@ -387,28 +389,13 @@ def test_titanic_feature_names():
     titanic = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'))
     ep = EasyPreprocessor()
     ep.fit(clean(titanic.drop('survived', axis=1)))
-    expected_names = [
-        'sibsp', 'parch', 'age_dabl_continuous', 'fare_dabl_continuous',
-        'body_dabl_continuous', 'pclass_1', 'pclass_2', 'pclass_3',
-        'sex_female', 'sex_male', 'sibsp_0', 'sibsp_1', 'sibsp_2',
-        'sibsp_3', 'sibsp_4', 'sibsp_5', 'sibsp_8', 'parch_0', 'parch_1',
-        'parch_2', 'parch_3', 'parch_4', 'parch_5', 'parch_6', 'parch_9',
-        'embarked_?', 'embarked_C', 'embarked_Q', 'embarked_S', 'boat_1',
-        'boat_10', 'boat_11', 'boat_12', 'boat_13', 'boat_13 15',
-        'boat_13 15 B', 'boat_14', 'boat_15', 'boat_15 16', 'boat_16',
-        'boat_2', 'boat_3', 'boat_4', 'boat_5', 'boat_5 7', 'boat_5 9',
-        'boat_6', 'boat_7', 'boat_8', 'boat_8 10', 'boat_9', 'boat_?',
-        'boat_A', 'boat_B', 'boat_C', 'boat_C D', 'boat_D', 'age_?_0.0',
-        'age_?_1.0', 'body_?_0.0', 'body_?_1.0']
-    try:
-        assert ep.get_feature_names_out() == expected_names
-    except AssertionError:
-        # OHE uses int in newer versions
-        expected_names[57] = 'age_?_0'
-        expected_names[58] = 'age_?_1'
-        expected_names[59] = 'body_?_0'
-        expected_names[60] = 'body_?_1'
-        assert ep.get_feature_names_out() == expected_names
+    expected_names = ['sibsp', 'parch', 'age_dabl_continuous', 'fare_dabl_continuous', 'body_dabl_continuous',
+                      'pclass_1', 'pclass_2', 'pclass_3', 'sex_female', 'sex_male', 'embarked_?', 'embarked_C',
+                      'embarked_Q', 'embarked_S', 'boat_1', 'boat_10', 'boat_11', 'boat_12', 'boat_13', 'boat_13 15',
+                      'boat_13 15 B', 'boat_14', 'boat_15', 'boat_15 16', 'boat_16', 'boat_2', 'boat_3', 'boat_4',
+                      'boat_5', 'boat_5 7', 'boat_5 9', 'boat_6', 'boat_7', 'boat_8', 'boat_8 10', 'boat_9', 'boat_?',
+                      'boat_A', 'boat_B', 'boat_C', 'boat_C D', 'boat_D', 'age_?_0', 'age_?_1', 'body_?_0', 'body_?_1']
+    assert ep.get_feature_names_out() == expected_names
 
     # without clean
     X = ep.fit_transform(titanic.drop('survived', axis=1))

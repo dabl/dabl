@@ -67,7 +67,7 @@ types in a convenient format:
     body_?                     False        False  ...        False    False
     body_dabl_continuous        True        False  ...        False    False
     <BLANKLINE>
-    [17 rows x 7 columns]
+    [17 rows x 8 columns]
 
 
 

@@ -178,11 +178,12 @@ def test_large_ordinal():
 
 
 def test_detect_low_cardinality_int():
+    rng = np.random.RandomState(42)
     df_all = pd.DataFrame(
-        {'binary_int': np.random.randint(0, 2, size=1000),
-         'categorical_int': np.random.randint(0, 4, size=1000),
-         'low_card_int_uniform': np.random.randint(0, 20, size=1000),
-         'low_card_int_binomial': np.random.binomial(20, .3, size=1000),
+        {'binary_int': rng.randint(0, 2, size=1000),
+         'categorical_int': rng.randint(0, 4, size=1000),
+         'low_card_int_uniform': rng.randint(0, 20, size=1000),
+         'low_card_int_binomial': rng.binomial(20, .3, size=1000),
          'cont_int': np.repeat(np.arange(500), 2),
          })
 

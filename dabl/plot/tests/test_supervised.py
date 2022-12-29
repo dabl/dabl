@@ -164,9 +164,9 @@ def test_negative_ordinal():
     data = pd.DataFrame([np.random.randint(0, 10, size=1000) - 5,
                          np.random.randint(0, 2, size=1000)]).T
     # ensure first column is low_card_int
+    # FIXME this is a weird example for ordinal, as it's uniform?
     assert (detect_types(data).T.idxmax()
-            == ['low_card_int', 'categorical']).all()
-    assert guess_ordinal(data[0])
+            == ['low_card_int_ordinal', 'categorical']).all()
     # smoke test
     plot(data, target_col=1)
 
@@ -175,6 +175,43 @@ def test_large_ordinal():
     # check that large integers don't bring us down (bincount memory error)
     # here some random phone numbers
     assert not guess_ordinal(pd.Series([6786930208, 2142878625, 9106275431]))
+
+
+def test_detect_low_cardinality_int():
+    rng = np.random.RandomState(42)
+    df_all = pd.DataFrame(
+        {'binary_int': rng.randint(0, 2, size=1000),
+         'categorical_int': rng.randint(0, 4, size=1000),
+         'low_card_int_uniform': rng.randint(0, 20, size=1000),
+         'low_card_int_binomial': rng.binomial(20, .3, size=1000),
+         'cont_int': np.repeat(np.arange(500), 2),
+         })
+
+    res = detect_types(df_all)
+    types = res.T.idxmax()
+    # This is duplicated from a preprocessing test, but let's make sure this behavior is as expected
+    assert types['binary_int'] == 'categorical'
+    assert types['categorical_int'] == 'categorical'
+    assert types['low_card_int_uniform'] == 'low_card_int_categorical'
+    assert types['low_card_int_binomial'] == 'low_card_int_ordinal'
+    assert types['cont_int'] == 'continuous'
+    classification_plots = plot(df_all, target_col="binary_int", plot_pairwise=False)
+    assert len(classification_plots) == 3
+    # scatter matrix of two continuous features
+    assert classification_plots[1][0][0, 0].get_ylabel() == "low_card_int_binomial"
+    assert classification_plots[1][0][1, 0].get_ylabel() == "cont_int"
+    assert classification_plots[2].shape == (1, 2)
+    assert classification_plots[2][0, 0].get_title() == "low_card_int_uniform"
+    assert classification_plots[2][0, 1].get_title() == "categorical_int"
+
+    regression_plots = plot(df_all, target_col="cont_int")
+    assert len(regression_plots) == 3
+    assert regression_plots[1].shape == (1, 1)
+    assert regression_plots[1][0, 0].get_xlabel() == "low_card_int_binomial (jittered)"
+    assert regression_plots[2].shape == (1, 3)
+    assert regression_plots[2][0, 0].get_ylabel() == "binary_int"
+    assert regression_plots[2][0, 1].get_ylabel() == "categorical_int"
+    assert regression_plots[2][0, 2].get_ylabel() == "low_card_int_uniform"
 
 
 def test_plot_classification_continuous():
@@ -199,8 +236,7 @@ def test_plot_classification_continuous():
                                              target_col='target',
                                              plot_pairwise=False)
     assert len(figures) == 1
-    # diagonal has twin axes
-    assert len(figures[0].get_axes()) == 5 * 5 + 5
+    assert figures[0].size == 5 * 5
 
     # also do pairwise plots
     figures = plot_classification_continuous(df, target_col='target',
@@ -215,7 +251,7 @@ def test_plot_classification_continuous():
     # bar plot never has ylabel
     assert axes[0].get_ylabel() == ""
     # pairwise
-    axes = figures[1].get_axes()
+    axes = figures[1].ravel()
     assert len(axes) == 4
     # known result
     assert axes[0].get_xlabel() == "SOD1_N"
@@ -355,18 +391,19 @@ def test_plot_regression_correlation():
 
 
 def test_plot_regression_categoricals_scatter():
-    data = pd.DataFrame(np.random.normal(scale=4, size=(1000, 2)),
+    rng = np.random.RandomState(0)
+    data = pd.DataFrame(rng.normal(scale=4, size=(1000, 2)),
                         columns=["cont1", "cont2"])
-    data['cat1'] = 1 - 2 * np.random.randint(0, 2, size=1000)
-    data['cat2'] = 1 - 2 * np.random.randint(0, 2, size=1000)
+    data['cat1'] = 1 - 2 * rng.randint(0, 2, size=1000)
+    data['cat2'] = 1 - 2 * rng.randint(0, 2, size=1000)
     data['y'] = (data.cat1 * (data.cont1 + 2) ** 2 - 10 * data.cat1
                  + data.cont1 * 0.5 + data.cat2 * data.cont2 * 3)
     figs = plot(data, target_col="y", find_scatter_categoricals=True)
     ax1, ax2 = figs[1][0]
-    assert ax1.get_xlabel() == 'cont1'
-    assert ax2.get_xlabel() == 'cont2'
-    assert ax1.get_legend().get_title().get_text() == "cat1"
-    assert ax2.get_legend().get_title().get_text() == "cat2"
+    assert ax1.get_xlabel() == 'cont2'
+    assert ax2.get_xlabel() == 'cont1'
+    assert ax1.get_legend().get_title().get_text() == "cat2"
+    assert ax2.get_legend().get_title().get_text() == "cat1"
 
 
 def test_label_truncation():

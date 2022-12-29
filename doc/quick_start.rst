@@ -67,7 +67,7 @@ types in a convenient format:
     body_?                     False        False  ...        False    False
     body_dabl_continuous        True        False  ...        False    False
     <BLANKLINE>
-    [17 rows x 7 columns]
+    [17 rows x 8 columns]
 
 
 
@@ -76,10 +76,9 @@ at the actual content. The easiest way to do that is using visualization of
 univariate and bivariate patterns. With plot,
 we can create plot of the features deemed most important for our task.
 
-    >>> dabl.plot(titanic, 'survived')
+    >>> dabl.plot(titanic, 'survived') # doctest: +SKIP
     Target looks like classification
     Linear Discriminant Analysis training set score: 0.578
-    [[<Figure size 1500x1500 with 30 Axes>, <Figure size 1600x400 with 4 Axes>, <Figure size 640x480 with 1 Axes>], None]
 
 
 .. plot::
@@ -87,10 +86,9 @@ we can create plot of the features deemed most important for our task.
     >>> import pandas as pd
     >>> import dabl
     >>> titanic = pd.read_csv(dabl.datasets.data_path("titanic.csv"))
-    >>> dabl.plot(titanic, 'survived')
+    >>> dabl.plot(titanic, 'survived') # doctest: +SKIP
     Target looks like classification
     Linear Discriminant Analysis training set score: 0.578
-    [[<Figure size 1500x1500 with 30 Axes>, <Figure size 1600x400 with 4 Axes>, <Figure size 640x480 with 1 Axes>], None]
 
     >>> import matplotlib.pyplot as plt; plt.show()
 

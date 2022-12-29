@@ -357,7 +357,8 @@ def _check_X_target_col(X, target_col, types=None, type_hints=None, task=None):
                          " for classification.".format(X.loc[0, target_col]))
     # FIXME we get target types here with detect_types,
     # but in the estimator with type_of_target
-    if task == "classification" and not types.loc[target_col, 'categorical']:
+    if task == "classification" and not (types.loc[target_col, 'categorical'] or types.loc[target_col, 'low_card_int_categorical']
+                                         or types.loc[target_col, 'low_card_int_ordinal']):
         raise ValueError("Type for target column {} detected as {},"
                          " need categorical for classification.".format(
                              target_col, types.T.idxmax()[target_col]))
@@ -460,7 +461,7 @@ def _find_scatter_plots_classification(X, target, how_many=3,
 
 def discrete_scatter(x, y, c, unique_c=None, legend='first',
                      clip_outliers=True,
-                     alpha='auto', s='auto', ax=None, **kwargs):
+                     alpha='auto', s='auto', ax=None, jitter_x=False, jitter_y=False, **kwargs):
     """Scatter plot for categories.
 
     Creates a scatter plot for x and y grouped by c.
@@ -490,6 +491,10 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         Marker size for scatter plots. 'auto' is dirty hacks.
     ax : matplotlib axes, default=None
         Axes to plot into.
+    jitter_x : bool, default='False'
+        Whether to jitter x coordinates.
+    jitter_y : bool, default='False'
+        Whether to jitter y coordinates.
     kwargs :
         Passed through to plt.scatter.
 
@@ -518,6 +523,13 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         unique_c = c.unique() if c is not None else []
     if len(unique_c) == 0:
         ax.scatter(x, y, s=s, alpha=alpha, **kwargs)
+
+    if jitter_x:
+        x = x + np.random.normal(0, .1, size=len(x))
+
+    if jitter_y:
+        y = y + np.random.normal(0, .1, size=len(y))
+
     for i in unique_c:
         mask = c == i
         ax.scatter(x[mask], y[mask], label=i, s=s, alpha=alpha, **kwargs)

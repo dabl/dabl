@@ -76,7 +76,7 @@ at the actual content. The easiest way to do that is using visualization of
 univariate and bivariate patterns. With plot,
 we can create plot of the features deemed most important for our task.
 
-    >>> dabl.plot(titanic, 'survived');
+    >>> dabl.plot(titanic, 'survived') # doctest: +SKIP
     Target looks like classification
     Linear Discriminant Analysis training set score: 0.578
 
@@ -86,7 +86,7 @@ we can create plot of the features deemed most important for our task.
     >>> import pandas as pd
     >>> import dabl
     >>> titanic = pd.read_csv(dabl.datasets.data_path("titanic.csv"))
-    >>> dabl.plot(titanic, 'survived');
+    >>> dabl.plot(titanic, 'survived') # doctest: +SKIP
     Target looks like classification
     Linear Discriminant Analysis training set score: 0.578
 

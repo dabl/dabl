@@ -1,6 +1,12 @@
 Release History
 ===============
 
+dabl 0.2.5
+-----------
+- Improved plotting of low cardinality integers, :issue:`326` by :user:`amueller`.
+- Added engineering formatter to plots, :issue:`324` by :user:`stefmolin`.
+- Share x and y axes when appropriate, :issue:`323` by :user:`stefmolin`.
+
 dabl 0.2.4
 --------------
 - Added pruning of correlated features and detecting of interactions with categorical features to regression plots, :issue:`316` by :user:`amueller`.

@@ -105,10 +105,8 @@ fi
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
 bash miniconda.sh -b -p $MINICONDA_PATH
-export PATH="$MINICONDA_PATH/bin:$PATH"
-echo $PATH
-ls $MINICONDA_PATH/bin
-source activate
+export PATH="/home/circleci/project/~/miniconda/bin:$PATH"
+hash -r
 conda update --yes --quiet conda
 
 # Configure the conda environment and put it in the path using the

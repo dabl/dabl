@@ -328,7 +328,7 @@ def test_plot_regression_with_target_outliers():
             }
     )
     # append single outlier record with target value 0
-    df = df.append({"feature": 50, "target": 0}, ignore_index=True)
+    df = pd.concat([df, pd.DataFrame({"feature": [50], "target": [0]})], ignore_index=True)
 
     with pytest.warns(
         UserWarning,

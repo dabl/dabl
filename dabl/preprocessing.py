@@ -86,9 +86,8 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             floats, X_col = _float_matching_fetch(X, col, return_safe_col=True)
             # FIXME sparse
             if (~floats).any():
-                encoders[col] = OneHotEncoder(sparse=False,
-                                              handle_unknown='ignore').fit(
-                    pd.DataFrame(X_col[~floats]))
+                ohe = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+                encoders[col] = ohe.fit(pd.DataFrame(X_col[~floats]))
             else:
                 encoders[col] = None
         self.encoders_ = encoders
@@ -600,10 +599,13 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         if (self.force_imputation
                 or X.loc[:, types.categorical].isna().any(axis=None)):
             steps_categorical.append(
-                SimpleImputer(strategy='most_frequent', add_indicator=True))
-        steps_categorical.append(
-            OneHotEncoder(categories='auto', handle_unknown='ignore',
-                          sparse=False))
+                SimpleImputer(strategy='most_frequent', add_indicator=True)
+                )
+            ohe = OneHotEncoder(
+                categories='auto', handle_unknown='ignore',
+                sparse=False, drop="if_binary")
+            steps_categorical.append(ohe)
+
         pipe_categorical = make_pipeline(*steps_categorical)
 
         steps_continuous = []
@@ -624,7 +626,9 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
         pipe_dirty_float = make_pipeline(
             DirtyFloatCleaner(),
             make_column_transformer(
-                (pipe_continuous, _select_cont), remainder="passthrough"))
+                (pipe_continuous, _select_cont), remainder="passthrough",
+                verbose_feature_names_out=False),
+                )
         # construct column transformer
         transformer_cols = []
         if types['continuous'].any():
@@ -640,8 +644,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
 
         if not len(transformer_cols):
             raise ValueError("No feature columns found")
-        self.ct_ = ColumnTransformer(transformer_cols, sparse_threshold=.1)
-
+        self.ct_ = ColumnTransformer(transformer_cols, sparse_threshold=.1, verbose_feature_names_out=False)
         self.ct_.fit(X)
 
         self.input_shape_ = X.shape

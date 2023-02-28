@@ -677,14 +677,14 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         plt.figure()
         counts = pd.DataFrame(X[target_col].value_counts())
         melted = counts.T.melt().rename(
-            columns={'variable': 'class', 'value': 'count'})
+            columns={'variable': target_col, 'value': 'count'})
         # class could be a string that's a float
         # seaborn is trying to be smart unless we declare it categorical
         # we actually fixed counts to have categorical index
         # but melt destroys it:
         # https://github.com/pandas-dev/pandas/issues/15853
-        melted['class'] = melted['class'].astype('category')
-        ax = sns.barplot(y='class', x='count', data=melted)
+        melted[target_col] = melted[target_col].astype('category')
+        ax = sns.barplot(y=target_col, x='count', data=melted)
         res.append(ax)
         _apply_eng_formatter(ax, which="x")
         plt.title("Target distribution")

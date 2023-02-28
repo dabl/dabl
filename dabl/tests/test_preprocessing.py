@@ -106,9 +106,10 @@ def test_boolean_and_nan(null_object):
     X = pd.DataFrame({'a': [True, False, True, False, null_object]})
     types = detect_types(X)
     assert types.categorical.a
-
-    X_preprocessed = EasyPreprocessor().fit_transform(X)
-    assert X_preprocessed.shape[1] == 4
+    ep = EasyPreprocessor()
+    X_preprocessed = ep.fit_transform(X)
+    assert (ep.get_feature_names_out() == ['a_True', 'missingindicator_a_True']).all()
+    assert X_preprocessed.shape[1] == 2
     assert all(np.unique(X_preprocessed) == [0, 1])
 
 
@@ -306,6 +307,8 @@ def test_transform_dirty_float():
     res = dfc.transform(dirty)
     # TODO test for new values in test etc
     assert res.shape == (100, 3)
+    assert (res.columns == [
+        'a_column_garbage', 'a_column_missing', 'a_column_dabl_continuous']).all()
     assert res.a_column_missing.sum() == 9
     assert res.a_column_garbage.sum() == 1
     assert (dfc.get_feature_names_out() == res.columns).all()
@@ -390,20 +393,32 @@ def test_titanic_feature_names():
     titanic = pd.read_csv(os.path.join(path, '../datasets/titanic.csv'))
     ep = EasyPreprocessor()
     ep.fit(clean(titanic.drop('survived', axis=1)))
-    expected_names = ['sibsp', 'parch', 'age_dabl_continuous', 'fare_dabl_continuous', 'body_dabl_continuous',
-                      'pclass_1', 'pclass_2', 'pclass_3', 'sex_female', 'sex_male', 'embarked_?', 'embarked_C',
-                      'embarked_Q', 'embarked_S', 'boat_1', 'boat_10', 'boat_11', 'boat_12', 'boat_13', 'boat_13 15',
-                      'boat_13 15 B', 'boat_14', 'boat_15', 'boat_15 16', 'boat_16', 'boat_2', 'boat_3', 'boat_4',
-                      'boat_5', 'boat_5 7', 'boat_5 9', 'boat_6', 'boat_7', 'boat_8', 'boat_8 10', 'boat_9', 'boat_?',
-                      'boat_A', 'boat_B', 'boat_C', 'boat_C D', 'boat_D', 'age_?_0', 'age_?_1', 'body_?_0', 'body_?_1']
-    assert ep.get_feature_names_out() == expected_names
-
+    expected_names = [
+        'sibsp', 'parch', 'age_dabl_continuous', 'fare_dabl_continuous',
+        'body_dabl_continuous', 'pclass_1', 'pclass_2', 'pclass_3',
+        'sex_male', 'embarked_?', 'embarked_C', 'embarked_Q', 'embarked_S',
+        'boat_1', 'boat_10', 'boat_11', 'boat_12', 'boat_13', 'boat_13 15',
+        'boat_13 15 B', 'boat_14', 'boat_15', 'boat_15 16', 'boat_16',
+        'boat_2', 'boat_3', 'boat_4', 'boat_5', 'boat_5 7', 'boat_5 9',
+        'boat_6', 'boat_7', 'boat_8', 'boat_8 10', 'boat_9', 'boat_?',
+        'boat_A', 'boat_B', 'boat_C', 'boat_C D', 'boat_D', 'age_?_1',
+        'body_?_1']
+    assert (ep.get_feature_names_out() == expected_names).all()
+    expected_names_no_clean = [
+        'sibsp', 'parch', 'pclass_1', 'pclass_2', 'pclass_3',
+        'sex_male', 'embarked_?', 'embarked_C', 'embarked_Q', 'embarked_S',
+        'boat_1', 'boat_10', 'boat_11', 'boat_12', 'boat_13', 'boat_13 15',
+        'boat_13 15 B', 'boat_14', 'boat_15', 'boat_15 16', 'boat_16',
+        'boat_2', 'boat_3', 'boat_4', 'boat_5', 'boat_5 7', 'boat_5 9',
+        'boat_6', 'boat_7', 'boat_8', 'boat_8 10', 'boat_9', 'boat_?',
+        'boat_A', 'boat_B', 'boat_C', 'boat_C D', 'boat_D',
+        'age_dabl_continuous', 'fare_dabl_continuous',
+        'body_dabl_continuous', 'age_?', 'fare_?', 'body_?']
     # without clean
     X = ep.fit_transform(titanic.drop('survived', axis=1))
-    # FIXME can't do that yet
-    # assert ep.get_feature_names_out() == expected_names_no_clean
+    assert (ep.get_feature_names_out() == expected_names_no_clean).all()
 
-    assert not np.isnan(X).any()
+    assert not np.isnan(X).any().any()
 
 
 def test_type_detection_bytes():
@@ -442,14 +457,14 @@ def test_easy_preprocessor_transform():
 def test_simple_preprocessor_imputed_features():
     # Issue: 211
 
-    data = pd.DataFrame({'A': [0, 1, 2, 1, np.NaN]}, dtype=int)
+    data = pd.DataFrame({'A': [0, 1, 2, 1, np.NaN]}, dtype="Int64")
     types = detect_types(data, type_hints={'A': 'categorical'})
 
     ep = EasyPreprocessor(types=types)
     ep.fit(data)
 
-    expected_names = ['A_0', 'A_1', 'A_2', 'A_imputed_False', 'A_imputed_True']
-    assert ep.get_feature_names_out() == expected_names
+    expected_names = ['A_0.0', 'A_1.0', 'A_2.0', 'missingindicator_A_1.0']
+    assert (ep.get_feature_names_out() == expected_names).all()
 
 
 def test_dirty_float_target_regression():

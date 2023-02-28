@@ -132,7 +132,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             enc = self.encoders_[col]
             feature_names.extend(enc.get_feature_names_out([str(col)]))
             feature_names.append("{}_dabl_continuous".format(col))
-        return feature_names
+        return np.array(feature_names)
 
 
 def guess_ordinal(values):
@@ -685,7 +685,7 @@ class EasyPreprocessor(BaseEstimator, TransformerMixin):
             else:
                 raise ValueError(
                     "Can't compute feature names for {}".format(name))
-        return feature_names
+        return np.array(feature_names)
 
     def transform(self, X):
         """ A reference implementation of a transform function.

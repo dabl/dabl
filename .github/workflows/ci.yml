@@ -34,6 +34,7 @@ jobs:
       - name: Conda info
         shell: bash -el {0}
         run: conda info
+      # TODO: Add a cache for the conda steps?
       - name: Install dependencies
         run: |
           conda update --yes -n base conda

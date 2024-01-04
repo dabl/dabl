@@ -17,7 +17,7 @@ except ImportError:
     from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _fit_and_score
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.metaestimators import available_if
+from dabl._available_if import available_if
 try:
     from sklearn.utils._testing import set_random_state
 except ImportError:

@@ -16,7 +16,7 @@ jobs:
       matrix:
         # Only test oldest and latest to avoid long CI times.
         # TODO: Add more versions for nightly and manual runs.
-        python-version: ["3.8", "3.12"]
+        python-version: ["3.8", "3.11"]
         scikit-learn-version: ["1.1.*", "dev"]
 
     runs-on: ubuntu-latest

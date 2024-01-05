@@ -1,4 +1,7 @@
 # dabl
+
+[![CI](https://github.com/dabl/dabl/actions/workflows/ci.yml/badge.svg)](https://github.com/dabl/dabl/actions/workflows/ci.yml)
+
 The data analysis baseline library.
 
 - "Mr Sanchez, are you a data scientist?"

@@ -26,7 +26,8 @@ jobs:
         if [ "$GITHUB_REF" == 'refs/heads/main' ] || [ "$GITHUB_EVENT_NAME" == 'schedule' ] || [ "$GITHUB_EVENT_NAME" == 'manual' ]; then
           echo '::set-output name=PythonVersionMatrix::["3.8", "3.9", "3.10", "3.11", "3.12"]'
         else
-          echo '::set-output name=PythonVersionMatrix::["3.8", "3.12"]'
+          # FIXME: echo '::set-output name=PythonVersionMatrix::["3.8", "3.12"]'
+          echo '::set-output name=PythonVersionMatrix::["3.8", "3.9", "3.10", "3.11", "3.12"]'
         fi
     - id: set-scikit-learn-version-matrix
       name: Determine scikit-learn version matrix
@@ -34,7 +35,8 @@ jobs:
         if [ "$GITHUB_REF" == 'refs/heads/main' ] || [ "$GITHUB_EVENT_NAME" == 'schedule' ] || [ "$GITHUB_EVENT_NAME" == 'manual' ]; then
           echo '::set-output name=ScikitLearnVersionMatrix::["1.1.*", "1.2.*", "1.3.*", "dev"]'
         else
-          echo '::set-output name=ScikitLearnVersionMatrix::["1.1.*", "dev"]'
+          # FIXME: echo '::set-output name=ScikitLearnVersionMatrix::["1.1.*", "dev"]'
+          echo '::set-output name=ScikitLearnVersionMatrix::["1.1.*", "1.2.*", "1.3.*", "dev"]'
         fi
 
 

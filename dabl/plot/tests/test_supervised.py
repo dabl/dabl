@@ -84,9 +84,9 @@ def test_plots_smoke(continuous_features, categorical_features, task):
                                            ['continuous', 'categorical'],
                                            ['continuous', 'categorical']))
 def test_type_hints(add, feature_type, target_type):
-    X = pd.DataFrame(np.random.randint(4, size=100)) + add
+    X = pd.DataFrame(np.random.randint(4, size=100), columns=['feat']) + add
     X['target'] = np.random.uniform(size=100)
-    plot(X, type_hints={0: feature_type,
+    plot(X, type_hints={'feat': feature_type,
                         'target': target_type},
          target_col='target')
     # get title of figure

@@ -6,6 +6,7 @@ import itertools
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle, Patch
 from matplotlib.ticker import EngFormatter
 from seaborn.utils import despine
@@ -369,7 +370,7 @@ def _check_X_target_col(X, target_col, types=None, type_hints=None, task=None):
     return types
 
 
-def _short_tick_names(ax, label_length=20, ticklabel_length=10):
+def _short_tick_names(ax: Axes, label_length=20, ticklabel_length=10):
     """Shorten axes labels and tick labels.
 
     Uses _shortname to change labels as a side effect.
@@ -384,8 +385,19 @@ def _short_tick_names(ax, label_length=20, ticklabel_length=10):
         Length of each label in xticklabels and yticklabels
 
     """
-    ax.set_yticks(ax.get_yticks().tolist())
-    ax.set_xticks(ax.get_xticks().tolist())
+    # Handle differences in return types between matplotlib 3.7 and 3.8
+    yticks = ax.get_yticks()
+    if isinstance(yticks, np.ndarray):
+        yticks = yticks.tolist()
+    assert isinstance(yticks, list)
+    ax.set_yticks(yticks)
+
+    xticks = ax.get_xticks()
+    if isinstance(xticks, np.ndarray):
+        xticks = xticks.tolist()
+    assert isinstance(xticks, list)
+    ax.set_xticks(xticks)
+
     ax.set_xticklabels(
         [_shortname(t.get_text(), maxlen=ticklabel_length)
          for t in ax.get_xticklabels()]

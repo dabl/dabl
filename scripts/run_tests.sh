@@ -8,6 +8,8 @@ scriptdir=$(dirname "$(readlink -f "$0")")
 cd "$scriptdir/.."
 
 for py_vers in 3.{8..12}; do
+    conda_env="dabl-py${py_vers}"
     # Run pytest foreach supported version of python.
-    conda run -n dabl-py${py_vers} pytest dabl/
+    conda run -n $conda_env pytest -n auto -x --failed-first --new-first dabl/
 done
+echo "OK"

@@ -68,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: |
           conda update --yes -n base conda
-          conda install --yes pip pytest numpy scipy wheel
+          conda install --yes pip pytest pytest-xdist numpy scipy wheel
           conda list
       - name: Install scikit-learn
         run: |
@@ -94,6 +94,6 @@ jobs:
           TEST_DIR=/tmp/test_dir
           mkdir -p $TEST_DIR
           cd $TEST_DIR
-          pytest --pyargs dabl
+          pytest -n auto --pyargs dabl
       - name: Test docs
         run: pytest doc

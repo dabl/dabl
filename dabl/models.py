@@ -1,3 +1,4 @@
+from importlib.metadata import version
 import warnings
 import numpy as np
 import pandas as pd
@@ -32,6 +33,8 @@ from .preprocessing import EasyPreprocessor, detect_types
 from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
 from .utils import _validate_Xyt
+
+_SKLEARN_VERSION = version('scikit-learn')
 
 
 def _format_scores(scores):
@@ -79,10 +82,11 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore',
                                         category=UndefinedMetricWarning)
+                _fit_and_score_args = {'score_params': {}} if _SKLEARN_VERSION >= '1.4' else {}
                 scores = _fit_and_score(estimator, X, y, scorer=scorers,
                                         train=train, test=test,
                                         parameters={}, fit_params={},
-                                        verbose=self.verbose)
+                                        verbose=self.verbose, **_fit_and_score_args)
             res.append(scores['test_scores'])
 
         res_mean = pd.DataFrame(res).mean(axis=0)

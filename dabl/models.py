@@ -1,3 +1,4 @@
+from importlib.metadata import version
 import warnings
 import numpy as np
 import pandas as pd
@@ -17,7 +18,7 @@ except ImportError:
     from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.model_selection._validation import _fit_and_score
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.metaestimators import if_delegate_has_method
+from dabl._available_if import available_if
 try:
     from sklearn.utils._testing import set_random_state
 except ImportError:
@@ -33,6 +34,8 @@ from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
 from .utils import _validate_Xyt
 
+_SKLEARN_VERSION = version('scikit-learn')
+
 
 def _format_scores(scores):
     return " ".join(('{}: {:.3f}'.format(name, score)
@@ -41,11 +44,14 @@ def _format_scores(scores):
 
 class _DablBaseEstimator(BaseEstimator):
 
-    @if_delegate_has_method(delegate='est_')
+    def _estimator_has(attr: str) -> bool:
+        return lambda self: hasattr(self, 'est_') and hasattr(self.est_, attr)
+
+    @available_if(_estimator_has('predict_proba'))
     def predict_proba(self, X):
         return self.est_.predict_proba(X)
 
-    @if_delegate_has_method(delegate='est_')
+    @available_if(_estimator_has('decision_function'))
     def decision_function(self, X):
         return self.est_.decision_function(X)
 
@@ -76,10 +82,11 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore',
                                         category=UndefinedMetricWarning)
+                _fit_and_score_args = {'score_params': {}} if _SKLEARN_VERSION >= '1.4' else {}
                 scores = _fit_and_score(estimator, X, y, scorer=scorers,
                                         train=train, test=test,
                                         parameters={}, fit_params={},
-                                        verbose=self.verbose)
+                                        verbose=self.verbose, **_fit_and_score_args)
             res.append(scores['test_scores'])
 
         res_mean = pd.DataFrame(res).mean(axis=0)

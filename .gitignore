@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .vscode
+.venv
 coverage
 
 # C extensions

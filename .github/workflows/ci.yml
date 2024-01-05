@@ -48,6 +48,10 @@ jobs:
         # matrix than we do for PRs so we make this value dynamic.
         python-version: ${{ fromJson(needs.prep-vars.outputs.PythonVersionMatrix) }}
         scikit-learn-version: ${{ fromJson(needs.prep-vars.outputs.ScikitLearnVersionMatrix) }}
+        exclude:
+          # Not supported:
+          - python-version: "3.12"
+            scikit-learn-version: "1.1.*"
 
     runs-on: ubuntu-latest
     defaults:

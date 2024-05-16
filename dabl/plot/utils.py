@@ -1,3 +1,4 @@
+from importlib.metadata import version
 from warnings import warn
 from functools import reduce
 import itertools
@@ -22,6 +23,8 @@ from sklearn.model_selection import cross_val_score, StratifiedShuffleSplit
 
 from ..preprocessing import detect_types
 from .._config import get_config
+
+_MATPLOTLIB_VERSION = version('matplotlib')
 
 
 def find_pretty_grid(n_plots, max_cols=5):
@@ -558,7 +561,11 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         if len(unique_c) > 15:
             props['size'] = 6
         legend = ax.legend(prop=props, title=getattr(c, 'name', None))
-        for handle in legend.legendHandles:
+        if _MATPLOTLIB_VERSION >= 3.8:
+            legend_handles = legend.legend_handles
+        else:
+            legend_handles = legend.legendHandles
+        for handle in legend_handles:
             handle.set_alpha(1)
             handle.set_sizes((100,))
 

@@ -561,7 +561,7 @@ def discrete_scatter(x, y, c, unique_c=None, legend='first',
         if len(unique_c) > 15:
             props['size'] = 6
         legend = ax.legend(prop=props, title=getattr(c, 'name', None))
-        if _MATPLOTLIB_VERSION >= 3.8:
+        if _MATPLOTLIB_VERSION >= '3.8':
             legend_handles = legend.legend_handles
         else:
             legend_handles = legend.legendHandles

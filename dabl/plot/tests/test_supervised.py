@@ -317,7 +317,7 @@ def test_plot_mixed_column_name_types():
 def test_na_vals_reg_plot_raise_warning():
     X, y = load_diabetes(return_X_y=True)
     X = pd.DataFrame(X)
-    y[::50] = np.NaN
+    y[::50] = np.nan
     X['target_col'] = y
     with pytest.warns(UserWarning, match="Missing values in target_col have "
                                          "been removed for regression"):
@@ -366,7 +366,7 @@ def test_plot_regression_categorical_missing_value():
     df.loc[200:300, 'y'] += 2
     df['x'] = 'a'
     df.loc[100:200, 'x'] = 'b'
-    df.loc[200:300, 'x'] = np.NaN
+    df.loc[200:300, 'x'] = np.nan
     res = plot(df, target_col='y')
     assert len(res[2][0, 0].get_yticklabels()) == 3
     assert res[2][0, 0].get_yticklabels()[2].get_text() == 'dabl_mi...'
@@ -375,7 +375,7 @@ def test_plot_regression_categorical_missing_value():
 def test_plot_regression_missing_categories():
     df = pd.DataFrame({'cat_col': np.random.choice(['a', 'b', 'c', 'd'],
                                                    size=100)})
-    df['target'] = np.NaN
+    df['target'] = np.nan
     counts = df.cat_col.value_counts()
     df.loc[df.cat_col == "a", 'target'] = np.random.normal(size=counts['a'])
     df.loc[df.cat_col == "b", 'target'] = np.random.normal(1, size=counts['b'])

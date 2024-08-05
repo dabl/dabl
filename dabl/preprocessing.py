@@ -107,7 +107,7 @@ class DirtyFloatCleaner(BaseEstimator, TransformerMixin):
             floats, X_col = _float_matching_fetch(X, col, return_safe_col=True)
             nofloats = ~floats
             X_new_col = X_col.copy()
-            X_new_col[nofloats] = np.NaN
+            X_new_col[nofloats] = np.nan
             X_new_col = X_new_col.astype(float)
             enc = self.encoders_[col]
             if enc is None:

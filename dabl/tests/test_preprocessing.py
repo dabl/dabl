@@ -150,7 +150,7 @@ def test_detect_types():
          'cont_int': np.repeat(np.arange(50), 2),
          'unique_string': [random_str() for i in range(100)],
          'continuous_float': np.random.normal(size=100),
-         'constant_nan': np.repeat(np.NaN, repeats=100),
+         'constant_nan': np.repeat(np.nan, repeats=100),
          'constant_string': ['every_day'] * 100,
          'constant_float': np.repeat(np.pi, repeats=100),
          'near_constant_float': near_constant_float,
@@ -161,7 +161,7 @@ def test_detect_types():
          'some_dicts': [{random_str(): random_str() for i in range(3)}
                         for j in range(100)]
          })
-    df_all.loc[0, 'some_lists'] = np.NaN
+    df_all.loc[0, 'some_lists'] = np.nan
     df_all['mixed_structured'] = df_all['some_lists']
     df_all.loc[::2, 'mixed_structured'] = df_all.loc[::2, 'some_dicts']
     res = detect_types(df_all)
@@ -458,7 +458,7 @@ def test_easy_preprocessor_transform():
 def test_simple_preprocessor_imputed_features():
     # Issue: 211
 
-    data = pd.DataFrame({'A': [0, 1, 2, 1, np.NaN]}, dtype="Int64")
+    data = pd.DataFrame({'A': [0, 1, 2, 1, np.nan]}, dtype="Int64")
     types = detect_types(data, type_hints={'A': 'categorical'})
 
     ep = EasyPreprocessor(types=types)
@@ -517,7 +517,7 @@ def test_strings_not_binary():
 
 def test_mostly_nan_values():
     x = np.empty(shape=1000)
-    x[:] = np.NaN
+    x[:] = np.nan
     x[:3] = 1
     df = pd.DataFrame({'mostly_empty': x})
     types = detect_types(df)

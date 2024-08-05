@@ -433,7 +433,7 @@ def _plot_univariate_classification(features, features_imp, target,
     if drop_outliers:
         for col in best_features.columns:
             inliers = _find_inliers(best_features.loc[:, col])
-            best_features[~inliers] = np.NaN
+            best_features[~inliers] = np.nan
 
     best_features[target_col] = target
 

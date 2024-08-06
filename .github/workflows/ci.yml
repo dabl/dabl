@@ -50,8 +50,27 @@ jobs:
         scikit-learn-version: ${{ fromJson(needs.prep-vars.outputs.ScikitLearnVersionMatrix) }}
         exclude:
           # Not supported:
+          # See Also: setup.py
+          - python-version: "3.8"
+            scikit-learn-version: "1.4.*"
+          - python-version: "3.8"
+            scikit-learn-version: "1.5.*"
+          - python-version: "3.9"
+            scikit-learn-version: "1.1.*"
+          - python-version: "3.9"
+            scikit-learn-version: "1.2.*"
+          - python-version: "3.10"
+            scikit-learn-version: "1.1.*"
+          - python-version: "3.10"
+            scikit-learn-version: "1.2.*"
+          - python-version: "3.11"
+            scikit-learn-version: "1.1.*"
+          - python-version: "3.11"
+            scikit-learn-version: "1.2.*"
           - python-version: "3.12"
             scikit-learn-version: "1.1.*"
+          - python-version: "3.12"
+            scikit-learn-version: "1.2.*"
 
     runs-on: ubuntu-latest
     defaults:

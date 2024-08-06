@@ -31,6 +31,7 @@ def mock_get_estimators_dummy(self):
 def test_basic(X, y, refit):
     # test on iris
     ec = SimpleClassifier(refit=refit)
+    ec.verbose = 256
     ec.fit(X, y)
     if refit:
         # smoke test

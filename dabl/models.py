@@ -7,6 +7,7 @@ import sklearn
 
 from sklearn.metrics import make_scorer, average_precision_score
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+import sklearn.metrics
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.multiclass import type_of_target
 from sklearn.pipeline import make_pipeline, Pipeline
@@ -157,7 +158,10 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         self.current_best_ = {rank_scoring: -np.inf}
         for est in estimators:
             set_random_state(est, self.random_state)
-            scorers = _check_multimetric_scoring(est, self.scoring_)
+            if _SKLEARN_VERSION >= '1.5':
+                scorers = sklearn.metrics.check_scoring(est, self.scoring_)
+            else:
+                scorers = _check_multimetric_scoring(est, self.scoring_)
             scores = self._evaluate_one(est, data_preproc, scorers)
             # make scoring configurable
             if scores[rank_scoring] > self.current_best_[rank_scoring]:

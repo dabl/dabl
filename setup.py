@@ -17,6 +17,14 @@ setup(name='dabl',
           "numpy",
           "scipy",
           "scikit-learn>=1.1",
+
+          # Workaround (currently) undeclared numpy 2.x incompatibility with older
+          # scikit-learn versions.
+          # See Also: https://github.com/scikit-learn/scikit-learn/issues/29630
+          "numpy<2.0; python_version<'3.9'",
+          "scikit-learn<1.4; python_version<'3.9'",
+          "scikit-learn>=1.3; python_version>='3.9'",
+
           "pandas",
           "matplotlib < 3.8;python_version<'3.9'",
           "matplotlib >= 3.8;python_version>='3.9'",

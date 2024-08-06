@@ -72,9 +72,11 @@ def resample(*arrays, **options):
              [2., 1.],
              [1., 0.]])
 
-      >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-      <3x2 sparse matrix of type '<... 'numpy.float64'>'
-          with 4 stored elements in Compressed Sparse Row format>
+      >>> X_sparse.shape
+      (3, 2)
+
+      >>> X_sparse.dtype
+      dtype('float64')
 
       >>> X_sparse.toarray()
       array([[1., 0.],

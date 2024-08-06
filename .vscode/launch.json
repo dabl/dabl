@@ -8,7 +8,11 @@
             "name": "Debug Unit Test",
             "type": "python",
             "request": "test",
-            "justMyCode": false
+            "justMyCode": false,
+            "env": {
+                // When debugging tests, only run a single pytest worker instance.
+                "PYTEST_ADDOPTS": "-n0 --dist=no --log-level=DEBUG",
+            }
         }
     ]
 }

@@ -107,7 +107,6 @@ jobs:
       - name: Show versions and install dabl
         run: |
           python --version
-          #python setup.py develop  # deprecated syntax
           python -m pip install -e .
           python -c "import numpy; print('numpy %s' % numpy.__version__)"
           python -c "import scipy; print('scipy %s' % scipy.__version__)"
@@ -123,3 +122,5 @@ jobs:
           pytest -n auto --pyargs dabl
       - name: Test docs
         run: pytest doc
+      - name: Test build
+        run: scripts/check_build.sh

@@ -35,7 +35,7 @@ This directory contains some scripts to help run CI type tests locally across a 
     ```sh
     git checkout main
     git pull
-    git tag vM.m.p
+    git tag M.m.p
     ```
 
     > Note: `M.m.p` is the version number you just bumped to above.

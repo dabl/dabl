@@ -124,6 +124,7 @@ jobs:
         run: pytest doc
 
   build-check:
+    name: Check the package build
     runs-on: ubuntu-latest
 
     steps:

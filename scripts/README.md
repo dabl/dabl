@@ -15,13 +15,17 @@ This directory contains some scripts to help run CI type tests locally across a 
 ## Versioning
 
 1. Create a new branch from main.
-2. Update the version:
+2. Update the `__version__` in [`dabl/__init__.py`](../dabl/__init__.py).
 
-    ```sh
-    ./scripts/update-version.py --no-tag patch  # or minor or major
+    For instance
+
+    ```python
+    __version__ = "0.2.8-dev"
     ```
 
-    > This will use the `bump2version` package to update the necessary files in the repo to the latest version.
+    > Include `-dev` suffix to keep local install version suffix.
+    >
+    > The Github Release Action will use the tag referenced.
 
 3. Submit and merge a PR for the changes.
 4. Update the tag locally.

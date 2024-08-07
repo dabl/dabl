@@ -65,7 +65,7 @@ Issues = "https://github.com/dabl/dabl/issues"
 dabl = "dabl"
 
 [tool.setuptools.packages.find]
-include = ["dabl"]
+include = ["dabl", "dabl.*"]
 exclude = ["*.tests", "*.tests.*"]
 
 [tool.setuptools.package-data]

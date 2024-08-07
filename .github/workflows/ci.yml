@@ -135,6 +135,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build
+        pip install -U build
     - name: Check build
       run: scripts/check_build.sh

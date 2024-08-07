@@ -7,9 +7,8 @@ set -euxo pipefail
 scriptdir=$(dirname "$(readlink -f "$0")")
 cd "$scriptdir/.."
 
-python3 -m pip install build
 rm -rf build/ dist/
-python3 -m build
+python -m build || python3 -m build
 # Basic validation of the whl produced.
 unzip -l dist/dabl-*-py3-none-any.whl | grep dabl/__init__.py
 # Make sure tests and docs aren't included.

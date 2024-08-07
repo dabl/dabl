@@ -63,7 +63,7 @@ dabl = "dabl"
 
 [tool.setuptools.packages.find]
 include = ["dabl"]
-#exclude = ["*.tests", "*.tests.*"]
+exclude = ["*.tests", "*.tests.*"]
 
 [tool.setuptools.package-data]
 dabl = [

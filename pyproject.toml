@@ -50,7 +50,7 @@ dependencies = [
     "matplotlib >= 3.8;python_version>='3.9'",
     "seaborn",
 ]
-version = "0.2.7-dev"
+version = "0.2.8-dev"
 
 [project.urls]
 Documentation = "https://dabl.github.io/"

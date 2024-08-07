@@ -1,1 +1,3 @@
 include LICENSE
+# Don't need to include the tests in the packaged data.
+prune **/tests

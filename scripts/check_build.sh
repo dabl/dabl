@@ -17,6 +17,6 @@ unzip -l dist/dabl-*-py3-none-any.whl | grep dabl/__init__.py
 # Make sure the package metadata looks right.
 unzip -p dist/dabl-*-py3-none-any.whl dabl-*/METADATA | grep 'pip install dabl'
 # Make sure the source tar looks OK.
-tar tzvf dist/dabl-*.tar.gz | grep examples/
+tar tzvf dist/dabl-*.tar.gz | grep portfolios/
 
 echo "OK"

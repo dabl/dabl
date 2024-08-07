@@ -12,6 +12,10 @@ on:
       tags:
         description: Manual dabl run aux info
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 jobs:
   prep-vars:
     name: Prepare some variables for other jobs

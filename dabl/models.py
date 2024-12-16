@@ -241,7 +241,7 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
             minority_class = y.value_counts().index[1]
             scorer_kwargs = {'pos_label': minority_class}
             if sys.version_info < (3, 12):
-                kwargs['needs_threshold'] = True
+                scorer_kwargs['needs_threshold'] = True
             my_average_precision_scorer = make_scorer(
                 average_precision_score, **scorer_kwargs)
             scoring = {'accuracy': 'accuracy',

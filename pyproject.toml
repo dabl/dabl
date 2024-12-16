@@ -34,6 +34,8 @@ maintainers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
+    "packaging",
+
     "numpy",
     "scipy",
     "scikit-learn>=1.1",

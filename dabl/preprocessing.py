@@ -203,7 +203,7 @@ def _find_string_floats(X, dirty_float_threshold):
         common_distinct_values = X_col.value_counts()[:5].index
         is_common = X_col.isin(common_distinct_values) | X_col.isna()
         if is_float.loc[~is_common, col].mean() > dirty_float_threshold:
-            dirty_float[col] = 1
+            dirty_float[col] = True
 
     return clean_float_string, dirty_float
 

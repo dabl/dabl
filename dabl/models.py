@@ -1,5 +1,6 @@
 from importlib.metadata import version
 from packaging.version import Version
+import sys
 import warnings
 import numpy as np
 import pandas as pd
@@ -238,9 +239,11 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
 
         if target_type == "binary":
             minority_class = y.value_counts().index[1]
+            scorer_kwargs = {'pos_label': minority_class}
+            if sys.version_info < (3, 12):
+                kwargs['needs_threshold'] = True
             my_average_precision_scorer = make_scorer(
-                average_precision_score, pos_label=minority_class,
-                needs_threshold=True)
+                average_precision_score, **scorer_kwargs)
             scoring = {'accuracy': 'accuracy',
                        'average_precision': my_average_precision_scorer,
                        'roc_auc': 'roc_auc',

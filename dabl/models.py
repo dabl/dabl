@@ -1,4 +1,6 @@
 from importlib.metadata import version
+from packaging.version import Version
+import sys
 import warnings
 import numpy as np
 import pandas as pd
@@ -35,7 +37,7 @@ from .pipelines import (get_fast_classifiers, get_fast_regressors,
                         get_any_classifiers)
 from .utils import _validate_Xyt
 
-_SKLEARN_VERSION = version('scikit-learn')
+_SKLEARN_VERSION = Version(version('scikit-learn'))
 
 
 def _format_scores(scores):
@@ -83,7 +85,11 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore',
                                         category=UndefinedMetricWarning)
-                _fit_and_score_args = {'score_params': {}} if _SKLEARN_VERSION >= '1.4' else {}
+                _fit_and_score_args = (
+                    {"score_params": {}}
+                    if _SKLEARN_VERSION >= Version("1.4")
+                    else {}
+                )
                 scores = _fit_and_score(estimator, X, y, scorer=scorers,
                                         train=train, test=test,
                                         parameters={}, fit_params={},
@@ -158,7 +164,7 @@ class _BaseSimpleEstimator(_DablBaseEstimator):
         self.current_best_ = {rank_scoring: -np.inf}
         for est in estimators:
             set_random_state(est, self.random_state)
-            if _SKLEARN_VERSION >= '1.5':
+            if _SKLEARN_VERSION >= Version('1.5'):
                 scorers = sklearn.metrics.check_scoring(est, self.scoring_)
             else:
                 scorers = _check_multimetric_scoring(est, self.scoring_)
@@ -233,9 +239,11 @@ class SimpleClassifier(_BaseSimpleEstimator, ClassifierMixin):
 
         if target_type == "binary":
             minority_class = y.value_counts().index[1]
+            scorer_kwargs = {'pos_label': minority_class}
+            if _SKLEARN_VERSION < Version('1.4'):
+                scorer_kwargs['needs_threshold'] = True
             my_average_precision_scorer = make_scorer(
-                average_precision_score, pos_label=minority_class,
-                needs_threshold=True)
+                average_precision_score, **scorer_kwargs)
             scoring = {'accuracy': 'accuracy',
                        'average_precision': my_average_precision_scorer,
                        'roc_auc': 'roc_auc',

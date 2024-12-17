@@ -122,7 +122,7 @@ def plot_regression_continuous(X, *, target_col, types=None,
 
     if find_scatter_categoricals:
         best_categorical = _find_categorical_for_regression(
-            X, types, target_col, top_cont=top_k, random_state=None)
+            X, types, target_col, top_cont=top_k, random_state=None, **kwargs)
     else:
         best_categorical = []
 
@@ -641,9 +641,6 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
         print("Target looks like regression")
         # FIXME we might be overwriting the original dataframe here?
         X[target_col] = X[target_col].astype(float)
-        # regression
-        # make sure we include the target column in X
-        # even though it's not categorical
 
         if drop_outliers:
             inliers = _find_inliers(X.loc[:, target_col])
@@ -671,9 +668,6 @@ def plot(X, y=None, target_col=None, type_hints=None, scatter_alpha='auto',
             X, target_col=target_col, types=types, **kwargs))
     else:
         print("Target looks like classification")
-        # regression
-        # make sure we include the target column in X
-        # even though it's not categorical
         plt.figure()
         counts = pd.DataFrame(X[target_col].value_counts())
         melted = counts.T.melt().rename(
